@@ -73,7 +73,14 @@ export interface LetterPayload {
 
 /** 내부 코드는 로깅용으로만 보존하고 UI에는 단일 사용자 메시지를 노출한다. */
 function normalizeOpenError(err: unknown): never {
-  const msg = err instanceof Error ? err.message : String(err);
+  // Supabase JS RPC 에러는 Error 인스턴스가 아닌 plain object {message, code, ...}로 올 수 있다.
+  // String(err) = "[object Object]"가 되어 코드 매칭이 실패하므로 .message 필드를 우선 추출한다.
+  const msg =
+    err instanceof Error
+      ? err.message
+      : typeof err === 'object' && err !== null && 'message' in err
+        ? String((err as { message: unknown }).message)
+        : String(err);
 
   // 로깅 (프로덕션에서는 원격 로거로 교체)
   console.warn('[openByToken] internal error:', msg);
