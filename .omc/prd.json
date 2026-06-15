@@ -25,7 +25,7 @@
      "acceptanceCriteria":["SC URL을 oEmbed로 검증 → embed-disabled/private/geo/비200 트랙은 작성 시점 거부","CC0 무드 픽커에서 곡 선택","단락별 음악 큐 지정·저장","광고 포함 가능 SC 트랙은 send-time 경고"],"passes":false},
     {"id":"US-004","title":"음악 동기화 엔진 (TrackSource)","approach_family":"integration","priority":4,
      "description":"단일 TrackSource 추상화로 SC·호스팅 양쪽 동형 제어.",
-     "acceptanceCriteria":["SoundCloudSource+HostedAudioSource가 동일 인터페이스(load/unlock/play/pause/seekTo/setVolume/onProgress/onFinish)","IntersectionObserver 단락 진입 시 추가 탭 없이 seekTo","iOS Safari 단일 ▶ 제스처가 양쪽 소스 언락","곡 전환/페이드는 setVolume 램프"],"passes":false},
+     "acceptanceCriteria":["SoundCloudSource+HostedAudioSource가 동일 인터페이스(load/unlock/play/pause/seekTo/setVolume/onProgress/onFinish)","IntersectionObserver 단락 진입 시 추가 탭 없이 seekTo","iOS Safari 단일 ▶ 제스처가 양쪽 소스 언락","곡 전환/페이드는 setVolume 램프"],"passes":true},
     {"id":"US-005","title":"CC0/RF 카탈로그 + 라이선스 게이트","approach_family":"data","priority":5,
      "description":"보장형 무드 카탈로그 + ingestion 라이선스 강제.",
      "acceptanceCriteria":["ingestion이 CC0/PD/CC-BY(+상업·재배포 허용 벤더)만 통과, NC/ND·비화이트리스트 자동 거부","통과 트랙마다 프로비넌스(출처·라이선스명+버전·텍스트 스냅샷·취득일·저작자) 저장","한국 인접권(실연·음반) 커버 확인, KOMCA 관리곡 배제"],"passes":true},
