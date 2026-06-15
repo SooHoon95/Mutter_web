@@ -34,7 +34,7 @@
     {"id":"US-007","title":"전달 링크 + 프라이버시","approach_family":"infrastructure","priority":7,
      "acceptanceCriteria":["≥128bit 토큰, 순차 ID 없음","암호 기본 ON, claim-and-bind, expiry/revoke","noindex, 공개 인덱스 미노출"],"passes":true},
     {"id":"US-008","title":"수신자 무설치 웹뷰","approach_family":"architecture","priority":8,
-     "acceptanceCriteria":["무계정·무설치 열기▶→스크롤 동기 음악","수신 로드 시 SC liveness 실패하면 카탈로그로 폴백 — 편지 절대 무음 아님(무음 편지 0)","모든 CC-BY 트랙 제목·저작자·출처·라이선스 크레딧 렌더","첫 의미 렌더 <3s/4G"],"passes":false},
+     "acceptanceCriteria":["무계정·무설치 열기▶→스크롤 동기 음악","수신 로드 시 SC liveness 실패하면 카탈로그로 폴백 — 편지 절대 무음 아님(무음 편지 0)","모든 CC-BY 트랙 제목·저작자·출처·라이선스 크레딧 렌더","첫 의미 렌더 <3s/4G"],"passes":true},
     {"id":"US-009","title":"법적 안전장치 (takedown 채널)","approach_family":"other","priority":9,
      "acceptanceCriteria":["푸터/ToS에 권리주장자 takedown 연락처·절차 게시","통지 시 해당 편지 오디오 비활성화 가능","SC: 스트림 rip·proxy·캐시·재호스팅 없음(공식 embed만)"],"passes":false},
     {"id":"US-010","title":"E2E + 디바이스 검증","approach_family":"testing","priority":10,

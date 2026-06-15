@@ -1,0 +1,75 @@
+/* AudioUnlockGate — "편지 열기 ▶" 풀스크린 게이트 스타일 */
+
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  /* 중립 배경 — 본문/이미지 누설 없이 잔잔한 진입 화면 */
+  background: radial-gradient(ellipse at 50% 30%, #1b2430 0%, #0d1117 70%);
+  color: #e8e4da;
+  text-align: center;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 22rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #aab3bf;
+}
+
+.openButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.85rem 1.75rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0d1117;
+  background: #e8c87a;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.15s ease;
+  /* 터치 타깃 최소 44px 보장(접근성) */
+  min-height: 44px;
+}
+
+.openButton:active {
+  transform: scale(0.97);
+}
+
+.openButton:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.playIcon {
+  font-size: 0.85em;
+  line-height: 1;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #7e8896;
+}

@@ -1,0 +1,33 @@
+/* Viewer 라우트 — 로딩/에러 상태 화면. 본문 레이아웃은 LetterView가 담당. */
+
+.center {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: #0d1117;
+  color: #e8e4da;
+  text-align: center;
+}
+
+.errorCard {
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.errorTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.errorMessage {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #aab3bf;
+  word-break: keep-all;
+  line-height: 1.5;
+}

@@ -1,0 +1,27 @@
+/* LetterView — 수신 본문 레이아웃. 템플릿 테마(CSS 변수)는 TemplateThemed가 주입. */
+
+.themed {
+  min-height: 100vh;
+  /* 템플릿 배경/전경을 본문 전체에 적용 */
+  background-color: var(--tpl-bg, #faf8f3);
+  color: var(--tpl-fg, #2c2416);
+}
+
+.reader {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 1rem;
+}
+
+/* 단락별 음악 큐 표시(♪). 재생 중 단락은 강조. */
+.cue {
+  font-size: 0.85rem;
+  color: var(--tpl-muted, #8a7a5e);
+  opacity: 0.5;
+}
+
+.cueActive {
+  font-size: 0.85rem;
+  color: var(--tpl-accent, #8b6914);
+  opacity: 1;
+}

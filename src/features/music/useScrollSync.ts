@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { MusicCue } from '@/data/types';
 import { SyncEngine } from './SyncEngine';
+import type { TrackSource } from './TrackSource';
 
 export interface UseScrollSyncResult {
   /** 현재 활성 단락 index (-1 = 아직 진입 전). */
@@ -23,10 +24,13 @@ export interface UseScrollSyncResult {
 /**
  * @param paragraphRefs 각 단락 DOM 노드 ref 배열. cues와 인덱스 1:1 대응.
  * @param cues          단락별 음악 큐(없는 단락은 undefined).
+ * @param sourceFactory SyncEngine에 주입할 소스 팩토리(옵션). T8 viewer는 무음0 폴백
+ *                      팩토리를 넘겨 SC 실패 시 CC0로 대체한다. 미지정 시 엔진 기본값(createSource).
  */
 export function useScrollSync(
   paragraphRefs: React.RefObject<HTMLElement>[],
   cues: Array<MusicCue | undefined>,
+  sourceFactory?: (cue: MusicCue) => TrackSource,
 ): UseScrollSyncResult {
   const engineRef = useRef<SyncEngine | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -43,6 +47,7 @@ export function useScrollSync(
 
     const engine = new SyncEngine({
       onActiveChange: (index) => setActiveIndex(index),
+      sourceFactory,
     });
     engine.attach(elements, cues);
     engineRef.current = engine;
@@ -51,7 +56,7 @@ export function useScrollSync(
       engine.destroy();
       engineRef.current = null;
     };
-  }, [paragraphRefs, cues]);
+  }, [paragraphRefs, cues, sourceFactory]);
 
   const unlock = useCallback(async () => {
     await engineRef.current?.unlockAll();

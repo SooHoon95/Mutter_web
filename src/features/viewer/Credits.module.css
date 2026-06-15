@@ -1,0 +1,50 @@
+/* Credits — CC-BY 크레딧 렌더 스타일. 템플릿 테마 위에 얹히는 중립 푸터 영역. */
+
+.credits {
+  margin-top: 2.5rem;
+  padding: 1rem 0 2rem;
+  border-top: 1px solid var(--tpl-border-color, rgba(0, 0, 0, 0.1));
+  font-size: 0.8rem;
+  color: var(--tpl-muted, #888);
+}
+
+.heading {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--tpl-muted, #888);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.item {
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.title {
+  font-weight: 600;
+  color: var(--tpl-fg, #333);
+}
+
+.author {
+  color: var(--tpl-fg, #333);
+}
+
+.license {
+  color: var(--tpl-muted, #888);
+}
+
+.source {
+  color: var(--tpl-accent, #06c);
+  text-decoration: underline;
+}

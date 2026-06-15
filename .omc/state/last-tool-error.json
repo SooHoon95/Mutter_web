@@ -1,7 +1,7 @@
 {
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"npm run test 2>&1\",\"timeout\":60000,\"description\":\"Run full test suite\",\"run_in_background\":false}",
-  "error": "Exit code 1\n\n> letter-app@0.1.0 test\n> vitest run\n\n\n RUN  v2.1.9 /Users/choesuhun/Desktop/Code/letter-app\n\n ✓ src/lib/licenseGate.test.ts (27 tests) 4ms\n ✓ src/lib/scOembed.test.ts (11 tests) 5ms\n ✓ src/data/letters.test.ts (8 tests) 5ms\n ✓ src/data/links.test.ts (13 tests) 6ms\n ✓ src/data/auth.test.ts (8 tests) 4ms\n ✓ src/features/music/HostedAudioSource.test.ts (8 tests) 9ms\n ✓ src/features/music/SyncEngine.test.ts (5 tests) 21ms\n ✓ src/features/templates/templates.test.ts (13 tests) 7ms\n ✓ sr...",
-  "timestamp": "2026-06-15T16:03:18.173Z",
-  "retry_count": 2
+  "tool_name": "mcp__plugin_oh-my-claudecode_t__lsp_diagnostics",
+  "tool_input_preview": "{\"file\":\"/Users/choesuhun/Desktop/Code/letter-app/src/routes/Viewer.tsx\"}",
+  "error": "Language server 'typescript-language-server' not found.\nInstall with: npm install -g typescript-language-server typescript",
+  "timestamp": "2026-06-15T16:27:14.384Z",
+  "retry_count": 4
 }
