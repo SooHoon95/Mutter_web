@@ -1,0 +1,84 @@
+/* TemplatePicker — 템플릿 선택 칩 UI. */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #555;
+  margin: 0;
+  /* global.css의 p 색상(--muted)을 덮어쓰지 않도록 명시 */
+  line-height: 1.4;
+}
+
+/* 칩 가로 스크롤 행 — 모바일에서 가로로 스크롤 가능 */
+.chipRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  /* iOS 관성 스크롤 */
+  -webkit-overflow-scrolling: touch;
+  /* 스크롤바 숨김 (시각 노이즈 제거) */
+  scrollbar-width: none;
+}
+
+.chipRow::-webkit-scrollbar {
+  display: none;
+}
+
+/* 개별 템플릿 칩 */
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 80px;
+  padding: 10px 12px;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 10px;
+  cursor: pointer;
+  /* 배경·색상은 인라인 style로 오버라이드됨 */
+  background: transparent;
+  transition: transform 0.12s, box-shadow 0.12s;
+  flex-shrink: 0;
+  /* 터치 영역 보장 */
+  min-height: 60px;
+}
+
+.chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.chip:active {
+  transform: translateY(0);
+}
+
+/* 선택된 칩 — 테두리·그림자로 강조 */
+.chipActive {
+  box-shadow: 0 0 0 3px currentColor;
+  transform: translateY(-1px);
+}
+
+.chipName {
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  /* 인라인 style의 fontFamily를 inherit하지 않고 UI 폰트 사용 */
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', system-ui,
+    sans-serif;
+}
+
+/* 샘플 텍스트 — 해당 템플릿 fontFamily로 렌더 */
+.chipSample {
+  font-size: 1rem;
+  line-height: 1.2;
+  opacity: 0.75;
+  /* fontFamily는 부모(.chip)의 인라인 style에서 상속 */
+}

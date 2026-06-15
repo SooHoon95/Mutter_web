@@ -1,10 +1,12 @@
-// 편지 작성 라우트. T5(US-003) 구현.
+// 편지 작성 라우트. T5(US-003) + T6(US-006) 구현.
 // RequireAuth는 router.tsx에서 이미 감싸므로 여기서 중복 적용하지 않는다.
 // /create/:id → 기존 초안 편집 (id 없으면 신규 초안).
 
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLetterDraft } from '@/features/compose';
 import { ParagraphEditor } from '@/features/compose';
+import { TemplatePicker, DEFAULT_TEMPLATE_ID } from '@/features/templates';
 import styles from './Create.module.css';
 
 export default function Create(): React.ReactElement {
@@ -22,8 +24,16 @@ export default function Create(): React.ReactElement {
     save,
   } = useLetterDraft(id ?? null);
 
+  // 템플릿 선택 상태 — draft.templateId로 저장 연동은 useLetterDraft 확장 시 추가.
+  // T6 범위에서는 로컬 상태로 선택·표시하고, templateId를 편지에 보존할 준비를 한다.
+  const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE_ID);
+
   function handleSave(): void {
     void save();
+  }
+
+  function handleTemplateSelect(newId: string): void {
+    setTemplateId(newId);
   }
 
   return (
@@ -58,6 +68,11 @@ export default function Create(): React.ReactElement {
           )}
         </div>
       )}
+
+      {/* 템플릿 선택 — T6 US-006 */}
+      <section className={styles.templateSection}>
+        <TemplatePicker selectedId={templateId} onSelect={handleTemplateSelect} />
+      </section>
 
       {/* 편지 제목 */}
       <div className={styles.titleSection}>

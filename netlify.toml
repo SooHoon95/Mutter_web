@@ -9,10 +9,13 @@
   status = 200
 
 # 수신 라우트는 검색 인덱싱 금지(capability-links: noindex).
+# L-1: 구체 경로 블록이 /* 를 덮어쓰므로 Referer 누출·클릭재킹 방어 헤더를 여기에도 명시한다.
 [[headers]]
   for = "/l/*"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
+    Referrer-Policy = "no-referrer"
+    X-Frame-Options = "DENY"
 
 [[headers]]
   for = "/*"

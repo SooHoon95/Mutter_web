@@ -1,0 +1,73 @@
+/*
+ * themes.css — 편지 템플릿 CSS 변수 베이스 정의.
+ * global.css와 분리해 TemplateThemed.tsx에서만 import한다.
+ * 각 템플릿은 [data-template-id="<id>"] 스코프 또는 인라인 style로 변수를 오버라이드한다.
+ */
+
+/*
+ * TemplateThemed 래퍼 클래스 — 자식 요소에 템플릿 CSS 변수를 전달하는 스코프.
+ * TemplateThemed.tsx가 .templateScoped 클래스를 부착하고,
+ * 각 템플릿 값을 인라인 CSS 변수로 주입한다.
+ */
+.templateScoped {
+  /* 기본값: 템플릿이 선택되지 않았을 때 안전한 폴백. */
+  --tpl-bg: #faf8f3;
+  --tpl-fg: #2c2416;
+  --tpl-muted: #8a7a5e;
+  --tpl-accent: #8b6914;
+  --tpl-font-family: 'Georgia', 'Times New Roman', 'Nanum Myeongjo', serif;
+  --tpl-heading-font-family: 'Georgia', 'Times New Roman', 'Nanum Myeongjo', serif;
+  --tpl-font-size: 1.0625rem;
+  --tpl-line-height: 1.85;
+  --tpl-heading-size: 1.375rem;
+  --tpl-border-radius: 4px;
+  --tpl-border-color: rgba(139, 105, 20, 0.2);
+  --tpl-paper-texture: linear-gradient(135deg, rgba(139, 105, 20, 0.04) 0%, transparent 60%);
+
+  background: var(--tpl-bg);
+  color: var(--tpl-fg);
+  font-family: var(--tpl-font-family);
+  font-size: var(--tpl-font-size);
+  line-height: var(--tpl-line-height);
+  border-radius: var(--tpl-border-radius);
+}
+
+/* 편지 제목 — heading 폰트 패밀리 적용 */
+.templateScoped h1,
+.templateScoped h2,
+.templateScoped h3 {
+  font-family: var(--tpl-heading-font-family);
+  font-size: var(--tpl-heading-size);
+  color: var(--tpl-fg);
+  line-height: 1.4;
+}
+
+/* 단락 텍스트 — 템플릿 색상·줄 간격 적용 */
+.templateScoped p {
+  color: var(--tpl-fg);
+  line-height: var(--tpl-line-height);
+  margin: 0;
+}
+
+/* 보조 텍스트 (작성일, 메타 등) */
+.templateScoped .tpl-muted {
+  color: var(--tpl-muted);
+}
+
+/* 강조 색상 요소 */
+.templateScoped .tpl-accent {
+  color: var(--tpl-accent);
+}
+
+/* 구분선 — 테마 테두리 색상 사용 */
+.templateScoped hr {
+  border: none;
+  border-top: 1px solid var(--tpl-border-color);
+  margin: 1.5rem 0;
+}
+
+/*
+ * 폰트 로드: 한국어 폰트는 시스템 폰트 스택으로 처리한다.
+ * Nanum Myeongjo 등은 사용자 디바이스에 없을 수 있어,
+ * 필요 시 T8 수신자 뷰에서 font-display: swap으로 구글 폰트를 레이지 로드한다.
+ */

@@ -68,6 +68,7 @@ create table if not exists delivery_links (
   claimed_at     timestamptz,
   expires_at     timestamptz,
   revoked        boolean not null default false,
+  revoked_at     timestamptz,                        -- M-3: revoke 시각 (revoke_link RPC가 설정)
   created_at     timestamptz not null default now()
 );
 

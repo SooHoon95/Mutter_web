@@ -102,6 +102,12 @@
   border-color: #1a1a1a;
 }
 
+/* 템플릿 선택 섹션 — T6 */
+.templateSection {
+  display: flex;
+  flex-direction: column;
+}
+
 /* 단락 섹션 */
 .paragraphSection {
   display: flex;

@@ -1,0 +1,98 @@
+/* Paginated — 긴 편지 모바일 리더 레이아웃. */
+/* 핵심 불변식: 가로 스크롤 0, 텍스트 클리핑 0. */
+
+.reader {
+  /* 가로 스크롤 원천 차단 */
+  overflow-x: hidden;
+  /* 세로는 부모 컨테이너에 위임 (스크롤 컨테이너는 외부에서 제어) */
+  overflow-y: visible;
+
+  width: 100%;
+  /* max-width: 템플릿 래퍼나 부모 페이지 컨테이너가 제어한다. */
+
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 편지 헤더 (제목 + 구분선) */
+.letterHeader {
+  margin-bottom: 2rem;
+}
+
+.letterTitle {
+  /* 폰트 스타일은 TemplateThemed CSS 변수에서 상속 */
+  font-size: var(--tpl-heading-size, 1.375rem);
+  font-family: var(--tpl-heading-font-family, inherit);
+  color: var(--tpl-fg, inherit);
+  line-height: 1.4;
+  margin: 0 0 1rem;
+  /* 긴 제목도 클리핑 없이 — overflow-wrap으로 줄바꿈 */
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--tpl-border-color, rgba(0, 0, 0, 0.1));
+  margin: 0;
+}
+
+/* 단락 목록 컨테이너 */
+.body {
+  display: flex;
+  flex-direction: column;
+  /* 단락 간격은 1.5 * fontSize 이상 — 읽기 리듬 보장 */
+  gap: 2rem;
+}
+
+/* 개별 단락 */
+.paragraph {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  /* 단락 스크롤 추적: IntersectionObserver 타겟이 될 수 있도록 display block 성격 유지 */
+}
+
+/* 장식 노드 (음악 큐 아이콘 등) */
+.decoration {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+/* 본문 텍스트 */
+.text {
+  /* TemplateThemed CSS 변수에서 상속 */
+  font-family: var(--tpl-font-family, inherit);
+  font-size: var(--tpl-font-size, 1rem);
+  line-height: var(--tpl-line-height, 1.8);
+  color: var(--tpl-fg, inherit);
+  margin: 0;
+
+  /*
+   * 모바일 텍스트 클리핑 방지:
+   * - overflow-wrap: break-word — URL 등 긴 단어 강제 줄바꿈
+   * - word-break: keep-all — 한국어 단어 경계 존중 (음절 중간 분리 방지)
+   * - white-space: pre-wrap — 개행·스페이스 보존 (편지 의도 보존)
+   */
+  overflow-wrap: break-word;
+  word-break: keep-all;
+  white-space: pre-wrap;
+
+  /* 가로 클리핑 원천 차단 */
+  max-width: 100%;
+}
+
+/* 모바일 최적화 — 터치 타겟과 읽기 편의성 */
+@media (max-width: 480px) {
+  .body {
+    gap: 1.75rem;
+  }
+
+  .text {
+    /* 모바일에서 최소 16px 유지 (iOS 자동 확대 방지) */
+    font-size: max(var(--tpl-font-size, 1rem), 1rem);
+  }
+}

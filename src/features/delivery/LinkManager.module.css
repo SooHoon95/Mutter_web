@@ -1,0 +1,186 @@
+/* LinkManager 컴포넌트 스타일 — 발신자가 링크를 발급·관리하는 UI */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* 발급 폼 ----------------------------------------------------------------- */
+
+.issueForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border, #2a2a2a);
+  border-radius: 0.5rem;
+  background: var(--color-surface, #18181b);
+}
+
+.issueForm h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #a1a1aa);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fieldRow label {
+  font-size: 0.875rem;
+  color: var(--color-text, #e4e4e7);
+  min-width: 5rem;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.toggle input[type='checkbox'] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-accent, #7c6fe0);
+}
+
+.input {
+  flex: 1;
+  background: var(--color-input-bg, #09090b);
+  border: 1px solid var(--color-border, #2a2a2a);
+  border-radius: 0.375rem;
+  color: var(--color-text, #e4e4e7);
+  font-size: 0.875rem;
+  padding: 0.375rem 0.625rem;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--color-accent, #7c6fe0);
+}
+
+.issueBtn {
+  align-self: flex-start;
+  background: var(--color-accent, #7c6fe0);
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.issueBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 에러 메시지 ---------------------------------------------------------------- */
+
+.error {
+  font-size: 0.8125rem;
+  color: var(--color-error, #f87171);
+}
+
+/* 링크 목록 ----------------------------------------------------------------- */
+
+.linkList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.linkItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border, #2a2a2a);
+  border-radius: 0.375rem;
+  background: var(--color-surface, #18181b);
+}
+
+.linkItem.revoked {
+  opacity: 0.45;
+}
+
+.linkUrl {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #a1a1aa);
+  word-break: break-all;
+  font-family: monospace;
+}
+
+.linkMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #a1a1aa);
+}
+
+.badge {
+  background: var(--color-badge-bg, #27272a);
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+}
+
+.badge.lock {
+  color: var(--color-accent, #7c6fe0);
+}
+
+.badge.expired,
+.badge.revoked {
+  color: var(--color-error, #f87171);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.copyBtn,
+.revokeBtn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.copyBtn {
+  background: var(--color-surface-2, #27272a);
+  color: var(--color-text, #e4e4e7);
+}
+
+.revokeBtn {
+  background: transparent;
+  color: var(--color-error, #f87171);
+  border: 1px solid var(--color-error, #f87171);
+}
+
+.revokeBtn:disabled,
+.copyBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.emptyState {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #a1a1aa);
+  text-align: center;
+  padding: 1rem 0;
+}
