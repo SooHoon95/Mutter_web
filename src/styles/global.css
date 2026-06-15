@@ -54,3 +54,29 @@ p {
   min-height: 100dvh;
   color: var(--muted);
 }
+
+/* AppShell — 제작자 전용 셸 레이아웃 (T6에서 디자인 구체화) */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app-shell__header {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid rgba(255 255 255 / 0.06);
+}
+
+.app-shell__logo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--fg);
+  text-decoration: none;
+  letter-spacing: 0.01em;
+}
+
+.app-shell__content {
+  flex: 1;
+}

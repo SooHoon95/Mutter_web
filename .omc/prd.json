@@ -17,7 +17,7 @@
   },
   "stories": [
     {"id":"US-001","title":"PWA 셸 / 단일 코드베이스","approach_family":"infrastructure","priority":1,
-     "acceptanceCriteria":["iOS Safari+Android Chrome(현재+1) 콜드 <3s/4G","유효 매니페스트+SW+A2HS","단일 코드베이스가 제작·수신 라우트"],"passes":false},
+     "acceptanceCriteria":["iOS Safari+Android Chrome(현재+1) 콜드 <3s/4G","유효 매니페스트+SW+A2HS","단일 코드베이스가 제작·수신 라우트"],"passes":true},
     {"id":"US-002","title":"제작자 인증 (수신 무인증)","approach_family":"architecture","priority":2,
      "acceptanceCriteria":["매직링크/OAuth 로그인, 세션 지속","타계정 접근 403","수신 라우트 무인증(인코그니토 OK)"],"passes":false},
     {"id":"US-003","title":"편지 작문 + 음악 큐 연출","approach_family":"architecture","priority":3,
