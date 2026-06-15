@@ -1,0 +1,123 @@
+/* Create 라우트 — 편지 작성 페이지. */
+/* T6 테마 스킨 예정. 지금은 기능 우선 최소 스타일. */
+
+.page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 헤더 */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.savingBadge {
+  font-size: 0.8125rem;
+  color: #888;
+}
+
+.savedBadge {
+  font-size: 0.8125rem;
+  color: #2e7d32;
+}
+
+.saveBtn {
+  padding: 7px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #1a1a1a;
+  color: #f5f5f5;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.saveBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* 에러 배너 */
+.errorBanner {
+  padding: 10px 14px;
+  border: 1px solid #f44336;
+  border-radius: 8px;
+  background: #fff5f5;
+  color: #c62828;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.errorHint {
+  color: #888;
+}
+
+/* 제목 섹션 */
+.titleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.titleInput {
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1.125rem;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.titleInput:focus {
+  border-color: #1a1a1a;
+}
+
+/* 단락 섹션 */
+.paragraphSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionHeading {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.sectionDesc {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}

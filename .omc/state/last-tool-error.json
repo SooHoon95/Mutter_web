@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"echo \\\"=== src tree ===\\\" && find src -type f | head -100 && echo \\\"=== package.json ===\\\" && cat package.json && echo \\\"=== tsconfig ===\\\" && cat tsconfig.json 2>/dev/null && echo \\\"=== v...",
-  "error": "Exit code 1\n=== src tree ===\nsrc/main.tsx\nsrc/vite-env.d.ts\nsrc/app/App.tsx\nsrc/app/registerSW.ts\nsrc/app/AuthProvider.test.tsx\nsrc/app/router.tsx\nsrc/app/AuthProvider.tsx\nsrc/styles/global.css\nsrc/components/AppShell.tsx\nsrc/lib/licenseGate.test.ts\nsrc/lib/token.test.ts\nsrc/lib/licenseGate.ts\nsrc/lib/token.ts\nsrc/data/auth.test.ts\nsrc/data/types.ts\nsrc/data/tracks.ts\nsrc/data/supabase.ts\nsrc/data/auth.ts\nsrc/routes/Login.module.css\nsrc/routes/Login.tsx\nsrc/routes/Create.tsx\nsrc/routes/Takedown....",
-  "timestamp": "2026-06-15T15:39:20.329Z",
+  "tool_input_preview": "{\"command\":\"npm run test 2>&1\",\"timeout\":120000,\"description\":\"Run full test suite\",\"run_in_background\":false}",
+  "error": "Exit code 1\n\n> letter-app@0.1.0 test\n> vitest run\n\n\n RUN  v2.1.9 /Users/choesuhun/Desktop/Code/letter-app\n\n ✓ src/lib/scOembed.test.ts (11 tests) 4ms\n ✓ src/lib/licenseGate.test.ts (27 tests) 4ms\n ✓ src/features/music/HostedAudioSource.test.ts (8 tests) 5ms\n ✓ src/data/auth.test.ts (8 tests) 7ms\n ❯ src/data/letters.test.ts (8 tests | 7 failed) 24ms\n   × createDraft > 새 초안을 생성하고 domain Letter를 반환한다 10ms\n     → sb.from(...).insert is not a function\n   × createDraft > Supabase 오류 시 throw한다 6ms\n    ...",
+  "timestamp": "2026-06-15T15:52:58.229Z",
   "retry_count": 1
 }

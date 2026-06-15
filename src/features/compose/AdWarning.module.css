@@ -1,0 +1,48 @@
+/* AdWarning — SC 트랙 광고 경고 배너. 주의를 끌되 편지 작성을 방해하지 않는 수준. */
+
+.warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #c8a630;
+  border-radius: 8px;
+  background: #fdf8e6;
+  font-size: 0.875rem;
+}
+
+.icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #a07800;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.message {
+  margin: 0;
+  color: #5c4500;
+  line-height: 1.5;
+}
+
+.switchBtn {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border: 1px solid #a07800;
+  border-radius: 6px;
+  background: transparent;
+  color: #a07800;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.switchBtn:hover {
+  background: #a07800;
+  color: #fff;
+}
