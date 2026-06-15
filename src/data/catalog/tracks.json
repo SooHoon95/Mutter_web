@@ -1,0 +1,99 @@
+[
+  {
+    "_note": "시드 카탈로그 — 실제 음원 검증·다운로드는 별도. Pixabay 자체 제작 음원만 수록(KOMCA/FKMP 관리곡 배제 정책). 음원 URL은 플레이스홀더.",
+    "id": "pixabay-calm-001",
+    "source": "hosted",
+    "title": "Calm Piano Melody",
+    "author": "Aleksey Chistilin",
+    "license": "CC0",
+    "url": "/audio/pixabay-calm-001.mp3",
+    "mood": "잔잔",
+    "provenance": {
+      "sourceUrl": "https://pixabay.com/music/solo-piano-calm-piano-music-241963/",
+      "licenseName": "CC0 1.0 Universal",
+      "licenseTextSnapshot": "No rights reserved. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission. See https://creativecommons.org/publicdomain/zero/1.0/",
+      "acquiredAt": "2026-06-16",
+      "author": "Aleksey Chistilin"
+    }
+  },
+  {
+    "id": "pixabay-warm-002",
+    "source": "hosted",
+    "title": "Warm Acoustic",
+    "author": "Lesfm",
+    "license": "CC0",
+    "url": "/audio/pixabay-warm-002.mp3",
+    "mood": "따뜻",
+    "provenance": {
+      "sourceUrl": "https://pixabay.com/music/acoustic-group-warm-acoustic-10707/",
+      "licenseName": "CC0 1.0 Universal",
+      "licenseTextSnapshot": "No rights reserved. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission. See https://creativecommons.org/publicdomain/zero/1.0/",
+      "acquiredAt": "2026-06-16",
+      "author": "Lesfm"
+    }
+  },
+  {
+    "id": "pixabay-nostalgia-003",
+    "source": "hosted",
+    "title": "Nostalgia",
+    "author": "Pold Music",
+    "license": "CC-BY",
+    "url": "/audio/pixabay-nostalgia-003.mp3",
+    "mood": "그리움",
+    "provenance": {
+      "sourceUrl": "https://pixabay.com/music/ambient-nostalgia-242400/",
+      "licenseName": "CC-BY 4.0",
+      "licenseTextSnapshot": "You are free to: Share — copy and redistribute the material in any medium or format. Adapt — remix, transform, and build upon the material for any purpose, even commercially. Attribution required: credit the creator, provide a link to the license, and indicate if changes were made. See https://creativecommons.org/licenses/by/4.0/",
+      "acquiredAt": "2026-06-16",
+      "author": "Pold Music"
+    }
+  },
+  {
+    "id": "pixabay-excitement-004",
+    "source": "hosted",
+    "title": "Gentle Hope",
+    "author": "SoulProdMusic",
+    "license": "CC0",
+    "url": "/audio/pixabay-excitement-004.mp3",
+    "mood": "설렘",
+    "provenance": {
+      "sourceUrl": "https://pixabay.com/music/beats-gentle-hope-12297/",
+      "licenseName": "CC0 1.0 Universal",
+      "licenseTextSnapshot": "No rights reserved. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission. See https://creativecommons.org/publicdomain/zero/1.0/",
+      "acquiredAt": "2026-06-16",
+      "author": "SoulProdMusic"
+    }
+  },
+  {
+    "id": "pixabay-longing-005",
+    "source": "hosted",
+    "title": "Missing You",
+    "author": "Lofium",
+    "license": "CC0",
+    "url": "/audio/pixabay-longing-005.mp3",
+    "mood": "그리움",
+    "provenance": {
+      "sourceUrl": "https://pixabay.com/music/lo-fi-missing-you-160765/",
+      "licenseName": "CC0 1.0 Universal",
+      "licenseTextSnapshot": "No rights reserved. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission. See https://creativecommons.org/publicdomain/zero/1.0/",
+      "acquiredAt": "2026-06-16",
+      "author": "Lofium"
+    }
+  },
+  {
+    "id": "pixabay-peaceful-006",
+    "source": "hosted",
+    "title": "Peaceful Garden",
+    "author": "Daddy_s_Music",
+    "license": "CC-BY",
+    "url": "/audio/pixabay-peaceful-006.mp3",
+    "mood": "잔잔",
+    "provenance": {
+      "sourceUrl": "https://pixabay.com/music/ambient-peaceful-garden-112226/",
+      "licenseName": "CC-BY 4.0",
+      "licenseTextSnapshot": "You are free to: Share — copy and redistribute the material in any medium or format. Adapt — remix, transform, and build upon the material for any purpose, even commercially. Attribution required: credit the creator, provide a link to the license, and indicate if changes were made. See https://creativecommons.org/licenses/by/4.0/",
+      "acquiredAt": "2026-06-16",
+      "author": "Daddy_s_Music"
+    }
+  }
+]
