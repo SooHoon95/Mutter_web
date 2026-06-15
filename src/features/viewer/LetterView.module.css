@@ -25,3 +25,15 @@
   color: var(--tpl-accent, #8b6914);
   opacity: 1;
 }
+
+/* T9: 권리자 요청으로 오디오 비활성화 시 표시하는 안내 배너. */
+.audioDisabledNotice {
+  max-width: 40rem;
+  margin: 0 auto 1.5rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.85rem;
+  color: var(--tpl-muted, #8a7a5e);
+  background: color-mix(in srgb, var(--tpl-muted, #8a7a5e) 8%, transparent);
+  border-left: 3px solid var(--tpl-muted, #8a7a5e);
+  border-radius: 0 4px 4px 0;
+}

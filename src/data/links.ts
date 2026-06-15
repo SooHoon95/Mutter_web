@@ -63,6 +63,8 @@ export interface LetterPayload {
   paragraphs: unknown;
   templateId: string;
   cues: unknown;
+  /** T9: 권리주장자 takedown 통지로 오디오가 비활성화된 경우 true. 본문은 유지된다. */
+  audioDisabled: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -205,6 +207,7 @@ export async function openByToken(
     paragraphs: unknown;
     template_id: string;
     cues: unknown;
+    audio_disabled: boolean;
   };
 
   return {
@@ -213,5 +216,6 @@ export async function openByToken(
     paragraphs: raw.paragraphs,
     templateId: raw.template_id,
     cues: raw.cues,
+    audioDisabled: raw.audio_disabled === true,
   };
 }

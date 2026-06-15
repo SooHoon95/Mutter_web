@@ -29,6 +29,13 @@ export interface ViewerLetter {
   paragraphs: Paragraph[];
   /** paragraphs와 인덱스 1:1 대응하는 큐 배열(없는 단락은 undefined). */
   cues: Array<MusicCue | undefined>;
+  /**
+   * T9: 권리주장자 takedown 통지로 오디오가 비활성화된 경우 true.
+   * true이면 LetterView가 오디오를 마운트/재생하지 않고 본문만 표시한다.
+   * "무음 편지 0" 원칙과는 별개 — 이건 법적 비활성화 상태이므로
+   * 사용자에게 명확히 안내한다.
+   */
+  audioDisabled: boolean;
 }
 
 export type ViewerStatus = 'loading' | 'needPassword' | 'error' | 'ready';
@@ -84,6 +91,7 @@ function normalizeCue(raw: unknown): MusicCue | undefined {
  * paragraphs와 cues를 정규화하고 인덱스 정렬한다.
  * - cues가 별도 배열로 오면 그것을, 없으면 각 단락의 cue 필드를 사용한다.
  * - 항상 paragraphs와 길이가 같은 cue 배열을 반환(인덱스 1:1, 없는 칸 undefined).
+ * - T9: audioDisabled가 true이면 ViewerLetter에 그대로 전달한다.
  */
 function normalizeLetter(payload: {
   id: string;
@@ -91,6 +99,7 @@ function normalizeLetter(payload: {
   templateId: string;
   paragraphs: unknown;
   cues: unknown;
+  audioDisabled: boolean;
 }): ViewerLetter {
   const paragraphs = normalizeParagraphs(payload.paragraphs);
 
@@ -111,6 +120,7 @@ function normalizeLetter(payload: {
     templateId: payload.templateId,
     paragraphs,
     cues,
+    audioDisabled: payload.audioDisabled,
   };
 }
 

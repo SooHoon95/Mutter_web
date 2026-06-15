@@ -34,6 +34,7 @@ const samplePayload: LetterPayload = {
   ],
   templateId: 'classic-serif',
   cues: [],
+  audioDisabled: false,
 };
 
 beforeEach(() => {
@@ -155,6 +156,46 @@ describe('useLetterViewer', () => {
       sourceType: 'soundcloud',
       ref: 'https://soundcloud.com/x/y',
       startMs: 1000,
+    });
+  });
+
+  // T9: audio_disabled 분기 검증
+  it('audioDisabled=false 페이로드 → letter.audioDisabled이 false다', async () => {
+    mockOpenByToken.mockResolvedValue({ ...samplePayload, audioDisabled: false });
+
+    const { result } = renderHook(() => useLetterViewer('tok'));
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    expect(result.current.letter?.audioDisabled).toBe(false);
+  });
+
+  it('audioDisabled=true 페이로드 → letter.audioDisabled이 true다', async () => {
+    mockOpenByToken.mockResolvedValue({ ...samplePayload, audioDisabled: true });
+
+    const { result } = renderHook(() => useLetterViewer('tok'));
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    expect(result.current.letter?.audioDisabled).toBe(true);
+    // audioDisabled여도 편지 본문은 정상 제공된다.
+    expect(result.current.letter?.paragraphs).toHaveLength(2);
+    expect(result.current.letter?.title).toBe('테스트 편지');
+  });
+
+  it('audioDisabled=true 페이로드 → cues는 유지된다(본문 인덱스 정합성 보존)', async () => {
+    const payload: LetterPayload = {
+      ...samplePayload,
+      audioDisabled: true,
+    };
+    mockOpenByToken.mockResolvedValue(payload);
+
+    const { result } = renderHook(() => useLetterViewer('tok'));
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    // cues 배열은 LetterView가 effectiveCues로 분기 — 훅 자체는 원본 유지
+    expect(result.current.letter?.cues[0]).toEqual({
+      sourceType: 'hosted',
+      ref: 'pixabay-calm-001',
+      startMs: 0,
     });
   });
 });

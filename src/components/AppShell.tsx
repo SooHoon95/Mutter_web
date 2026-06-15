@@ -11,6 +11,7 @@
  * 여기서는 라우트 분기와 컨테이너 구조만 확립한다.
  */
 import type { ReactNode } from 'react';
+import { Footer } from './Footer';
 
 interface AppShellProps {
   children: ReactNode;
@@ -26,6 +27,8 @@ export function AppShell({ children }: AppShellProps): ReactNode {
         </a>
       </header>
       <div className="app-shell__content">{children}</div>
+      {/* T9: 저작권 신고 링크 + 이용 약관 (license-compliance) */}
+      <Footer />
     </div>
   );
 }

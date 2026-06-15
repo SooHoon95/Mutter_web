@@ -36,7 +36,7 @@
     {"id":"US-008","title":"수신자 무설치 웹뷰","approach_family":"architecture","priority":8,
      "acceptanceCriteria":["무계정·무설치 열기▶→스크롤 동기 음악","수신 로드 시 SC liveness 실패하면 카탈로그로 폴백 — 편지 절대 무음 아님(무음 편지 0)","모든 CC-BY 트랙 제목·저작자·출처·라이선스 크레딧 렌더","첫 의미 렌더 <3s/4G"],"passes":true},
     {"id":"US-009","title":"법적 안전장치 (takedown 채널)","approach_family":"other","priority":9,
-     "acceptanceCriteria":["푸터/ToS에 권리주장자 takedown 연락처·절차 게시","통지 시 해당 편지 오디오 비활성화 가능","SC: 스트림 rip·proxy·캐시·재호스팅 없음(공식 embed만)"],"passes":false},
+     "acceptanceCriteria":["푸터/ToS에 권리주장자 takedown 연락처·절차 게시","통지 시 해당 편지 오디오 비활성화 가능","SC: 스트림 rip·proxy·캐시·재호스팅 없음(공식 embed만)"],"passes":true},
     {"id":"US-010","title":"E2E + 디바이스 검증","approach_family":"testing","priority":10,
      "acceptanceCriteria":["자동 e2e: 작성→큐→링크→인코그니토 오픈→스크롤 동기 음악","불행경로: 광고 트랙 경고, embed-disabled 거부, SC 삭제→카탈로그 폴백, revoked 링크","실기기 iOS·Android 각 1대 수동 통과"],"passes":false}
   ],

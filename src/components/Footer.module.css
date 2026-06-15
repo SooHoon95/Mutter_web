@@ -1,0 +1,26 @@
+/* Footer — 공통 푸터. AppShell(제작 셸)과 LetterView(수신 뷰) 양쪽에서 사용. */
+
+.footer {
+  padding: 1.5rem 1.25rem 2rem;
+  text-align: center;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin-top: 2rem;
+}
+
+.tos,
+.copy {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  color: #a09080;
+  line-height: 1.5;
+}
+
+.link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:hover {
+  color: #6b5740;
+}

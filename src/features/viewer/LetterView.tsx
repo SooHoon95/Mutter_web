@@ -20,6 +20,7 @@ import type { ViewerLetter } from './useLetterViewer';
 import { createFallbackSourceFactory } from './fallbackSourceFactory';
 import { AudioUnlockGate } from './AudioUnlockGate';
 import { Credits } from './Credits';
+import { Footer } from '@/components/Footer';
 import styles from './LetterView.module.css';
 
 interface LetterViewProps {
@@ -27,7 +28,7 @@ interface LetterViewProps {
 }
 
 export function LetterView({ letter }: LetterViewProps): React.ReactElement {
-  const { title, templateId, paragraphs, cues } = letter;
+  const { title, templateId, paragraphs, cues, audioDisabled } = letter;
 
   // 게이트 통과(언락) 여부. 통과 전엔 게이트가 본문을 덮는다(오디오 façade).
   const [unlocked, setUnlocked] = useState(false);
@@ -42,24 +43,29 @@ export function LetterView({ letter }: LetterViewProps): React.ReactElement {
   // 무음0 폴백 팩토리 — SC 실패 시 CC0로 대체. 마운트 동안 안정적이어야 하므로 ref로 고정.
   const sourceFactoryRef = useRef(createFallbackSourceFactory());
 
+  // T9: 오디오 비활성화 상태면 빈 큐 배열을 엔진에 전달해 오디오를 마운트하지 않는다.
+  // useScrollSync 훅은 항상 호출해야 하므로(React 훅 규칙), 빈 배열로 no-op 실행.
+  const effectiveCues = audioDisabled ? [] : cues;
+
   const { activeIndex, unlock } = useScrollSync(
     paragraphRefs,
-    cues,
+    effectiveCues,
     sourceFactoryRef.current,
   );
 
   function handleUnlock(): Promise<void> {
-    // 게이트가 사라지면 본문이 전면에 드러난다. 언락 자체는 제스처 틱에서 시작된다.
+    // audioDisabled 상태에서는 언락 게이트를 건너뛰므로 이 함수는 호출되지 않는다.
     setUnlocked(true);
     return unlock();
   }
 
   // Paginated에 넘길 단락 표현. decoration으로 현재 재생 중 단락에 음표 표시.
+  // audioDisabled 상태에서는 음표 데코레이션도 표시하지 않는다.
   const paginatedParagraphs: PaginatedParagraph[] = paragraphs.map((p, index) => ({
     id: p.id,
     text: p.text,
     decoration:
-      cues[index] && unlocked ? (
+      cues[index] && unlocked && !audioDisabled ? (
         <span
           className={index === activeIndex ? styles.cueActive : styles.cue}
           title="이 단락에서 음악이 재생됩니다"
@@ -90,8 +96,22 @@ export function LetterView({ letter }: LetterViewProps): React.ReactElement {
       {/* CC-BY 크레딧 — 미렌더 시 침해(license-compliance). 본문 하단에 항상 표기. */}
       <Credits cues={cues} />
 
-      {/* 게이트: 언락 전까지 본문 위를 덮는다. 오디오/iframe은 이 클릭 이후에만 mount. */}
-      {!unlocked && <AudioUnlockGate title={title} onUnlock={handleUnlock} />}
+      {/* T9: 저작권 신고 링크 + 이용 약관 (수신 뷰 하단) */}
+      <Footer />
+
+      {/*
+        T9: 권리주장자 요청으로 오디오가 비활성화된 경우.
+        본문은 유지되고 AudioUnlockGate 대신 안내 배너를 표시한다.
+        이 상태는 "무음 편지 0" 원칙의 예외가 아니라 별도 법적 비활성화 상태이다.
+      */}
+      {audioDisabled ? (
+        <p className={styles.audioDisabledNotice} role="note">
+          권리자의 요청으로 이 편지의 음악이 비활성화되었습니다.
+        </p>
+      ) : (
+        /* 게이트: 언락 전까지 본문 위를 덮는다. 오디오/iframe은 이 클릭 이후에만 mount. */
+        !unlocked && <AudioUnlockGate title={title} onUnlock={handleUnlock} />
+      )}
     </TemplateThemed>
   );
 }
