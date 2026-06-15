@@ -1,0 +1,50 @@
+{
+  "project": "감성 편지 앱 (Emotional Letter App) — MVP v4",
+  "frame": "연출되는 편지 (sender-as-director) — 음악은 연출의 한 악기",
+  "scope": "v1 음악 = SoundCloud(primary) + CC0/RF 무드 픽커(보장형) 2기둥. 작성자 업로드·손글씨는 v2.",
+  "source": "deep-interview → ralplan(v2) → 범위전환(v3) → 음악검증 워크플로우(v4, 법무·기술·범위 적대적 검증)",
+  "platform": "mobile web / PWA",
+  "stack": "Vite + React + TypeScript / Supabase(매직링크 인증·Postgres·RLS·Storage) / Netlify 배포 / Vitest(unit) + Playwright(e2e). SoundCloud Widget API(키 불필요).",
+  "harness": "TheReader 하네스 모방 — CLAUDE.md + .claude/skills/* + .claude/commands/* + tasks/todo.md·lessons.md. TASK 실행 = ralplan→ultrawork→ralph.",
+  "decisions": {
+    "music_v1": "SoundCloud paste-URL (primary, oEmbed 검증) + curated CC0/RF 무드 픽커 (보장형 fallback, 무음 편지 0)",
+    "creator_upload": "v2로 연기 — DMCA/한국 OSP 면책 기계장치(지정수신인·notice-and-takedown·반복침해자 정책) 100% 선구축 필요",
+    "abstraction": "단일 TrackSource 인터페이스 = SoundCloudSource(Widget API) + HostedAudioSource(<audio>, CC0·(v2)업로드 공용)",
+    "sync": "스크롤 동기(IntersectionObserver) + seekTo, 1곡 위주",
+    "sc_search": "불가(Data API 폐쇄) → paste-URL only, oEmbed로 검증",
+    "link": "추측불가 ≥128bit + 암호 기본 ON + claim-and-bind + noindex",
+    "validated": "SoundCloud PoC ✅ iOS Safari 제스처 후 seekTo·순수오디오·무로그인 풀재생 (poc/spike-music-soundcloud.html)"
+  },
+  "stories": [
+    {"id":"US-001","title":"PWA 셸 / 단일 코드베이스","approach_family":"infrastructure","priority":1,
+     "acceptanceCriteria":["iOS Safari+Android Chrome(현재+1) 콜드 <3s/4G","유효 매니페스트+SW+A2HS","단일 코드베이스가 제작·수신 라우트"],"passes":false},
+    {"id":"US-002","title":"제작자 인증 (수신 무인증)","approach_family":"architecture","priority":2,
+     "acceptanceCriteria":["매직링크/OAuth 로그인, 세션 지속","타계정 접근 403","수신 라우트 무인증(인코그니토 OK)"],"passes":false},
+    {"id":"US-003","title":"편지 작문 + 음악 큐 연출","approach_family":"architecture","priority":3,
+     "description":"SC paste-URL + CC0 무드 픽커로 단락별 음악 큐 연출.",
+     "acceptanceCriteria":["SC URL을 oEmbed로 검증 → embed-disabled/private/geo/비200 트랙은 작성 시점 거부","CC0 무드 픽커에서 곡 선택","단락별 음악 큐 지정·저장","광고 포함 가능 SC 트랙은 send-time 경고"],"passes":false},
+    {"id":"US-004","title":"음악 동기화 엔진 (TrackSource)","approach_family":"integration","priority":4,
+     "description":"단일 TrackSource 추상화로 SC·호스팅 양쪽 동형 제어.",
+     "acceptanceCriteria":["SoundCloudSource+HostedAudioSource가 동일 인터페이스(load/unlock/play/pause/seekTo/setVolume/onProgress/onFinish)","IntersectionObserver 단락 진입 시 추가 탭 없이 seekTo","iOS Safari 단일 ▶ 제스처가 양쪽 소스 언락","곡 전환/페이드는 setVolume 램프"],"passes":false},
+    {"id":"US-005","title":"CC0/RF 카탈로그 + 라이선스 게이트","approach_family":"data","priority":5,
+     "description":"보장형 무드 카탈로그 + ingestion 라이선스 강제.",
+     "acceptanceCriteria":["ingestion이 CC0/PD/CC-BY(+상업·재배포 허용 벤더)만 통과, NC/ND·비화이트리스트 자동 거부","통과 트랙마다 프로비넌스(출처·라이선스명+버전·텍스트 스냅샷·취득일·저작자) 저장","한국 인접권(실연·음반) 커버 확인, KOMCA 관리곡 배제"],"passes":false},
+    {"id":"US-006","title":"템플릿 / 타이포","approach_family":"architecture","priority":6,
+     "acceptanceCriteria":["5~7 템플릿 선택·지속","긴 편지 모바일 페이지네이션, 클리핑 없음"],"passes":false},
+    {"id":"US-007","title":"전달 링크 + 프라이버시","approach_family":"infrastructure","priority":7,
+     "acceptanceCriteria":["≥128bit 토큰, 순차 ID 없음","암호 기본 ON, claim-and-bind, expiry/revoke","noindex, 공개 인덱스 미노출"],"passes":false},
+    {"id":"US-008","title":"수신자 무설치 웹뷰","approach_family":"architecture","priority":8,
+     "acceptanceCriteria":["무계정·무설치 열기▶→스크롤 동기 음악","수신 로드 시 SC liveness 실패하면 카탈로그로 폴백 — 편지 절대 무음 아님(무음 편지 0)","모든 CC-BY 트랙 제목·저작자·출처·라이선스 크레딧 렌더","첫 의미 렌더 <3s/4G"],"passes":false},
+    {"id":"US-009","title":"법적 안전장치 (takedown 채널)","approach_family":"other","priority":9,
+     "acceptanceCriteria":["푸터/ToS에 권리주장자 takedown 연락처·절차 게시","통지 시 해당 편지 오디오 비활성화 가능","SC: 스트림 rip·proxy·캐시·재호스팅 없음(공식 embed만)"],"passes":false},
+    {"id":"US-010","title":"E2E + 디바이스 검증","approach_family":"testing","priority":10,
+     "acceptanceCriteria":["자동 e2e: 작성→큐→링크→인코그니토 오픈→스크롤 동기 음악","불행경로: 광고 트랙 경고, embed-disabled 거부, SC 삭제→카탈로그 폴백, revoked 링크","실기기 iOS·Android 각 1대 수동 통과"],"passes":false}
+  ],
+  "build_order": ["HostedAudioSource + CC0 카탈로그(싱크 엔진 디리스크)", "SoundCloudSource(검증됨)", "(v2) Creator Upload = HostedAudioSource + R2 + 검증"],
+  "v2_deferred": [
+    "Creator Upload 게이트: DMCA 지정수신인 등록 + 한국 권리주장자 수신인 + notice-and-takedown 파이프라인 + counter-notice + 반복침해자 정책 + 소유권 warranty+indemnify + bound-letter 비공개 + 곡당1곡/크기캡",
+    "손글씨 합성 전체(moat): 음절-블록, BRR>=70%, 가이드 캡처, 사칭방지, 생체PII, 흘림체",
+    "OCR", "둘만의 아카이브 + 앱 연결", "네이티브 앱", "자유 디자인 에디터",
+    "Web Audio 갭리스 크로스페이드", "콘텐츠 핑거프린팅($0 밖)", "인앱 SoundCloud 검색(API 폐쇄로 불가)"
+  ]
+}

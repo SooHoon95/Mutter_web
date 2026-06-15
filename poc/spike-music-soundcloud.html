@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SPIKE-MUSIC · SoundCloud 동기 편지 PoC</title>
+<style>
+  :root{ --paper:#fbf7ef; --ink:#3a3027; --muted:#9b8f7e; --accent:#ff5500; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; background:var(--paper); color:var(--ink);
+    font-family:"Nanum Myeongjo","Apple SD Gothic Neo",Georgia,serif; }
+  #intro{ position:fixed; inset:0; z-index:50; background:linear-gradient(160deg,#f3ead9,#e8d8bf);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:28px; text-align:center; }
+  #intro h1{ font-size:21px; font-weight:700; margin:0; }
+  #intro p{ color:#6f5f48; font-size:14px; line-height:1.7; margin:0; max-width:300px; }
+  .vid-row{ width:100%; max-width:330px; }
+  .vid-row label{ display:block; font-size:12px; color:#8a785c; margin:0 0 6px; }
+  .vid-row .inwrap{ display:flex; gap:6px; }
+  #scInput{ flex:1; padding:11px 12px; border:1px solid #d7c4a4; border-radius:10px; font-size:12px; background:#fffdf8; color:#4a3d2c; min-width:0; }
+  #applyBtn{ border:1px solid #d7c4a4; background:#fffdf8; color:#6f5f48; border-radius:10px; padding:0 12px; font-size:12px; cursor:pointer; }
+  #openBtn{ appearance:none; border:none; cursor:pointer; padding:16px 30px; border-radius:999px;
+    background:var(--accent); color:#fff; font-size:17px; font-weight:700; box-shadow:0 6px 18px rgba(255,85,0,.35); transition:transform .1s,opacity .2s; }
+  #openBtn:disabled{ opacity:.4; }
+  #openBtn:active{ transform:scale(.96); }
+  #letter{ max-width:620px; margin:0 auto; padding:64px 26px 230px; }
+  .section{ min-height:74vh; display:flex; align-items:center; }
+  .section .text{ font-size:19px; line-height:2.05; opacity:.18; transform:translateY(14px); transition:opacity .9s ease, transform .9s ease; }
+  .section.active .text{ opacity:1; transform:none; }
+  .cuebadge{ display:inline-block; margin-top:14px; font-family:system-ui,sans-serif; font-size:11px; color:var(--muted); border:1px dashed #d6c7ad; border-radius:6px; padding:2px 7px; }
+  #nowplaying{ position:fixed; left:0; right:0; bottom:0; z-index:40; display:none; flex-direction:column;
+    background:rgba(251,247,239,.94); backdrop-filter:blur(8px); border-top:1px solid #e7dcc8; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); }
+  #nowplaying.on{ display:flex; }
+  #scwrap{ width:100%; }
+  #scwrap iframe{ width:100%; height:120px; border:0; border-radius:8px; display:block; }
+  .np-state{ font-family:system-ui,sans-serif; font-size:11px; color:var(--muted); margin-top:5px; display:flex; gap:10px; align-items:center; }
+  .np-state button{ appearance:none; border:1px solid #d7c4a4; background:#fffdf8; color:#6f5f48; border-radius:8px; padding:5px 9px; font-size:12px; cursor:pointer; }
+  #dbgToggle{ position:fixed; top:calc(8px + env(safe-area-inset-top)); right:10px; z-index:45; font-family:system-ui,sans-serif; font-size:11px; background:rgba(58,48,39,.8); color:#fff; border:none; border-radius:8px; padding:6px 9px; cursor:pointer; display:none; }
+  #dbgToggle.on{ display:block; }
+  #dbg{ position:fixed; top:calc(40px + env(safe-area-inset-top)); right:10px; z-index:45; width:230px; font-family:ui-monospace,Menlo,monospace; font-size:11px; line-height:1.6; color:#e8e8e8; background:rgba(30,26,21,.92); border-radius:10px; padding:11px 12px; display:none; }
+  #dbg.on{ display:block; }
+  #dbg b{ color:#ffb27a; }
+  #dbg .hint{ color:#b6a98f; margin-top:8px; display:block; font-size:10px; }
+</style>
+</head>
+<body>
+
+<div id="intro">
+  <h1>✉️ 편지가 도착했어요</h1>
+  <p>읽어 내려가면, 글의 흐름에 맞춰 음악이 함께 흘러요.<br/>소리가 나오니 볼륨을 확인해 주세요.</p>
+  <div class="vid-row">
+    <label>🎵 SoundCloud 트랙 URL</label>
+    <div class="inwrap">
+      <input id="scInput" value="https://soundcloud.com/danielwasdaniel/lily-of-the-valley" />
+      <button id="applyBtn">적용</button>
+    </div>
+  </div>
+  <button id="openBtn" disabled>편지 열기 ▶</button>
+  <p style="font-size:11px;color:#8a785c">※ 순수 오디오 · 무로그인 풀재생 · 광고 빈도 직접 확인</p>
+</div>
+
+<main id="letter">
+  <div class="section" data-frac="0"><div class="text">
+    잘 지내고 있어?<br/>오랜만에 너한테 편지를 써.<br/>막상 쓰려니 무슨 말부터 해야 할지 모르겠더라.
+    <span class="cuebadge">⏱ <span class="ts">0:00</span> — 인트로</span>
+  </div></div>
+  <div class="section" data-frac="0.18"><div class="text">
+    우리가 처음 만났던 그날, 기억나?<br/>별거 아닌 하루였는데<br/>이상하게 그날만 또렷하게 남아 있어.
+    <span class="cuebadge">⏱ <span class="ts">–</span> — 1절</span>
+  </div></div>
+  <div class="section" data-frac="0.42"><div class="text">
+    힘든 시간도 많았지만<br/>네가 곁에 있어서 버틸 수 있었어.<br/>그 말을 제대로 못 한 게 늘 마음에 걸렸어.
+    <span class="cuebadge">⏱ <span class="ts">–</span> — 후렴</span>
+  </div></div>
+  <div class="section" data-frac="0.68"><div class="text">
+    이 노래가 흐르는 지금,<br/>네가 이 부분에서 한 번 울컥했으면 좋겠다.<br/>딱 그런 마음으로 골랐거든.
+    <span class="cuebadge">⏱ <span class="ts">–</span> — 브릿지</span>
+  </div></div>
+  <div class="section" data-frac="0.9"><div class="text">
+    고마워. 그리고 사랑해.<br/>언젠가 직접 말할게.<br/>— 너의 친구가
+    <span class="cuebadge">⏱ <span class="ts">–</span> — 아웃트로</span>
+  </div></div>
+</main>
+
+<div id="nowplaying">
+  <div id="scwrap">
+    <iframe id="sc-iframe" allow="autoplay"
+      src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fdanielwasdaniel%2Flily-of-the-valley&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false"></iframe>
+  </div>
+  <div class="np-state">
+    <span id="npState">—</span>
+    <button id="toggleBtn">⏸</button>
+    <button id="resetBtn">🔄</button>
+  </div>
+</div>
+
+<button id="dbgToggle">🐞 debug</button>
+<div id="dbg">
+  <div>event: <b id="dEvt">—</b></div>
+  <div>pos: <b id="dPos">0.0</b>s / dur: <b id="dDur">?</b>s</div>
+  <div>active cue: <b id="dCue">—</b></div>
+  <div>last seek: <b id="dSeek">—</b></div>
+  <div>seeks: <b id="dCount">0</b></div>
+  <span class="hint">광고가 뜨면 pos가 한동안 안 움직이거나 seek해도 노래가 늦게 시작돼요. 그 빈도를 기록하세요.</span>
+</div>
+
+<script src="https://w.soundcloud.com/player/api.js"></script>
+<script>
+(function(){
+  var widget=null, ready=false, durMs=0, lastFrac=null, seekCount=0, playing=false;
+
+  function mmss(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); }
+  function setEvt(n){ var el=document.getElementById('dEvt'); if(el) el.textContent=n; document.getElementById('npState').textContent=n; }
+
+  widget=SC.Widget(document.getElementById('sc-iframe'));
+  widget.bind(SC.Widget.Events.READY, function(){
+    ready=true; document.getElementById('openBtn').disabled=false; setEvt('준비됨');
+    widget.getDuration(function(ms){ durMs=ms; document.getElementById('dDur').textContent=(ms/1000).toFixed(0);
+      // 트랙 길이에 맞춰 각 단락의 cue 타임스탬프 표시
+      var secs=document.querySelectorAll('.section');
+      secs.forEach(function(sec){ var f=Number(sec.dataset.frac); var ts=sec.querySelector('.ts'); if(ts) ts.textContent=mmss(f*ms/1000); });
+    });
+  });
+  widget.bind(SC.Widget.Events.PLAY, function(){ playing=true; setEvt('재생중 ▶'); document.getElementById('toggleBtn').textContent='⏸'; });
+  widget.bind(SC.Widget.Events.PAUSE, function(){ playing=false; setEvt('일시정지'); document.getElementById('toggleBtn').textContent='▶'; });
+  widget.bind(SC.Widget.Events.FINISH, function(){ setEvt('종료'); });
+  widget.bind(SC.Widget.Events.PLAY_PROGRESS, function(e){ document.getElementById('dPos').textContent=(e.currentPosition/1000).toFixed(1); });
+
+  // 곡 교체(적용) — 제스처 전에 미리 로드해서 iOS에서 play()가 제스처 안에 있도록
+  document.getElementById('applyBtn').addEventListener('click', function(){
+    var url=document.getElementById('scInput').value.trim(); if(!url) return;
+    ready=false; document.getElementById('openBtn').disabled=true; setEvt('곡 불러오는 중…');
+    widget.load(url, { auto_play:false, visual:false, callback:function(){ /* READY 이벤트가 다시 처리 */ } });
+  });
+
+  // 편지 열기 ▶ : 제스처 안에서 첫 재생(iOS 오디오 언락)
+  document.getElementById('openBtn').addEventListener('click', function(){
+    if(!ready) return;
+    widget.play();
+    document.getElementById('intro').style.display='none';
+    document.getElementById('nowplaying').classList.add('on');
+    document.getElementById('dbgToggle').classList.add('on');
+    startObserver();
+  });
+
+  // 스크롤 동기: 중앙 밴드에 들어온 단락의 frac 지점으로 seekTo(ms)
+  function startObserver(){
+    var sections=[].slice.call(document.querySelectorAll('.section'));
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          sections.forEach(function(s){ s.classList.remove('active'); });
+          e.target.classList.add('active');
+          var f=Number(e.target.dataset.frac);
+          if(f!==lastFrac && durMs>0){
+            lastFrac=f; seekCount++;
+            widget.seekTo(Math.floor(f*durMs)); // ★ SoundCloud는 ms
+            if(!playing) widget.play();
+            document.getElementById('dCue').textContent=mmss(f*durMs/1000);
+            document.getElementById('dSeek').textContent='→ '+mmss(f*durMs/1000);
+            document.getElementById('dCount').textContent=seekCount;
+          }
+        }
+      });
+    },{ rootMargin:'-45% 0px -45% 0px', threshold:0 });
+    sections.forEach(function(s){ io.observe(s); });
+  }
+
+  document.getElementById('toggleBtn').addEventListener('click', function(){ widget.toggle(); });
+  document.getElementById('resetBtn').addEventListener('click', function(){ location.reload(); });
+  document.getElementById('dbgToggle').addEventListener('click', function(){ document.getElementById('dbg').classList.toggle('on'); });
+})();
+</script>
+</body>
+</html>

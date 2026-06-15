@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>SPIKE-MUSIC-001 · 읽기-동기 음악 편지 PoC</title>
+<style>
+  :root{ --paper:#fbf7ef; --ink:#3a3027; --muted:#9b8f7e; --accent:#b8895f; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; background:var(--paper); color:var(--ink);
+    font-family:"Nanum Myeongjo","Apple SD Gothic Neo",Georgia,serif; }
+  /* ── 인트로 오버레이 (열기 ▶ = 오디오 언락 제스처) ── */
+  #intro{ position:fixed; inset:0; z-index:50; background:linear-gradient(160deg,#f3ead9,#e8d8bf);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:28px; text-align:center; }
+  #intro h1{ font-size:21px; font-weight:700; margin:0; letter-spacing:.02em; }
+  #intro p{ color:#6f5f48; font-size:14px; line-height:1.7; margin:0; max-width:300px; }
+  .vid-row{ width:100%; max-width:320px; }
+  .vid-row label{ display:block; font-size:12px; color:#8a785c; margin:0 0 6px; }
+  #videoInput{ width:100%; padding:11px 12px; border:1px solid #d7c4a4; border-radius:10px;
+    font-size:13px; background:#fffdf8; color:#4a3d2c; }
+  #openBtn{ appearance:none; border:none; cursor:pointer; padding:16px 30px; border-radius:999px;
+    background:var(--accent); color:#fff; font-size:17px; font-weight:700; box-shadow:0 6px 18px rgba(184,137,95,.4);
+    transition:transform .1s, opacity .2s; }
+  #openBtn:disabled{ opacity:.4; }
+  #openBtn:active{ transform:scale(.96); }
+  /* ── 편지 본문 ── */
+  #letter{ max-width:620px; margin:0 auto; padding:64px 26px 200px; }
+  .section{ min-height:74vh; display:flex; align-items:center; }
+  .section .text{ font-size:19px; line-height:2.05; letter-spacing:.01em;
+    opacity:.18; transform:translateY(14px); transition:opacity .9s ease, transform .9s ease; }
+  .section.active .text{ opacity:1; transform:none; }
+  .cuebadge{ display:inline-block; margin-top:14px; font-family:system-ui,sans-serif; font-size:11px;
+    color:var(--muted); border:1px dashed #d6c7ad; border-radius:6px; padding:2px 7px; }
+  /* ── now-playing 카드 (오디오 우선, 영상은 작게) ── */
+  #nowplaying{ position:fixed; left:0; right:0; bottom:0; z-index:40; display:none;
+    background:rgba(251,247,239,.92); backdrop-filter:blur(8px); border-top:1px solid #e7dcc8;
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom)); align-items:center; gap:12px; }
+  #nowplaying.on{ display:flex; }
+  #player{ width:128px; height:72px; flex:0 0 auto; border-radius:8px; overflow:hidden; background:#000; }
+  .np-meta{ flex:1 1 auto; min-width:0; font-family:system-ui,sans-serif; }
+  .np-title{ font-size:13px; font-weight:600; color:#4a3d2c; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .np-state{ font-size:11px; color:var(--muted); margin-top:3px; }
+  .np-btns{ display:flex; gap:6px; flex:0 0 auto; }
+  .np-btns button{ appearance:none; border:1px solid #d7c4a4; background:#fffdf8; color:#6f5f48;
+    border-radius:8px; padding:7px 9px; font-size:12px; cursor:pointer; }
+  /* ── 디버그 패널 (PoC 평가용) ── */
+  #dbgToggle{ position:fixed; top:calc(8px + env(safe-area-inset-top)); right:10px; z-index:45;
+    font-family:system-ui,sans-serif; font-size:11px; background:rgba(58,48,39,.8); color:#fff;
+    border:none; border-radius:8px; padding:6px 9px; cursor:pointer; display:none; }
+  #dbgToggle.on{ display:block; }
+  #dbg{ position:fixed; top:calc(40px + env(safe-area-inset-top)); right:10px; z-index:45; width:220px;
+    font-family:ui-monospace,Menlo,monospace; font-size:11px; line-height:1.6; color:#e8e8e8;
+    background:rgba(30,26,21,.92); border-radius:10px; padding:11px 12px; display:none; }
+  #dbg.on{ display:block; }
+  #dbg b{ color:#f0c896; }
+  #dbg .hint{ color:#b6a98f; margin-top:8px; display:block; font-size:10px; }
+</style>
+</head>
+<body>
+
+<!-- 인트로: 열기 ▶ 한 번이 iOS 오디오 언락 제스처 -->
+<div id="intro">
+  <h1>✉️ 편지가 도착했어요</h1>
+  <p>읽어 내려가면, 글의 흐름에 맞춰 음악이 함께 흘러요.<br/>소리가 나오니 볼륨을 확인해 주세요.</p>
+  <div class="vid-row">
+    <label>🎵 테스트할 노래 (YouTube 링크 / ID — 비우면 기본곡)</label>
+    <input id="videoInput" placeholder="https://youtu.be/..." />
+  </div>
+  <button id="openBtn" disabled>편지 열기 ▶</button>
+  <p style="font-size:11px;color:#8a785c">※ '우리 노래'를 붙여넣으면 실제 광고 빈도를 볼 수 있어요</p>
+</div>
+
+<!-- 편지 본문: 각 .section 의 data-cue = 그 지점에서 점프할 노래의 초(seconds) -->
+<main id="letter">
+  <div class="section" data-cue="0"><div class="text">
+    잘 지내고 있어?<br/>오랜만에 너한테 편지를 써.<br/>막상 쓰려니 무슨 말부터 해야 할지 모르겠더라.
+    <span class="cuebadge">⏱ 0:00 — 인트로</span>
+  </div></div>
+
+  <div class="section" data-cue="43"><div class="text">
+    우리가 처음 만났던 그날, 기억나?<br/>별거 아닌 하루였는데<br/>이상하게 그날만 또렷하게 남아 있어.
+    <span class="cuebadge">⏱ 0:43 — 1절</span>
+  </div></div>
+
+  <div class="section" data-cue="86"><div class="text">
+    힘든 시간도 많았지만<br/>네가 곁에 있어서 버틸 수 있었어.<br/>그 말을 제대로 못 한 게 늘 마음에 걸렸어.
+    <span class="cuebadge">⏱ 1:26 — 후렴</span>
+  </div></div>
+
+  <div class="section" data-cue="130"><div class="text">
+    이 노래가 흐르는 지금,<br/>네가 이 부분에서 한 번 울컥했으면 좋겠다.<br/>딱 그런 마음으로 골랐거든.
+    <span class="cuebadge">⏱ 2:10 — 브릿지</span>
+  </div></div>
+
+  <div class="section" data-cue="170"><div class="text">
+    고마워. 그리고 사랑해.<br/>언젠가 직접 말할게.<br/>— 너의 친구가
+    <span class="cuebadge">⏱ 2:50 — 아웃트로</span>
+  </div></div>
+</main>
+
+<!-- now-playing 카드 -->
+<div id="nowplaying">
+  <div id="player"></div>
+  <div class="np-meta">
+    <div class="np-title">🎵 지금 재생 중</div>
+    <div class="np-state" id="npState">—</div>
+  </div>
+  <div class="np-btns">
+    <button id="toggleBtn">⏸</button>
+    <button id="resetBtn">🔄</button>
+  </div>
+</div>
+
+<!-- 디버그 패널 -->
+<button id="dbgToggle">🐞 debug</button>
+<div id="dbg">
+  <div>state: <b id="dState">—</b></div>
+  <div>time: <b id="dTime">0.0</b>s</div>
+  <div>active cue: <b id="dCue">—</b></div>
+  <div>last seek: <b id="dSeek">—</b></div>
+  <div>seeks: <b id="dCount">0</b></div>
+  <span class="hint">광고가 뜨면 state가 한동안 '버퍼링/재생'으로 머물고 seek해도 노래가 늦게 시작돼요. 그 빈도를 기록해 주세요.</span>
+</div>
+
+<script>
+(function(){
+  var player=null, ready=false, currentId='', lastCue=null, seekCount=0;
+  var DEFAULT_ID='dQw4w9WgXcQ'; // 기본곡(확실히 임베드 가능). '우리 노래'로 교체해 광고 테스트
+  var STATE={'-1':'대기(unstarted)','0':'종료','1':'재생중 ▶','2':'일시정지','3':'버퍼링…','5':'큐됨'};
+
+  function parseId(s){
+    s=(s||'').trim(); if(!s) return DEFAULT_ID;
+    if(/^[\w-]{11}$/.test(s)) return s;
+    try{ var u=new URL(s);
+      if(u.hostname.indexOf('youtu.be')>=0) return u.pathname.slice(1,12);
+      if(u.searchParams.get('v')) return u.searchParams.get('v');
+      var m=u.pathname.match(/\/embed\/([\w-]{11})/); if(m) return m[1];
+    }catch(e){}
+    var m2=s.match(/([\w-]{11})/); return m2?m2[1]:DEFAULT_ID;
+  }
+
+  // YouTube IFrame API 로드
+  var tag=document.createElement('script'); tag.src='https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+
+  window.onYouTubeIframeAPIReady=function(){
+    currentId=DEFAULT_ID;
+    player=new YT.Player('player',{
+      videoId:currentId,
+      playerVars:{ playsinline:1, controls:1, rel:0, modestbranding:1, fs:0 },
+      events:{
+        onReady:function(){ ready=true; document.getElementById('openBtn').disabled=false; },
+        onStateChange:function(e){ document.getElementById('dState').textContent=STATE[String(e.data)]||e.data;
+          document.getElementById('npState').textContent=STATE[String(e.data)]||e.data; }
+      }
+    });
+  };
+
+  // ── 열기 ▶ : 제스처 안에서 첫 재생(언락) ──
+  document.getElementById('openBtn').addEventListener('click',function(){
+    if(!ready) return;
+    var id=parseId(document.getElementById('videoInput').value);
+    if(id!==currentId){ player.loadVideoById(id); currentId=id; } // 새 곡(자동재생, 제스처 내)
+    else { player.playVideo(); }
+    document.getElementById('intro').style.display='none';
+    document.getElementById('nowplaying').classList.add('on');
+    document.getElementById('dbgToggle').classList.add('on');
+    startObserver(); startPolling();
+  });
+
+  // ── 스크롤 동기: 중앙 밴드에 들어온 단락의 cue 로 seekTo ──
+  function startObserver(){
+    var sections=[].slice.call(document.querySelectorAll('.section'));
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          sections.forEach(function(s){ s.classList.remove('active'); });
+          e.target.classList.add('active');
+          var cue=Number(e.target.dataset.cue);
+          if(cue!==lastCue){
+            lastCue=cue; seekCount++;
+            try{ player.seekTo(cue,true); }catch(err){}
+            document.getElementById('dCue').textContent=cue+'s';
+            document.getElementById('dSeek').textContent='→ '+cue+'s';
+            document.getElementById('dCount').textContent=seekCount;
+          }
+        }
+      });
+    },{ rootMargin:'-45% 0px -45% 0px', threshold:0 });
+    sections.forEach(function(s){ io.observe(s); });
+  }
+
+  // ── 상태 폴링(평가용) ──
+  function startPolling(){
+    setInterval(function(){
+      if(!player||!player.getCurrentTime) return;
+      try{ document.getElementById('dTime').textContent=player.getCurrentTime().toFixed(1); }catch(e){}
+    },400);
+  }
+
+  // 미니 컨트롤
+  document.getElementById('toggleBtn').addEventListener('click',function(){
+    if(!player) return; var st=player.getPlayerState();
+    if(st===1){ player.pauseVideo(); this.textContent='▶'; } else { player.playVideo(); this.textContent='⏸'; }
+  });
+  document.getElementById('resetBtn').addEventListener('click',function(){ location.reload(); });
+  document.getElementById('dbgToggle').addEventListener('click',function(){ document.getElementById('dbg').classList.toggle('on'); });
+})();
+</script>
+</body>
+</html>

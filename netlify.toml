@@ -1,0 +1,21 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA 폴백 — 모든 경로를 index.html로(클라이언트 라우팅).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 수신 라우트는 검색 인덱싱 금지(capability-links: noindex).
+[[headers]]
+  for = "/l/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
