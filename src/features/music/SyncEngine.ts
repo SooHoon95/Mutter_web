@@ -1,13 +1,17 @@
-// SyncEngine — 스크롤 동기 음악 엔진.
+// SyncEngine — 스크롤 동기 음악 엔진 (풀 기반, iOS 다중 트랙 대응).
 //
-// 단락 엘리먼트마다 IntersectionObserver를 걸고, 단락이 임계에 진입하면 그 단락의
-// MusicCue로 "추가 탭 없이" seekTo(+필요 시 소스 전환)를 수행한다.
-// 단일 활성 트랙(1곡 위주). 엔진 본체는 TrackSource 인터페이스에만 의존하고,
-// 소스 타입 분기는 createSource 팩토리 한 곳에만 존재한다.
+// 핵심: iOS Safari는 "사용자 제스처 밖"에서 시작하는 오디오 재생을 막는다. 그래서
+// 단락을 스크롤로 지날 때 그 자리에서 새 위젯을 만들어 play()하면 2번째 이후 트랙이
+// 재생되지 않는다. 이를 피하려고:
+//   1) attach() 시점에 모든 distinct 트랙 소스를 미리 생성·로드해 둔다(▶ 전, 게이트 뒤).
+//   2) unlockAll()(▶ 제스처)에서 **모든** 소스를 한꺼번에 언락(play→pause→음소거)한다.
+//   3) 스크롤로 단락이 바뀌면 이미 언락된 소스를 재생/페이드만 한다(새 제스처 불필요).
+//
+// 엔진 본체는 TrackSource 인터페이스에만 의존하고, 소스 타입 분기는 createSource 한 곳에만.
 
 import type { MusicCue } from '@/data/types';
 import { getTrackById } from '@/data/tracks';
-import type { TrackSource, Unsub } from './TrackSource';
+import type { TrackSource } from './TrackSource';
 import { SoundCloudSource } from './SoundCloudSource';
 import { HostedAudioSource } from './HostedAudioSource';
 import { applyFade, type FadeHandle } from './fade';
@@ -15,14 +19,12 @@ import { applyFade, type FadeHandle } from './fade';
 /** 단락 진입 시 외부(viewer)로 알리는 콜백. */
 export type ActiveParagraphCb = (index: number) => void;
 
-const FADE_MS = 600; // 곡 전환 페이드 길이. 모바일에서 끊김 없이 부드러운 정도.
+const FADE_MS = 600; // 곡 전환 페이드 길이.
 const FULL_VOLUME = 1;
 
 /**
  * MusicCue로부터 적절한 TrackSource를 생성하는 팩토리.
  * **여기가 소스 타입을 아는 유일한 지점**이다(엔진 본체는 인터페이스만 사용).
- * - soundcloud: cue.ref = canonical 트랙 URL
- * - hosted: cue.ref = 카탈로그 trackId → getTrackById로 오디오 URL 해석
  */
 export function createSource(cue: MusicCue): TrackSource {
   if (cue.sourceType === 'soundcloud') {
@@ -30,16 +32,14 @@ export function createSource(cue: MusicCue): TrackSource {
   }
   const track = getTrackById(cue.ref);
   if (!track) {
-    // "무음 편지 0" — 카탈로그에 없는 ref는 시드/매핑 오류. 조용히 무음으로 떨어지지 않는다.
     throw new Error(`[SyncEngine] hosted 트랙을 찾을 수 없음: ${cue.ref}`);
   }
   return new HostedAudioSource(track.url);
 }
 
-/** 큐 동일성 비교 — 같은 소스·같은 ref면 같은 트랙으로 본다(전환 불필요 판단용). */
-function sameTrack(a: MusicCue | undefined, b: MusicCue | undefined): boolean {
-  if (!a || !b) return false;
-  return a.sourceType === b.sourceType && a.ref === b.ref;
+/** 같은 트랙 식별 키(sourceType+ref). 같은 곡을 쓰는 단락들은 소스 하나를 공유한다. */
+function cueKey(cue: MusicCue): string {
+  return `${cue.sourceType}::${cue.ref}`;
 }
 
 export interface SyncEngineOptions {
@@ -60,72 +60,100 @@ export class SyncEngine {
   private readonly sourceFactory: (cue: MusicCue) => TrackSource;
 
   private observer: IntersectionObserver | null = null;
-  private cues: MusicCue[] = [];
+  private cues: Array<MusicCue | undefined> = [];
   private elements: Element[] = [];
 
-  private activeSource: TrackSource | null = null;
-  private activeCue: MusicCue | undefined;
+  /** cueKey → 미리 생성·로드된 소스. 단락 전환 시 새로 만들지 않고 여기서 꺼내 쓴다. */
+  private readonly pool = new Map<string, TrackSource>();
+
+  private activeKey: string | null = null;
   private activeIndex = -1;
 
-  // 페이드 핸들을 둘로 나눈다: 떠나는 소스의 페이드아웃과 새 소스의 페이드인은
-  // 동시에 진행되므로 서로를 cancel하면 안 된다(한 슬롯이면 페이드아웃이 0에
-  // 닿기 전에 페이드인이 취소해버린다).
+  // 페이드 인/아웃은 동시에 진행되므로 슬롯을 분리한다.
   private fadeIn: FadeHandle | null = null;
   private fadeOut: FadeHandle | null = null;
+  // 페이드아웃 후 정지 타이머(전환 중첩 시 정리).
+  private pauseTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // 활성 소스의 progress/finish 구독 해제 함수(소스 교체 시 정리).
-  private sourceUnsubs: Unsub[] = [];
-
-  // iOS 언락이 끝났는지. 언락 전에는 play()/seekTo()를 미루지 않고 그대로 호출하되,
-  // 첫 진입 시 자동 play를 해도 되는지 판단에 쓴다.
   private unlocked = false;
 
   constructor(options: SyncEngineOptions = {}) {
     this.onActiveChange = options.onActiveChange;
     this.observerFactory =
-      options.observerFactory ??
-      ((cb, opts) => new IntersectionObserver(cb, opts));
+      options.observerFactory ?? ((cb, opts) => new IntersectionObserver(cb, opts));
     this.sourceFactory = options.sourceFactory ?? createSource;
   }
 
   /**
-   * 단락 엘리먼트 배열과 그에 대응하는 큐 배열을 받아 IntersectionObserver를 설정한다.
-   * paragraphEls[i] ↔ cues[i] 가 1:1 대응이며, cue가 없는 단락(undefined)은 음악 변화 없음.
+   * 단락 엘리먼트 + 큐 배열을 받아 (1) 모든 distinct 소스를 미리 생성·로드하고
+   * (2) IntersectionObserver를 설정한다. ▶ 전에 호출돼 소스를 준비해 둔다.
    */
   attach(paragraphEls: Element[], cues: Array<MusicCue | undefined>): void {
     this.detachObserver();
     this.elements = paragraphEls;
-    // cue 인덱스를 엘리먼트 인덱스와 정렬(undefined 포함).
-    this.cues = cues as MusicCue[];
+    this.cues = cues;
 
-    const observer = this.observerFactory(
-      (entries) => this.handleIntersect(entries),
-      // 단락 중앙 밴드(상하 45% 제외)에 들어오면 활성으로 — PoC와 동일한 임계.
-      { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
-    );
+    // 1) 모든 distinct cue의 소스를 미리 생성·로드(언락은 ▶ 제스처에서).
+    for (const cue of cues) {
+      if (!cue) continue;
+      const key = cueKey(cue);
+      if (this.pool.has(key)) continue;
+      let src: TrackSource;
+      try {
+        src = this.sourceFactory(cue);
+      } catch (err) {
+        console.error('[SyncEngine] 소스 생성 실패(건너뜀):', err);
+        continue;
+      }
+      this.pool.set(key, src);
+      // 미리 로드 — 실패는 폴백 팩토리가 처리(무음0). 로드 에러는 조용히 무시.
+      void src.load().catch((err) => console.error('[SyncEngine] preload 실패:', err));
+    }
+
+    // 2) IntersectionObserver: 단락 중앙 밴드 진입 감지.
+    const observer = this.observerFactory((entries) => this.handleIntersect(entries), {
+      rootMargin: '-45% 0px -45% 0px',
+      threshold: 0,
+    });
     for (const el of paragraphEls) observer.observe(el);
     this.observer = observer;
   }
 
   /**
-   * iOS 언락. **사용자 제스처 핸들러 내부에서 동기적으로 호출**해야 한다.
-   * 현재 활성 소스가 있으면 그 소스를 언락하고, 없으면 첫 단락 큐의 소스를 만들어 언락한다.
-   * 이후 소스 전환 때도 이미 언락된 오디오 컨텍스트를 재사용한다.
+   * iOS 언락. **사용자 제스처(▶ 클릭) 핸들러 안에서 호출**해야 한다.
+   * 풀의 모든 소스를 언락(play→pause→음소거)해 둔 뒤, 첫 cue를 재생한다.
+   * 이렇게 미리 다 언락해야 스크롤로 만나는 2번째+ 트랙도 재생된다(iOS 제약 회피).
    */
   async unlockAll(): Promise<void> {
     this.unlocked = true;
-    // 활성 소스가 아직 없으면 첫 cue가 있는 단락의 소스를 준비한다.
-    if (!this.activeSource) {
-      const firstIdx = this.cues.findIndex((c) => c !== undefined);
-      if (firstIdx >= 0) {
-        await this.switchToCue(this.cues[firstIdx], { autoplay: true });
-        this.activeIndex = firstIdx;
-        this.onActiveChange?.(firstIdx); // 첫 단락 활성 표시(♪ 하이라이트)
+
+    // 1) 모든 소스를 제스처 컨텍스트에서 언락(play를 동기적으로 호출하는 게 핵심).
+    for (const src of this.pool.values()) {
+      try {
+        void src.unlock(); // 내부에서 play() 동기 호출 → 이 소스는 이후 재생 허용됨
+      } catch {
+        /* 개별 소스 언락 실패는 무시(나머지는 계속) */
       }
-    } else {
-      await this.activeSource.unlock();
-      this.activeSource.play();
     }
+
+    // 2) 첫 cue를 제외한 나머지는 정지·음소거.
+    const firstIdx = this.cues.findIndex((c) => c != null);
+    const firstKey = firstIdx >= 0 ? cueKey(this.cues[firstIdx] as MusicCue) : null;
+    for (const [key, src] of this.pool) {
+      if (key === firstKey) continue;
+      try {
+        src.pause();
+        src.setVolume(0);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // 3) 첫 cue 재생 + 페이드인.
+    if (firstIdx >= 0) {
+      this.activate(this.cues[firstIdx] as MusicCue, firstIdx);
+    }
+    return Promise.resolve();
   }
 
   destroy(): void {
@@ -134,9 +162,21 @@ export class SyncEngine {
     this.fadeOut?.cancel();
     this.fadeIn = null;
     this.fadeOut = null;
-    this.teardownSource();
+    if (this.pauseTimer) {
+      clearTimeout(this.pauseTimer);
+      this.pauseTimer = null;
+    }
+    for (const src of this.pool.values()) {
+      try {
+        src.destroy();
+      } catch {
+        /* ignore */
+      }
+    }
+    this.pool.clear();
     this.elements = [];
     this.cues = [];
+    this.activeKey = null;
     this.activeIndex = -1;
   }
 
@@ -148,89 +188,67 @@ export class SyncEngine {
       const index = this.elements.indexOf(entry.target);
       if (index < 0) continue;
 
-      // 활성 단락 통지(cue 유무와 무관 — 텍스트 하이라이트 등 UI용).
+      // 활성 단락 통지(cue 유무 무관 — 텍스트 하이라이트 등 UI용).
       if (index !== this.activeIndex) {
         this.activeIndex = index;
         this.onActiveChange?.(index);
       }
 
       const cue = this.cues[index];
-      if (!cue) continue; // 음악 큐 없는 단락 — 현재 곡 그대로 유지.
+      if (!cue) continue; // 음악 큐 없는 단락 — 현재 곡 유지.
+      if (!this.unlocked) continue; // 언락 전(▶ 전)에는 재생하지 않는다.
 
-      if (sameTrack(cue, this.activeCue)) {
-        // 같은 트랙: 단락 위치로만 점프(추가 탭 없이 seekTo).
-        this.activeSource?.seekTo(cue.startMs ?? 0);
+      const key = cueKey(cue);
+      if (key === this.activeKey) {
+        // 같은 트랙: 위치만 점프(추가 탭 없이 seekTo).
+        this.pool.get(key)?.seekTo(cue.startMs ?? 0);
       } else {
-        // 다른 트랙: 페이드아웃 → 전환 → 페이드인. (await 불필요 — fire-and-forget)
-        void this.transition(cue);
+        // 다른 트랙: 이미 언락된 풀 소스로 전환(페이드).
+        this.switchTo(cue);
       }
     }
   }
 
-  /** 곡 전환: 이전 소스 페이드아웃 후 destroy → 새 소스 로드·언락·페이드인. */
-  private async transition(cue: MusicCue): Promise<void> {
-    const previous = this.activeSource;
+  /** 활성 cue 재생 + 페이드인(언락 직후/전환 시 공통). */
+  private activate(cue: MusicCue, index: number): void {
+    const key = cueKey(cue);
+    const src = this.pool.get(key);
+    if (!src) return;
+    this.activeKey = key;
+    this.activeIndex = index;
+    src.seekTo(cue.startMs ?? 0);
+    src.play();
+    this.fadeIn?.cancel();
+    this.fadeIn = applyFade(src, FULL_VOLUME, FADE_MS, { from: 0 });
+  }
 
-    // 이전 소스 페이드아웃(있으면). 새 소스의 페이드인과 별도 슬롯이라 충돌하지 않는다.
-    if (previous) {
+  /** 스크롤 전환: 이전 소스 페이드아웃·정지 → 새 소스(이미 언락됨) 재생·페이드인. */
+  private switchTo(cue: MusicCue): void {
+    const prev = this.activeKey ? this.pool.get(this.activeKey) : null;
+    const nextKey = cueKey(cue);
+    const next = this.pool.get(nextKey);
+    if (!next) return;
+
+    // 이전 소스 페이드아웃 후 정지(파괴하지 않음 — 재진입 시 재사용).
+    if (prev && prev !== next) {
       this.fadeOut?.cancel();
-      this.fadeOut = applyFade(previous, 0, FADE_MS, { from: FULL_VOLUME });
+      this.fadeOut = applyFade(prev, 0, FADE_MS, { from: FULL_VOLUME });
+      if (this.pauseTimer) clearTimeout(this.pauseTimer);
+      this.pauseTimer = setTimeout(() => {
+        try {
+          prev.pause();
+        } catch {
+          /* ignore */
+        }
+      }, FADE_MS + 50);
     }
 
-    await this.switchToCue(cue, { autoplay: this.unlocked });
-  }
-
-  /**
-   * 새 cue의 소스로 교체한다. 이전 소스 구독을 해제·정리하고, 새 소스를 만들어
-   * load → (언락된 경우) unlock → seekTo → 페이드인 한다.
-   */
-  private async switchToCue(cue: MusicCue, opts: { autoplay: boolean }): Promise<void> {
-    const previous = this.activeSource;
-
-    const source = this.sourceFactory(cue);
-    this.activeSource = source;
-    this.activeCue = cue;
-
-    // 새 소스 구독(현재는 외부 전달 없이 내부 보관 — viewer 연동은 hook에서).
-    this.clearSourceUnsubs();
-
-    await source.load();
-
-    // 이미 사용자 제스처로 언락된 상태라면 새 소스도 같은 컨텍스트에서 언락.
-    if (opts.autoplay && this.unlocked) {
-      await source.unlock();
-    }
-
-    source.seekTo(cue.startMs ?? 0);
-
-    if (opts.autoplay) {
-      source.play();
-      // 0→full 페이드인. (페이드아웃 슬롯과 분리 — 이전 소스의 램프를 건드리지 않는다)
-      this.fadeIn?.cancel();
-      this.fadeIn = applyFade(source, FULL_VOLUME, FADE_MS, { from: 0 });
-    } else {
-      source.setVolume(FULL_VOLUME);
-    }
-
-    // 전환이 끝났으니 이전 소스를 정리(페이드아웃 시간 이후).
-    if (previous && previous !== source) {
-      // 페이드아웃이 끝나도록 잠시 후 destroy. 타이머 누수 방지 위해 즉시 destroy해도
-      // 무방하지만, 부드러움을 위해 페이드 시간만큼 유지 후 정리한다.
-      const stale = previous;
-      window.setTimeout(() => stale.destroy(), FADE_MS + 50);
-    }
-  }
-
-  private clearSourceUnsubs(): void {
-    for (const unsub of this.sourceUnsubs) unsub();
-    this.sourceUnsubs = [];
-  }
-
-  private teardownSource(): void {
-    this.clearSourceUnsubs();
-    this.activeSource?.destroy();
-    this.activeSource = null;
-    this.activeCue = undefined;
+    // 새 소스 재생 + 페이드인(이미 언락돼 있으므로 iOS도 허용).
+    this.activeKey = nextKey;
+    next.seekTo(cue.startMs ?? 0);
+    next.play();
+    this.fadeIn?.cancel();
+    this.fadeIn = applyFade(next, FULL_VOLUME, FADE_MS, { from: 0 });
   }
 
   private detachObserver(): void {

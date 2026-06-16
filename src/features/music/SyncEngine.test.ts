@@ -118,7 +118,7 @@ describe('SyncEngine', () => {
     expect(created).toHaveLength(1); // 같은 트랙 → 소스 하나만
   });
 
-  it('다른 트랙으로 진입 시 소스 전환 + 페이드(setVolume 램프)가 발생한다', async () => {
+  it('다른 트랙으로 진입 시 풀의 소스로 전환 + 페이드(setVolume 램프)가 발생한다', async () => {
     const created: Array<TrackSource & { volumes: number[] }> = [];
     const harness = makeObserverHarness();
     const cues: Array<MusicCue | undefined> = [
@@ -136,25 +136,25 @@ describe('SyncEngine', () => {
     const els = makeEls(2);
     engine.attach(els, cues);
 
-    await engine.unlockAll(); // 첫 소스(trackA)
-    await vi.runAllTimersAsync();
-    expect(created).toHaveLength(1);
+    // 풀 기반: attach 시점에 두 트랙 소스가 모두 미리 생성·로드된다(▶ 제스처에서 일괄 언락 위해).
+    expect(created).toHaveLength(2);
 
-    // 다른 트랙(trackB) 단락 진입 → 새 소스 생성 + 페이드.
+    await engine.unlockAll(); // 모든 소스 언락 + 첫 소스(trackA) 재생
+    await vi.runAllTimersAsync();
+
+    // 다른 트랙(trackB) 단락 진입 → 이미 언락된 풀 소스로 전환 + 페이드.
     harness.enter(els[1]);
     await vi.runAllTimersAsync();
 
-    expect(created).toHaveLength(2);
-    const prev = created[0];
-    const next = created[1];
-    // 이전 소스: full → 0 페이드아웃(여러 단계 setVolume, 마지막 0).
-    expect(prev.setVolume).toHaveBeenCalled();
+    const prev = created[0]; // trackA
+    const next = created[1]; // trackB
+    // 이전 소스: full → 0 페이드아웃(마지막 0).
     expect(prev.volumes[prev.volumes.length - 1]).toBe(0);
     // 새 소스: 0 → full 페이드인(마지막 1).
-    expect(next.setVolume).toHaveBeenCalled();
     expect(next.volumes[next.volumes.length - 1]).toBe(1);
-    // 이전 소스는 전환 후 destroy된다.
-    expect(prev.destroy).toHaveBeenCalled();
+    // 전환 후 이전 소스는 정지하되 파괴하지 않는다(재진입 위해 풀에 유지).
+    expect(prev.pause).toHaveBeenCalled();
+    expect(prev.destroy).not.toHaveBeenCalled();
   });
 
   it('destroy는 IntersectionObserver를 disconnect하고 활성 소스를 destroy한다', async () => {
