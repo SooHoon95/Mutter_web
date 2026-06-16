@@ -14,6 +14,7 @@ import type { Paragraph, MusicCue } from '@/data/types';
 export interface DraftState {
   letterId: string | null;
   title: string;
+  templateId: string;
   paragraphs: Paragraph[];
 }
 
@@ -22,6 +23,7 @@ export interface UseLetterDraftReturn {
   isSaving: boolean;
   saveError: Error | null;
   setTitle: (title: string) => void;
+  setTemplateId: (id: string) => void;
   addParagraph: () => void;
   updateParagraphText: (id: string, text: string) => void;
   deleteParagraph: (id: string) => void;
@@ -43,11 +45,15 @@ function newParagraphId(): string {
 // hook 구현
 // ---------------------------------------------------------------------------
 
-export function useLetterDraft(initialLetterId: string | null = null): UseLetterDraftReturn {
+export function useLetterDraft(
+  initialLetterId: string | null = null,
+  initialTemplateId = 'default',
+): UseLetterDraftReturn {
   const queryClient = useQueryClient();
 
   const [letterId, setLetterId] = useState<string | null>(initialLetterId);
   const [title, setTitle] = useState('');
+  const [templateId, setTemplateId] = useState<string>(initialTemplateId);
   const [paragraphs, setParagraphs] = useState<Paragraph[]>([
     // 초기 단락 1개 제공 — 빈 편지로 시작하지 않는다
     { id: newParagraphId(), order: 0, text: '' },
@@ -56,7 +62,7 @@ export function useLetterDraft(initialLetterId: string | null = null): UseLetter
 
   // ── 뮤테이션: 신규 초안 생성 ──────────────────────────────────────────────
   const createMutation = useMutation({
-    mutationFn: () => createDraft({ title, paragraphs }),
+    mutationFn: () => createDraft({ title, paragraphs, templateId }),
     onSuccess: (letter) => {
       setLetterId(letter.id);
       // 내가 보낸 편지 목록 캐시 무효화
@@ -66,7 +72,7 @@ export function useLetterDraft(initialLetterId: string | null = null): UseLetter
 
   // ── 뮤테이션: 기존 초안 업데이트 ──────────────────────────────────────────
   const updateMutation = useMutation({
-    mutationFn: (id: string) => updateLetter(id, { title, paragraphs }),
+    mutationFn: (id: string) => updateLetter(id, { title, paragraphs, templateId }),
     onSuccess: (letter) => {
       void queryClient.invalidateQueries({ queryKey: ['letters', letter.id] });
       void queryClient.invalidateQueries({ queryKey: ['letters', 'mine'] });
@@ -133,10 +139,11 @@ export function useLetterDraft(initialLetterId: string | null = null): UseLetter
   }, [letterId, createMutation, updateMutation]);
 
   return {
-    draft: { letterId, title, paragraphs },
+    draft: { letterId, title, templateId, paragraphs },
     isSaving,
     saveError,
     setTitle,
+    setTemplateId,
     addParagraph,
     updateParagraphText,
     deleteParagraph,

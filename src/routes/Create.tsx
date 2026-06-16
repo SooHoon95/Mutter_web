@@ -1,12 +1,13 @@
-// 편지 작성 라우트. T5(US-003) + T6(US-006) 구현.
+// 편지 작성 라우트. T5(US-003) + T6(US-006) + 보내기(링크 발급) 통합.
 // RequireAuth는 router.tsx에서 이미 감싸므로 여기서 중복 적용하지 않는다.
 // /create/:id → 기존 초안 편집 (id 없으면 신규 초안).
+//
+// 흐름: 작성 → "저장" → (저장되면) "보내기" 섹션에서 전달 링크 발급 → URL 복사 → 전달.
 
-import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useLetterDraft } from '@/features/compose';
-import { ParagraphEditor } from '@/features/compose';
+import { useLetterDraft, ParagraphEditor } from '@/features/compose';
 import { TemplatePicker, DEFAULT_TEMPLATE_ID } from '@/features/templates';
+import { LinkManager } from '@/features/delivery';
 import styles from './Create.module.css';
 
 export default function Create(): React.ReactElement {
@@ -16,24 +17,17 @@ export default function Create(): React.ReactElement {
     isSaving,
     saveError,
     setTitle,
+    setTemplateId,
     addParagraph,
     updateParagraphText,
     deleteParagraph,
     moveParagraph,
     setCue,
     save,
-  } = useLetterDraft(id ?? null);
-
-  // 템플릿 선택 상태 — draft.templateId로 저장 연동은 useLetterDraft 확장 시 추가.
-  // T6 범위에서는 로컬 상태로 선택·표시하고, templateId를 편지에 보존할 준비를 한다.
-  const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE_ID);
+  } = useLetterDraft(id ?? null, DEFAULT_TEMPLATE_ID);
 
   function handleSave(): void {
     void save();
-  }
-
-  function handleTemplateSelect(newId: string): void {
-    setTemplateId(newId);
   }
 
   return (
@@ -41,10 +35,9 @@ export default function Create(): React.ReactElement {
       <div className={styles.header}>
         <h1 className={styles.heading}>편지 쓰기</h1>
         <div className={styles.headerActions}>
-          {/* 초안 저장 상태 표시 */}
           {isSaving && <span className={styles.savingBadge}>저장 중…</span>}
           {draft.letterId && !isSaving && (
-            <span className={styles.savedBadge}>초안 저장됨</span>
+            <span className={styles.savedBadge}>저장됨</span>
           )}
           <button
             type="button"
@@ -52,7 +45,7 @@ export default function Create(): React.ReactElement {
             onClick={handleSave}
             disabled={isSaving}
           >
-            {isSaving ? '저장 중…' : '저장'}
+            {isSaving ? '저장 중…' : draft.letterId ? '저장' : '저장하고 보내기 준비'}
           </button>
         </div>
       </div>
@@ -61,17 +54,12 @@ export default function Create(): React.ReactElement {
       {saveError && (
         <div className={styles.errorBanner} role="alert">
           저장 실패: {saveError.message}
-          {!draft.letterId && (
-            <span className={styles.errorHint}>
-              {' '}— Supabase 크리덴셜(.env)을 설정하면 저장이 활성화됩니다.
-            </span>
-          )}
         </div>
       )}
 
-      {/* 템플릿 선택 — T6 US-006 */}
+      {/* 템플릿 선택 — T6 US-006 (이제 draft.templateId로 저장됨) */}
       <section className={styles.templateSection}>
-        <TemplatePicker selectedId={templateId} onSelect={handleTemplateSelect} />
+        <TemplatePicker selectedId={draft.templateId} onSelect={setTemplateId} />
       </section>
 
       {/* 편지 제목 */}
@@ -103,6 +91,25 @@ export default function Create(): React.ReactElement {
           onCueChange={setCue}
           onAddParagraph={addParagraph}
         />
+      </section>
+
+      {/* 보내기 — 전달 링크 발급. 저장 후(letterId 존재)에만 노출. */}
+      <section className={styles.sendSection}>
+        <h2 className={styles.sectionHeading}>보내기</h2>
+        {draft.letterId ? (
+          <>
+            <p className={styles.sectionDesc}>
+              전달 링크를 만들어 수신자에게 보내세요. 암호는 기본으로 켜져 있고, 링크를 연 첫
+              기기에 귀속됩니다.
+            </p>
+            <LinkManager letterId={draft.letterId} />
+          </>
+        ) : (
+          <p className={styles.sendHint}>
+            먼저 <strong>“저장하고 보내기 준비”</strong>를 누르면, 여기에서 전달 링크를 만들어
+            보낼 수 있어요.
+          </p>
+        )}
       </section>
     </main>
   );

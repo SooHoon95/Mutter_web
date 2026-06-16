@@ -127,3 +127,24 @@
   margin: 0;
   line-height: 1.5;
 }
+
+/* 보내기(전달 링크) 섹션 — 작성과 시각적으로 구분 */
+.sendSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.sendHint {
+  font-size: 0.9375rem;
+  color: #555;
+  margin: 0;
+  padding: 16px;
+  background: #fafafa;
+  border: 1px dashed #d0d0d0;
+  border-radius: 10px;
+  line-height: 1.6;
+}
