@@ -126,6 +126,16 @@
   cursor: pointer;
   transition: opacity 0.15s;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* 브랜드 로고는 텍스트와 무관하게 고정 크기 유지 */
+.socialButtonGoogle svg,
+.socialButtonKakao svg {
+  flex-shrink: 0;
 }
 
 .socialButtonGoogle:disabled,
