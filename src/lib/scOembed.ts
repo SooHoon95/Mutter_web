@@ -35,9 +35,28 @@ const SC_OEMBED_ENDPOINT = 'https://soundcloud.com/oembed';
 function isValidScUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return parsed.hostname === 'soundcloud.com' || parsed.hostname === 'www.soundcloud.com';
+    const host = parsed.hostname.toLowerCase();
+    // soundcloud.com + 모든 서브도메인(www·m·on). on.soundcloud.com = 모바일 공유 단축링크.
+    return host === 'soundcloud.com' || host.endsWith('.soundcloud.com');
   } catch {
     return false;
+  }
+}
+
+/**
+ * oEmbed 응답 html의 iframe src에서 canonical 트랙 URL(player의 url= 파라미터)을 추출한다.
+ * 단축링크(on.soundcloud.com)도 oEmbed가 canonical(api.soundcloud.com/tracks/ID)로 변환해 주므로,
+ * 이를 뽑아 Widget 재생에 쓴다(단축 URL은 Widget이 직접 못 여는 경우가 있음). 실패하면 null.
+ */
+function extractCanonicalUrl(html: string | undefined): string | null {
+  if (!html) return null;
+  const srcMatch = html.match(/src="([^"]+)"/);
+  if (!srcMatch) return null;
+  try {
+    const src = new URL(srcMatch[1].replace(/&amp;/g, '&'));
+    return src.searchParams.get('url'); // URLSearchParams가 디코드해 반환
+  } catch {
+    return null;
   }
 }
 
@@ -108,10 +127,12 @@ export async function validateScUrl(
     return { ok: false, reason: 'embed-disabled' };
   }
 
+  // 재생용 canonical은 oEmbed html에서 추출(단축링크 대응). 실패 시 입력 URL로 폴백.
+  const canonicalUrl = extractCanonicalUrl(data.html) ?? url;
   return {
     ok: true,
     title: data.title ?? '',
     author: data.author_name ?? '',
-    canonicalUrl: url,
+    canonicalUrl,
   };
 }

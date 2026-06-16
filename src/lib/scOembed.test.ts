@@ -27,7 +27,7 @@ const VALID_SC_URL = 'https://soundcloud.com/artist/track-name';
 const VALID_OEMBED_BODY = {
   title: '테스트 트랙',
   author_name: '아티스트',
-  html: '<iframe src="https://w.soundcloud.com/player/?url=..." />',
+  html: '<iframe src="https://w.soundcloud.com/player/?visual=true&url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F123&show_artwork=true"></iframe>',
 };
 
 // ---------------------------------------------------------------------------
@@ -41,7 +41,8 @@ describe('validateScUrl — 성공 케이스', () => {
     if (result.ok) {
       expect(result.title).toBe('테스트 트랙');
       expect(result.author).toBe('아티스트');
-      expect(result.canonicalUrl).toBe(VALID_SC_URL);
+      // canonicalUrl은 oEmbed html의 player url= 파라미터에서 추출(재생용).
+      expect(result.canonicalUrl).toBe('https://api.soundcloud.com/tracks/123');
     }
   });
 
@@ -49,6 +50,16 @@ describe('validateScUrl — 성공 케이스', () => {
     const url = 'https://www.soundcloud.com/artist/track';
     const result = await validateScUrl(url, makeFetch(200, VALID_OEMBED_BODY));
     expect(result.ok).toBe(true);
+  });
+
+  it('on.soundcloud.com 모바일 공유 단축링크도 유효하고 canonical을 추출한다', async () => {
+    const url = 'https://on.soundcloud.com/6j9QPtqHxJgnYvcBot';
+    const result = await validateScUrl(url, makeFetch(200, VALID_OEMBED_BODY));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      // 단축 URL이 아니라 oEmbed가 돌려준 canonical(api.soundcloud.com)을 써야 Widget이 연다.
+      expect(result.canonicalUrl).toBe('https://api.soundcloud.com/tracks/123');
+    }
   });
 });
 
