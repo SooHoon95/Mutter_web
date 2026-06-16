@@ -1,0 +1,62 @@
+/* ConnectionPicker — 연결된 사람 라디오 리스트 */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.item {
+  margin: 0;
+  padding: 0;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #ece8e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.option:hover {
+  border-color: #8b6914;
+  background: #fcfaf5;
+}
+
+.optionChecked {
+  border-color: #8b6914;
+  background: #fcfaf5;
+}
+
+.radio {
+  accent-color: #8b6914;
+  cursor: pointer;
+}
+
+.nickname {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #2c2416;
+}
+
+.empty {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: #8a7a5e;
+  font-size: 0.9rem;
+}
+
+.error {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: #b94040;
+  font-size: 0.9rem;
+}

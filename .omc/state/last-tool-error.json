@@ -1,7 +1,7 @@
 {
-  "tool_name": "mcp__plugin_oh-my-claudecode_t__lsp_diagnostics",
-  "tool_input_preview": "{\"file\":\"/Users/choesuhun/Desktop/Code/letter-app/src/data/threads.test.ts\",\"severity\":\"error\"}",
-  "error": "Language server 'typescript-language-server' not found.\nInstall with: npm install -g typescript-language-server typescript",
-  "timestamp": "2026-06-16T15:22:43.060Z",
-  "retry_count": 10
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/Users/choesuhun/Desktop/Code/letter-app/src/features/delivery\"}",
+  "error": "EISDIR: illegal operation on a directory, read '/Users/choesuhun/Desktop/Code/letter-app/src/features/delivery'",
+  "timestamp": "2026-06-16T23:17:44.084Z",
+  "retry_count": 2
 }

@@ -4,14 +4,20 @@
 //
 // 흐름: 작성 → "저장" → (저장되면) "보내기" 섹션에서 전달 링크 발급 → URL 복사 → 전달.
 
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLetterDraft, ParagraphEditor } from '@/features/compose';
 import { TemplatePicker, TemplatePreview, DEFAULT_TEMPLATE_ID } from '@/features/templates';
 import { LinkManager } from '@/features/delivery';
+import { SendToConnection } from '@/features/connections';
 import styles from './Create.module.css';
+
+// 보내기 방식 — 'link'는 연결 안 된 사람용 전달 링크, 'connection'은 연결된 사람 직접 발송.
+type SendMode = 'link' | 'connection';
 
 export default function Create(): React.ReactElement {
   const { id } = useParams<{ id?: string }>();
+  const [sendMode, setSendMode] = useState<SendMode>('link');
   const {
     draft,
     isSaving,
@@ -105,11 +111,44 @@ export default function Create(): React.ReactElement {
         <h2 className={styles.sectionHeading}>보내기</h2>
         {draft.letterId ? (
           <>
-            <p className={styles.sectionDesc}>
-              전달 링크를 만들어 수신자에게 보내세요. 암호는 기본으로 켜져 있고, 링크를 연 첫
-              기기에 귀속됩니다.
-            </p>
-            <LinkManager letterId={draft.letterId} />
+            {/* 보내기 방식 탭 — 연결 안 된 사람(링크) vs 연결된 사람(직접 발송) */}
+            <div className={styles.sendTabs} role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={sendMode === 'link'}
+                className={`${styles.sendTab} ${sendMode === 'link' ? styles.sendTabActive : ''}`}
+                onClick={() => setSendMode('link')}
+              >
+                전달 링크
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={sendMode === 'connection'}
+                className={`${styles.sendTab} ${sendMode === 'connection' ? styles.sendTabActive : ''}`}
+                onClick={() => setSendMode('connection')}
+              >
+                연결된 사람에게 보내기
+              </button>
+            </div>
+
+            {sendMode === 'link' ? (
+              <>
+                <p className={styles.sectionDesc}>
+                  전달 링크를 만들어 수신자에게 보내세요. 암호는 기본으로 켜져 있고, 링크를 연 첫
+                  기기에 귀속됩니다.
+                </p>
+                <LinkManager letterId={draft.letterId} />
+              </>
+            ) : (
+              <>
+                <p className={styles.sectionDesc}>
+                  연결된 사람을 골라 링크 없이 바로 받은 편지함으로 보낼 수 있어요.
+                </p>
+                <SendToConnection letterId={draft.letterId} />
+              </>
+            )}
           </>
         ) : (
           <p className={styles.sendHint}>

@@ -183,3 +183,35 @@
   border-radius: 10px;
   line-height: 1.6;
 }
+
+/* 보내기 방식 탭 — 전달 링크 / 연결된 사람 */
+.sendTabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #f3f0ea;
+  border-radius: 10px;
+}
+
+.sendTab {
+  flex: 1;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: #6b5d44;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sendTab:hover {
+  color: #2c2416;
+}
+
+.sendTabActive {
+  background: #fff;
+  color: #2c2416;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}

@@ -1,0 +1,46 @@
+/* ConnectionList — 연결된 사람 목록(가로 칩 형태) */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.item {
+  margin: 0;
+  padding: 0;
+}
+
+.button {
+  padding: 0.5rem 1rem;
+  background: #fff;
+  border: 1px solid #ece8e0;
+  border-radius: 999px;
+  color: #2c2416;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.button:hover {
+  border-color: #8b6914;
+  background: #fcfaf5;
+}
+
+.empty {
+  margin: 0;
+  padding: 1rem 0;
+  color: #8a7a5e;
+  font-size: 0.9rem;
+}
+
+.error {
+  margin: 0;
+  padding: 1rem 0;
+  color: #b94040;
+  font-size: 0.9rem;
+}
