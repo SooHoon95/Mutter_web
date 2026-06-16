@@ -120,6 +120,7 @@ export class SyncEngine {
       if (firstIdx >= 0) {
         await this.switchToCue(this.cues[firstIdx], { autoplay: true });
         this.activeIndex = firstIdx;
+        this.onActiveChange?.(firstIdx); // 첫 단락 활성 표시(♪ 하이라이트)
       }
     } else {
       await this.activeSource.unlock();

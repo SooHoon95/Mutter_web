@@ -96,7 +96,10 @@ export class SoundCloudSource implements TrackSource {
     // 2) canonical embed URL iframe 생성·부착.
     const iframe = document.createElement('iframe');
     iframe.src = buildEmbedSrc(this.trackUrl);
-    iframe.allow = 'autoplay';
+    // SoundCloud 공식 embed와 동일하게 autoplay + encrypted-media를 모두 위임해야 한다.
+    // encrypted-media가 없으면 "Permissions policy violation"으로 위젯 재생이 막히고,
+    // 특히 사용자 제스처 밖(스크롤 전환)에서 트는 2번째 이후 트랙이 재생되지 않는다.
+    iframe.allow = 'autoplay; encrypted-media';
     iframe.style.width = '100%';
     iframe.style.border = '0';
     (this.options.container ?? document.body).appendChild(iframe);
