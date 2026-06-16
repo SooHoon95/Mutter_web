@@ -34,20 +34,6 @@ export default function Create(): React.ReactElement {
     <main className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.heading}>편지 쓰기</h1>
-        <div className={styles.headerActions}>
-          {isSaving && <span className={styles.savingBadge}>저장 중…</span>}
-          {draft.letterId && !isSaving && (
-            <span className={styles.savedBadge}>저장됨</span>
-          )}
-          <button
-            type="button"
-            className={styles.saveBtn}
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? '저장 중…' : draft.letterId ? '저장' : '저장하고 보내기 준비'}
-          </button>
-        </div>
       </div>
 
       {/* 저장 오류 표시 */}
@@ -96,6 +82,22 @@ export default function Create(): React.ReactElement {
           onCueChange={setCue}
           onAddParagraph={addParagraph}
         />
+      </section>
+
+      {/* 저장 — 작성 영역 맨 아래. 저장해야 아래 "보내기"에서 링크를 만들 수 있다. */}
+      <section className={styles.saveSection}>
+        <div className={styles.saveStatus}>
+          {isSaving && <span className={styles.savingBadge}>저장 중…</span>}
+          {draft.letterId && !isSaving && <span className={styles.savedBadge}>저장됨</span>}
+        </div>
+        <button
+          type="button"
+          className={styles.saveBtnLarge}
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? '저장 중…' : draft.letterId ? '저장하기' : '저장하고 보내기 준비'}
+        </button>
       </section>
 
       {/* 보내기 — 전달 링크 발급. 저장 후(letterId 존재)에만 노출. */}
