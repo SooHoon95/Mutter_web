@@ -6,7 +6,7 @@
 
 import { useParams } from 'react-router-dom';
 import { useLetterDraft, ParagraphEditor } from '@/features/compose';
-import { TemplatePicker, DEFAULT_TEMPLATE_ID } from '@/features/templates';
+import { TemplatePicker, TemplatePreview, DEFAULT_TEMPLATE_ID } from '@/features/templates';
 import { LinkManager } from '@/features/delivery';
 import styles from './Create.module.css';
 
@@ -60,6 +60,11 @@ export default function Create(): React.ReactElement {
       {/* 템플릿 선택 — T6 US-006 (이제 draft.templateId로 저장됨) */}
       <section className={styles.templateSection}>
         <TemplatePicker selectedId={draft.templateId} onSelect={setTemplateId} />
+        <TemplatePreview
+          templateId={draft.templateId}
+          title={draft.title}
+          sampleText={draft.paragraphs[0]?.text}
+        />
       </section>
 
       {/* 편지 제목 */}

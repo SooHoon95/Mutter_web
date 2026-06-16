@@ -1,0 +1,57 @@
+.frame {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.caption {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #555;
+}
+
+/* 편지지 — TemplateThemed가 --tpl-* 변수 + paper-texture 배경을 주입한다. */
+.paper {
+  border-radius: var(--tpl-border-radius, 12px);
+  border: 1px solid var(--tpl-border-color, #e5e5e5);
+  padding: 1.5rem 1.375rem;
+  min-height: 168px;
+  background-color: var(--tpl-bg, #faf8f3);
+  color: var(--tpl-fg, #2c2416);
+  background-size: cover;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.title {
+  font-family: var(--tpl-heading-font-family, inherit);
+  font-size: var(--tpl-heading-size, 1.25rem);
+  color: var(--tpl-fg, inherit);
+  margin: 0 0 0.75rem;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--tpl-border-color, rgba(0, 0, 0, 0.12));
+  margin: 0 0 0.75rem;
+}
+
+.body {
+  font-family: var(--tpl-font-family, inherit);
+  font-size: var(--tpl-font-size, 1rem);
+  line-height: var(--tpl-line-height, 1.8);
+  color: var(--tpl-fg, inherit);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  /* 미리보기는 5줄까지만 — 길면 잘라 깔끔하게 */
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

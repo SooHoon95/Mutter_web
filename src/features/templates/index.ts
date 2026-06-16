@@ -5,5 +5,6 @@ export { getAllTemplates, getTemplate, getDefaultTemplate, DEFAULT_TEMPLATE_ID }
 export type { Template, TemplateTheme } from './templates';
 export { TemplateThemed } from './TemplateThemed';
 export { TemplatePicker } from './TemplatePicker';
+export { TemplatePreview } from './TemplatePreview';
 export { Paginated } from './Paginated';
 export type { PaginatedParagraph } from './Paginated';
