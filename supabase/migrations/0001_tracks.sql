@@ -43,10 +43,7 @@ create policy "tracks: public read"
 -- anon/authenticated 역할의 insert/update/delete는 모두 거부(정책 없음 = 거부).
 
 comment on table public.tracks is
-  '큐레이션 CC0/RF 카탈로그. licenseGate.ts ingestion 통과분만 수록. ' ||
-  'KOMCA/FKMP 관리곡 배제(한국 인접권 미커버 위험). ' ||
-  'NC/ND 라이선스는 check 제약으로 DB 레벨 거부.';
+  '큐레이션 CC0/RF 카탈로그. licenseGate.ts ingestion 통과분만 수록. KOMCA/FKMP 관리곡 배제(한국 인접권 미커버 위험). NC/ND 라이선스는 check 제약으로 DB 레벨 거부.';
 
 comment on column public.tracks.provenance is
-  'jsonb: { sourceUrl, licenseName, licenseTextSnapshot, acquiredAt, author }. ' ||
-  '라이선스 텍스트 스냅샷 포함 — takedown 시 근거 자료.';
+  'jsonb: { sourceUrl, licenseName, licenseTextSnapshot, acquiredAt, author }. 라이선스 텍스트 스냅샷 포함 — takedown 시 근거 자료.';

@@ -10,9 +10,19 @@
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { getSupabase } from './supabase';
 
-/** 매직링크 발송. 이메일 입력 후 호출한다. */
+/**
+ * 매직링크 발송. 이메일 입력 후 호출한다.
+ * emailRedirectTo: 링크 클릭 후 현재 앱 origin으로 복귀(로컬·배포 자동 적응).
+ * 단, 이 origin이 Supabase 대시보드 Authentication → URL Configuration의
+ * Redirect URLs 허용목록에 등록돼 있어야 한다.
+ */
 export async function sendMagicLink(email: string): Promise<void> {
-  const { error } = await getSupabase().auth.signInWithOtp({ email });
+  const emailRedirectTo =
+    typeof window !== 'undefined' ? window.location.origin : undefined;
+  const { error } = await getSupabase().auth.signInWithOtp({
+    email,
+    options: emailRedirectTo ? { emailRedirectTo } : undefined,
+  });
   if (error) throw error;
 }
 

@@ -42,7 +42,9 @@ describe('sendMagicLink', () => {
     await sendMagicLink('user@example.com');
 
     expect(client.auth.signInWithOtp).toHaveBeenCalledOnce();
-    expect(client.auth.signInWithOtp).toHaveBeenCalledWith({ email: 'user@example.com' });
+    expect(client.auth.signInWithOtp).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'user@example.com' }),
+    );
   });
 
   it('Supabase 오류를 throw한다', async () => {
