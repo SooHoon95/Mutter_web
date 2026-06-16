@@ -33,6 +33,9 @@ export function AppShell({ children }: AppShellProps): ReactNode {
               <NavLink to="/sent" className="app-shell__navlink">
                 보낸 편지
               </NavLink>
+              <NavLink to="/people" className="app-shell__navlink">
+                주고받은
+              </NavLink>
               <NavLink to="/me" className="app-shell__navlink">
                 마이페이지
               </NavLink>

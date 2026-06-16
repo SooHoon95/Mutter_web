@@ -42,6 +42,10 @@ function Dashboard({ email }: { email: string }): React.ReactElement {
           <span className={styles.cardTitle}>받은 편지함</span>
           <span className={styles.cardDesc}>보관한 편지 다시 보기</span>
         </Link>
+        <Link className={styles.card} to="/people">
+          <span className={styles.cardTitle}>주고받은 편지</span>
+          <span className={styles.cardDesc}>상대별로 주고받은 편지 모아보기</span>
+        </Link>
         <Link className={styles.card} to="/me">
           <span className={styles.cardTitle}>마이페이지</span>
           <span className={styles.cardDesc}>프로필·계정 설정</span>

@@ -1,0 +1,30 @@
+/* People 라우트 — 주고받은 사람 페이지 레이아웃 */
+
+.page {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c2416;
+  margin: 0 0 1.5rem;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 1.5rem;
+  padding: 0.4rem 0.8rem;
+  background: none;
+  border: none;
+  color: #8b6914;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.back:hover {
+  text-decoration: underline;
+}

@@ -3,19 +3,41 @@
 
 import { useState, useEffect } from 'react';
 import { listMyLetters } from '../data/letters';
+import { getMySentWithRecipients } from '../data/threads';
+import type { SentWithRecipient } from '../data/threads';
 import type { Letter } from '../data/types';
 import { LinkManager } from '../features/delivery';
 
+/**
+ * letter_id별 수신자 닉네임 목록을 묶는다.
+ * 한 편지에 수신자가 여러 명일 수 있고(여러 행), recipient가 null인 행(아직 저장 전)은
+ * 수신자로 치지 않는다. 닉네임 미설정 수신자는 '알 수 없음'으로 표시한다.
+ */
+function groupRecipients(rows: SentWithRecipient[]): Map<string, string[]> {
+  const byLetter = new Map<string, string[]>();
+  for (const row of rows) {
+    if (row.recipientId === null) continue;
+    const names = byLetter.get(row.letterId) ?? [];
+    names.push(row.recipientNickname ?? '알 수 없음');
+    byLetter.set(row.letterId, names);
+  }
+  return byLetter;
+}
+
 export default function Sent() {
   const [letters, setLetters] = useState<Letter[]>([]);
+  const [recipients, setRecipients] = useState<Map<string, string[]>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    listMyLetters()
-      .then(setLetters)
+    Promise.all([listMyLetters(), getMySentWithRecipients()])
+      .then(([myLetters, sentRows]) => {
+        setLetters(myLetters);
+        setRecipients(groupRecipients(sentRows));
+      })
       .catch((err: unknown) =>
         setError(err instanceof Error ? err.message : '편지 목록 로드 실패'),
       )
@@ -71,6 +93,14 @@ export default function Sent() {
                   <strong style={{ fontSize: '1rem' }}>{letter.title || '(제목 없음)'}</strong>
                   <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary, #a1a1aa)', margin: '0.25rem 0 0' }}>
                     {new Date(letter.updatedAt).toLocaleString('ko-KR')}
+                  </p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary, #a1a1aa)', margin: '0.25rem 0 0' }}>
+                    {(() => {
+                      const names = recipients.get(letter.id);
+                      return names && names.length > 0
+                        ? `받은이: ${names.join(', ')}`
+                        : '아직 받은 사람 없음';
+                    })()}
                   </p>
                 </div>
                 <button

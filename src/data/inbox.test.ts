@@ -21,12 +21,16 @@ const sampleRows = [
     token: 'tok_abc',
     title: '첫 번째 편지',
     saved_at: '2026-06-16T00:00:00Z',
+    sender_id: 'sender-001',
+    sender_nickname: '보낸이일',
   },
   {
     letter_id: 'letter-002',
     token: 'tok_def',
     title: '두 번째 편지',
     saved_at: '2026-06-15T00:00:00Z',
+    sender_id: null,
+    sender_nickname: null,
   },
 ];
 
@@ -81,12 +85,16 @@ describe('getMyInbox', () => {
       token: 'tok_abc',
       title: '첫 번째 편지',
       savedAt: '2026-06-16T00:00:00Z',
+      senderId: 'sender-001',
+      senderNickname: '보낸이일',
     });
     expect(result[1]).toEqual({
       letterId: 'letter-002',
       token: 'tok_def',
       title: '두 번째 편지',
       savedAt: '2026-06-15T00:00:00Z',
+      senderId: null,
+      senderNickname: null,
     });
   });
 

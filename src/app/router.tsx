@@ -10,6 +10,7 @@ const Create = lazy(() => import('@/routes/Create'));
 const Sent = lazy(() => import('@/routes/Sent'));
 const MyPage = lazy(() => import('@/routes/MyPage'));
 const Inbox = lazy(() => import('@/routes/Inbox'));
+const People = lazy(() => import('@/routes/People')); // 주고받은 편지(상대별 스레드)
 const Viewer = lazy(() => import('@/routes/Viewer'));
 const Takedown = lazy(() => import('@/routes/Takedown'));
 const NotFound = lazy(() => import('@/routes/NotFound'));
@@ -50,6 +51,7 @@ export const router = createBrowserRouter([
   { path: '/create/:id', element: withProtectedCreatorShell(<Create />) },
   { path: '/sent', element: withProtectedCreatorShell(<Sent />) },
   { path: '/inbox', element: withProtectedCreatorShell(<Inbox />) },
+  { path: '/people', element: withProtectedCreatorShell(<People />) },
   { path: '/me', element: withProtectedCreatorShell(<MyPage />) },
   // ── 수신 경로 (셸 없음 — 무인증, 인코그니토 OK) ────────────────────────────
   // 토큰/암호/claim-bind로만 통제(T7/T8). RequireAuth 적용 절대 금지.

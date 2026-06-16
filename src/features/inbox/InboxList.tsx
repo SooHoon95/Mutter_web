@@ -41,6 +41,7 @@ export function InboxList(): React.ReactElement {
         <li key={item.letterId} className={styles.item}>
           <div className={styles.meta}>
             <p className={styles.title}>{item.title}</p>
+            <p className={styles.sender}>보낸이: {item.senderNickname ?? '알 수 없음'}</p>
             <p className={styles.savedAt}>{formatDate(item.savedAt)} 저장</p>
           </div>
           <Link to={`/l/${item.token}`} className={styles.openLink}>
