@@ -12,3 +12,4 @@ test-results
 .netlify
 .vite
 *.log
+.vercel
