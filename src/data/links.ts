@@ -127,10 +127,13 @@ export async function issueLink(letterId: string, input: IssueLinkInput): Promis
     p_expires_at: input.expiresAt ?? null,
   });
 
-  if (error) throw error;
+  // Supabase 에러는 Error 인스턴스가 아닐 수 있어 message를 살려 던진다(UI에 실제 사유 노출).
+  if (error) throw new Error(error.message || '링크 발급에 실패했습니다.');
 
-  // RPC가 발급된 링크 row를 반환한다 (issue_link SQL 참조)
-  const row = data as DeliveryLinkRow;
+  // issue_link는 `returns setof`이므로 data는 배열이다. 첫 행을 취한다.
+  const rows = (Array.isArray(data) ? data : [data]) as DeliveryLinkRow[];
+  const row = rows[0];
+  if (!row || !row.token) throw new Error('링크 발급 응답이 비어 있습니다.');
   return rowToLink(row);
 }
 
