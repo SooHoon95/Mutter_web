@@ -36,13 +36,22 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
   useEffect(() => {
     // onAuthStateChange는 마운트 시 즉시 INITIAL_SESSION 이벤트로 현재 세션을 반환한다.
     // 따라서 별도 getCurrentSession() 호출 없이 이 구독으로 초기 로딩을 처리할 수 있다.
-    const unsubscribe = onAuthChange((_event, s) => {
-      setSession(s);
+    let unsubscribe = (): void => {};
+    try {
+      unsubscribe = onAuthChange((_event, s) => {
+        setSession(s);
+        setLoading(false);
+      });
+    } catch (err) {
+      // Supabase 환경변수 누락/초기화 실패 시에도 앱은 반드시 렌더돼야 한다.
+      // 랜딩·수신(/l/:token)·법적 채널은 인증이 필요 없으므로 비로그인 상태로 진행한다.
+      // (이 가드가 없으면 env 누락 시 앱 전체가 흰 화면으로 죽는다.)
+      console.error('[AuthProvider] 인증 초기화 실패 — 비로그인 상태로 진행:', err);
       setLoading(false);
-    });
+    }
 
     // 구독 정리 — 컴포넌트 언마운트 시 메모리 누수 방지
-    return unsubscribe;
+    return () => unsubscribe();
   }, []);
 
   const value: AuthContextValue = {
