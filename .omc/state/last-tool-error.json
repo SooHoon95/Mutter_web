@@ -1,7 +1,7 @@
 {
-  "tool_name": "mcp__plugin_oh-my-claudecode_t__lsp_diagnostics",
-  "tool_input_preview": "{\"file\":\"/Users/choesuhun/Desktop/Code/letter-app/src/routes/Viewer.tsx\"}",
-  "error": "Language server 'typescript-language-server' not found.\nInstall with: npm install -g typescript-language-server typescript",
-  "timestamp": "2026-06-15T16:27:14.384Z",
-  "retry_count": 4
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"sleep 8; cat /private/tmp/claude-501/-Users-choesuhun-Desktop-Code/fe095495-4484-4bc2-add3-a4a6605c5f4c/tasks/bdtre25ug.output 2>/dev/null | tail -5; echo \\\"---재확인---\\\"; (npx --yes vercel ...",
+  "error": "Exit code 143\nCommand timed out after 1m 0s\n=== vercel whoami (명확) ===\n---재확인---",
+  "timestamp": "2026-06-16T11:49:08.816Z",
+  "retry_count": 1
 }

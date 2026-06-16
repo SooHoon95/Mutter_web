@@ -1,0 +1,189 @@
+/* MyPageView — 마이페이지 UI. */
+/* 기능 우선 최소 스타일. T6 테마에서 스킨 예정. */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 20px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.5;
+}
+
+.value {
+  font-size: 1rem;
+  word-break: break-all;
+}
+
+.nicknameRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: transparent;
+  outline: none;
+  min-width: 0;
+}
+
+.input:focus {
+  border-color: #1a1a1a;
+}
+
+.btnSave {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: #1a1a1a;
+  color: #f5f5f5;
+  font-size: 0.875rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.btnSave:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btnSave:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #e8e8e8;
+  margin: 4px 0;
+}
+
+.btnLogout {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid #d0d0d0;
+  background: transparent;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background 0.1s;
+  text-align: center;
+}
+
+.btnLogout:hover {
+  background: #f5f5f5;
+}
+
+.btnDelete {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid #d44;
+  background: transparent;
+  color: #c33;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background 0.1s;
+  text-align: center;
+}
+
+.btnDelete:hover {
+  background: #fff0f0;
+}
+
+.btnDelete:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.errorMsg {
+  font-size: 0.875rem;
+  color: #c33;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.modalCard {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px 24px;
+  max-width: 360px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modalTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modalBody {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btnCancel {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #d0d0d0;
+  background: transparent;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.btnConfirmDelete {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: #c33;
+  color: #fff;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btnConfirmDelete:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btnConfirmDelete:hover:not(:disabled) {
+  opacity: 0.85;
+}

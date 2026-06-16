@@ -12,7 +12,7 @@ vi.mock('./supabase', () => ({
 }));
 
 import { getSupabase } from './supabase';
-import { sendMagicLink, signOut, getCurrentSession, onAuthChange } from './auth';
+import { sendMagicLink, signOut, getCurrentSession, onAuthChange, signInWithProvider } from './auth';
 
 const mockGetSupabase = vi.mocked(getSupabase);
 
@@ -20,6 +20,7 @@ function makeClient(overrides: Record<string, unknown> = {}) {
   return {
     auth: {
       signInWithOtp: vi.fn().mockResolvedValue({ error: null }),
+      signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
       signOut: vi.fn().mockResolvedValue({ error: null }),
       getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
       onAuthStateChange: vi.fn().mockReturnValue({
@@ -128,5 +129,40 @@ describe('onAuthChange', () => {
     // cleanup 호출 시 subscription.unsubscribe()가 실행돼야 한다
     cleanup();
     expect(unsubscribeMock).toHaveBeenCalledOnce();
+  });
+});
+
+describe('signInWithProvider', () => {
+  it('google provider로 signInWithOAuth를 호출한다', async () => {
+    const client = makeClient();
+    mockGetSupabase.mockReturnValue(client as unknown as ReturnType<typeof getSupabase>);
+
+    await signInWithProvider('google');
+
+    expect(client.auth.signInWithOAuth).toHaveBeenCalledOnce();
+    expect(client.auth.signInWithOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: 'google' }),
+    );
+  });
+
+  it('kakao provider로 signInWithOAuth를 호출한다', async () => {
+    const client = makeClient();
+    mockGetSupabase.mockReturnValue(client as unknown as ReturnType<typeof getSupabase>);
+
+    await signInWithProvider('kakao');
+
+    expect(client.auth.signInWithOAuth).toHaveBeenCalledOnce();
+    expect(client.auth.signInWithOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: 'kakao' }),
+    );
+  });
+
+  it('Supabase 오류를 throw한다', async () => {
+    const client = makeClient({
+      signInWithOAuth: vi.fn().mockResolvedValue({ error: new Error('provider error') }),
+    });
+    mockGetSupabase.mockReturnValue(client as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(signInWithProvider('google')).rejects.toThrow('provider error');
   });
 });

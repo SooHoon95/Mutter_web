@@ -61,5 +61,5 @@ export default function Viewer(): React.ReactElement {
     );
   }
 
-  return <LetterView letter={letter} />;
+  return <LetterView letter={letter} token={token} />;
 }

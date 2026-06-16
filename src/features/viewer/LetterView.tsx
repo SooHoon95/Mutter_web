@@ -16,6 +16,7 @@
 import { useMemo, useRef, useState, createRef } from 'react';
 import { TemplateThemed, Paginated, type PaginatedParagraph } from '@/features/templates';
 import { useScrollSync } from '@/features/music';
+import { SaveToInboxButton } from '@/features/inbox';
 import type { ViewerLetter } from './useLetterViewer';
 import { createFallbackSourceFactory } from './fallbackSourceFactory';
 import { AudioUnlockGate } from './AudioUnlockGate';
@@ -25,9 +26,11 @@ import styles from './LetterView.module.css';
 
 interface LetterViewProps {
   letter: ViewerLetter;
+  /** 수신 토큰 — 로그인 수신자가 받은 편지함에 저장할 때 사용. */
+  token?: string;
 }
 
-export function LetterView({ letter }: LetterViewProps): React.ReactElement {
+export function LetterView({ letter, token }: LetterViewProps): React.ReactElement {
   const { title, templateId, paragraphs, cues, audioDisabled } = letter;
 
   // 게이트 통과(언락) 여부. 통과 전엔 게이트가 본문을 덮는다(오디오 façade).
@@ -95,6 +98,9 @@ export function LetterView({ letter }: LetterViewProps): React.ReactElement {
 
       {/* CC-BY 크레딧 — 미렌더 시 침해(license-compliance). 본문 하단에 항상 표기. */}
       <Credits cues={cues} />
+
+      {/* 로그인한 수신자에게만 보이는 받은 편지함 저장 버튼. 비로그인 시 null 반환(무마찰 유지). */}
+      {token !== undefined && <SaveToInboxButton token={token} />}
 
       {/* T9: 저작권 신고 링크 + 이용 약관 (수신 뷰 하단) */}
       <Footer />

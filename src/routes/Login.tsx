@@ -14,7 +14,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { sendMagicLink } from '@/data/auth';
+import { sendMagicLink, signInWithProvider } from '@/data/auth';
 import { useAuth } from '@/app/AuthProvider';
 import styles from './Login.module.css';
 
@@ -32,6 +32,20 @@ export default function Login(): React.ReactNode {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [socialLoading, setSocialLoading] = useState<'google' | 'kakao' | null>(null);
+
+  async function handleSocialLogin(provider: 'google' | 'kakao'): Promise<void> {
+    setError(null);
+    setSocialLoading(provider);
+    try {
+      await signInWithProvider(provider);
+      // 리다이렉트가 발생하므로 이후 코드는 실행되지 않는다
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '소셜 로그인에 실패했습니다.';
+      setError(message);
+      setSocialLoading(null);
+    }
+  }
 
   // 이미 로그인된 상태라면 원래 경로 또는 '/'으로 이동
   useEffect(() => {
@@ -78,6 +92,31 @@ export default function Login(): React.ReactNode {
       <div className={styles.card}>
         <h1 className={styles.title}>편지 쓰기</h1>
         <p className={styles.subtitle}>이메일로 로그인 링크를 보내드립니다.</p>
+
+        <div className={styles.socialButtons}>
+          <button
+            className={styles.socialButtonGoogle}
+            type="button"
+            disabled={socialLoading !== null}
+            aria-label="Google로 계속하기"
+            onClick={() => void handleSocialLogin('google')}
+          >
+            {socialLoading === 'google' ? '연결 중…' : 'Google로 계속하기'}
+          </button>
+          <button
+            className={styles.socialButtonKakao}
+            type="button"
+            disabled={socialLoading !== null}
+            aria-label="Kakao로 계속하기"
+            onClick={() => void handleSocialLogin('kakao')}
+          >
+            {socialLoading === 'kakao' ? '연결 중…' : 'Kakao로 계속하기'}
+          </button>
+        </div>
+
+        <div className={styles.divider} aria-hidden="true">
+          <span className={styles.dividerText}>또는</span>
+        </div>
 
         <form className={styles.form} onSubmit={(e) => void handleSubmit(e)}>
           <label className={styles.label} htmlFor="email">

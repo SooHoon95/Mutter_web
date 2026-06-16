@@ -1,0 +1,40 @@
+/* SaveToInboxButton — 받은 편지함 저장 버튼 */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border: 1.5px solid var(--tpl-accent, #8b6914);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tpl-accent, #8b6914);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--tpl-accent, #8b6914);
+  color: #fff;
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: var(--tpl-muted, #8a7a5e);
+}
+
+.wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0 0.5rem;
+}

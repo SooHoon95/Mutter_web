@@ -1,16 +1,14 @@
 /**
  * src/components/AppShell.tsx
  *
- * 제작자 전용 앱 셸 레이아웃.
- * Landing, Login, Create, Sent 등 인증이 필요한(또는 제작 흐름의) 라우트만 사용한다.
+ * 제작자 전용 앱 셸 레이아웃 + 인증 인지 네비게이션.
+ * Home(랜딩/대시보드), Login, Create, Sent, Inbox, MyPage 등 제작 흐름 라우트가 사용한다.
  *
- * 수신 라우트(/l/:token)와 takedown 라우트는 이 셸을 사용하지 않는다.
- * 수신자가 인코그니토에서 편지를 열 때 제작 전용 헤더/네비가 렌더되면 안 된다.
- *
- * 디자인(템플릿·타이포)은 T6(US-006)에서 구체화한다.
- * 여기서는 라우트 분기와 컨테이너 구조만 확립한다.
+ * 수신 라우트(/l/:token)와 takedown 라우트는 이 셸을 쓰지 않는다(수신자에게 제작 UI 비노출).
  */
 import type { ReactNode } from 'react';
+import { NavLink } from 'react-router-dom';
+import { useAuth } from '@/app/AuthProvider';
 import { Footer } from './Footer';
 
 interface AppShellProps {
@@ -18,16 +16,36 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps): ReactNode {
+  const { session, loading } = useAuth();
+
   return (
     <div className="app-shell">
-      {/* 제작 전용 헤더 — T6에서 브랜드/네비 구체화 */}
       <header className="app-shell__header">
-        <a className="app-shell__logo" href="/">
+        <NavLink className="app-shell__logo" to="/">
           편지
-        </a>
+        </NavLink>
+        <nav className="app-shell__nav" aria-label="주요 메뉴">
+          {!loading && session && (
+            <>
+              <NavLink to="/inbox" className="app-shell__navlink">
+                받은 편지함
+              </NavLink>
+              <NavLink to="/sent" className="app-shell__navlink">
+                보낸 편지
+              </NavLink>
+              <NavLink to="/me" className="app-shell__navlink">
+                마이페이지
+              </NavLink>
+            </>
+          )}
+          {!loading && !session && (
+            <NavLink to="/login" className="app-shell__navlink">
+              로그인
+            </NavLink>
+          )}
+        </nav>
       </header>
       <div className="app-shell__content">{children}</div>
-      {/* T9: 저작권 신고 링크 + 이용 약관 (license-compliance) */}
       <Footer />
     </div>
   );

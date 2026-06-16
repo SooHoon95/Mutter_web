@@ -50,3 +50,18 @@ export function onAuthChange(
   // Supabase v2: data.subscription.unsubscribe()로 정리
   return () => data.subscription.unsubscribe();
 }
+
+/**
+ * 소셜 OAuth 로그인. Google 또는 Kakao 제공자로 리다이렉트한다.
+ *
+ * 주의: 실제 동작을 위해 Supabase 대시보드 Authentication → Providers에서
+ * Google/Kakao client id·secret을 각각 등록해야 한다.
+ * redirectTo: OAuth 완료 후 현재 앱 origin으로 복귀(로컬·배포 자동 적응).
+ */
+export async function signInWithProvider(provider: 'google' | 'kakao'): Promise<void> {
+  const { error } = await getSupabase().auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: window.location.origin },
+  });
+  if (error) throw error;
+}
