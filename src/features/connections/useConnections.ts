@@ -1,10 +1,11 @@
-// useConnections — 특정 사람과의 연결 react-query hooks.
-// 연결 목록 조회(getMyConnections) + 초대 생성/수락/직접 발송 뮤테이션을 제공한다.
+// useConnections — 독점 1:1 연결 react-query hooks.
+// 연결 목록 조회(getMyConnections) + 초대 생성/수락/해제/직접 발송 뮤테이션을 제공한다.
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   createInvite,
   acceptInvite,
+  disconnect,
   getMyConnections,
   sendToConnection,
 } from '@/data/connections';
@@ -20,11 +21,13 @@ interface UseConnectionsReturn {
   isCreatingInvite: boolean;
   acceptInvite: (token: string) => Promise<void>;
   isAccepting: boolean;
+  disconnect: () => Promise<void>;
+  isDisconnecting: boolean;
   sendToConnection: (letterId: string, recipientId: string) => Promise<void>;
   isSending: boolean;
 }
 
-/** 연결 목록 조회 + 초대/수락/직접 발송 뮤테이션 */
+/** 연결 목록 조회 + 초대/수락/해제/직접 발송 뮤테이션 */
 export function useConnections(): UseConnectionsReturn {
   const queryClient = useQueryClient();
 
@@ -47,6 +50,12 @@ export function useConnections(): UseConnectionsReturn {
     onSuccess: invalidate,
   });
 
+  const disconnectMutation = useMutation<void, Error, void>({
+    mutationFn: disconnect,
+    // 해제 성공 → 연결 목록을 비운다(invalidate로 재조회).
+    onSuccess: invalidate,
+  });
+
   const sendMutation = useMutation<void, Error, { letterId: string; recipientId: string }>({
     mutationFn: ({ letterId, recipientId }) => sendToConnection(letterId, recipientId),
   });
@@ -59,6 +68,8 @@ export function useConnections(): UseConnectionsReturn {
     isCreatingInvite: createInviteMutation.isPending,
     acceptInvite: acceptMutation.mutateAsync,
     isAccepting: acceptMutation.isPending,
+    disconnect: disconnectMutation.mutateAsync,
+    isDisconnecting: disconnectMutation.isPending,
     sendToConnection: (letterId, recipientId) =>
       sendMutation.mutateAsync({ letterId, recipientId }),
     isSending: sendMutation.isPending,

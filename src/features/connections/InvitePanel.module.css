@@ -81,3 +81,34 @@
   font-size: 0.8125rem;
   color: #b94040;
 }
+
+/* 연결 해제 버튼 — 연결된 상태일 때만 노출 */
+.disconnectBtn {
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  border: 1.5px solid #b94040;
+  border-radius: 8px;
+  background: none;
+  color: #b94040;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.disconnectBtn:hover:not(:disabled) {
+  background: #b94040;
+  color: #fff;
+}
+
+.disconnectBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* 연결 해제 후 편지 보존 안내 */
+.hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #8a7a5e;
+}

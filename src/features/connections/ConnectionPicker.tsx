@@ -28,7 +28,7 @@ export function ConnectionPicker({
   if (connections.length === 0) {
     return (
       <p className={styles.empty}>
-        아직 연결된 사람이 없어요 — 연결 초대를 보내보세요.
+        연결된 사람이 없어요 — 먼저 연결하세요.
       </p>
     );
   }

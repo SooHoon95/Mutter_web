@@ -22,6 +22,7 @@ import {
   acceptInvite,
   getMyConnections,
   sendToConnection,
+  disconnect,
 } from './connections';
 
 const mockGetSupabase = vi.mocked(getSupabase);
@@ -31,12 +32,15 @@ const mockGenerateToken = vi.mocked(generateToken);
 // RPC 응답 샘플
 // ---------------------------------------------------------------------------
 
+// 독점 1:1 필드(viewer_has_connection, inviter_has_connection) 포함
 const inviteRows = [
   {
     inviter_id: 'user-001',
     inviter_nickname: '초대한사람',
     is_self: false,
     already_connected: false,
+    viewer_has_connection: false,
+    inviter_has_connection: false,
   },
 ];
 
@@ -45,11 +49,6 @@ const connectionRows = [
     user_id: 'conn-001',
     nickname: '연결된사람',
     connected_at: '2026-06-16T00:00:00Z',
-  },
-  {
-    user_id: 'conn-002',
-    nickname: null,
-    connected_at: '2026-06-15T00:00:00Z',
   },
 ];
 
@@ -108,6 +107,8 @@ describe('getInvite', () => {
       inviterNickname: '초대한사람',
       isSelf: false,
       alreadyConnected: false,
+      viewerHasConnection: false,
+      inviterHasConnection: false,
     });
   });
 
@@ -117,6 +118,22 @@ describe('getInvite', () => {
 
     const result = await getInvite('tok_abc');
     expect(result.inviterId).toBe('user-001');
+    expect(result.viewerHasConnection).toBe(false);
+    expect(result.inviterHasConnection).toBe(false);
+  });
+
+  it('viewerHasConnection=true, inviterHasConnection=true인 행을 올바르게 매핑한다', async () => {
+    const blockedRow = {
+      ...inviteRows[0],
+      viewer_has_connection: true,
+      inviter_has_connection: true,
+    };
+    const mock = makeRpcMock({ data: [blockedRow], error: null });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    const result = await getInvite('tok_abc');
+    expect(result.viewerHasConnection).toBe(true);
+    expect(result.inviterHasConnection).toBe(true);
   });
 
   it('빈 결과면 throw한다', async () => {
@@ -145,9 +162,52 @@ describe('acceptInvite', () => {
     expect(mock.rpc).toHaveBeenCalledWith('accept_connect_invite', { p_token: 'tok_abc' });
   });
 
-  it('RPC 오류 시 throw한다', async () => {
-    const dbError = new Error('수락 실패');
-    const mock = makeRpcMock({ data: null, error: dbError });
+  it('ALREADY_CONNECTED_SELF 에러를 사용자 메시지로 정규화한다', async () => {
+    const mock = makeRpcMock({
+      data: null,
+      error: new Error('ALREADY_CONNECTED_SELF'),
+    });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(acceptInvite('tok_abc')).rejects.toThrow(
+      '이미 다른 사람과 연결돼 있어요. 연결을 해제한 뒤 다시 시도하세요.',
+    );
+  });
+
+  it('ALREADY_CONNECTED_OTHER 에러를 사용자 메시지로 정규화한다', async () => {
+    const mock = makeRpcMock({
+      data: null,
+      error: new Error('ALREADY_CONNECTED_OTHER'),
+    });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(acceptInvite('tok_abc')).rejects.toThrow(
+      '상대가 이미 다른 사람과 연결돼 있어요.',
+    );
+  });
+
+  it('CANNOT_CONNECT_SELF 에러를 사용자 메시지로 정규화한다', async () => {
+    const mock = makeRpcMock({
+      data: null,
+      error: new Error('CANNOT_CONNECT_SELF'),
+    });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(acceptInvite('tok_abc')).rejects.toThrow('본인은 연결할 수 없어요.');
+  });
+
+  it('INVITE_NOT_FOUND 에러를 사용자 메시지로 정규화한다', async () => {
+    const mock = makeRpcMock({
+      data: null,
+      error: new Error('INVITE_NOT_FOUND'),
+    });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(acceptInvite('tok_abc')).rejects.toThrow('초대를 찾을 수 없어요.');
+  });
+
+  it('알 수 없는 RPC 오류는 원본 메시지로 throw한다', async () => {
+    const mock = makeRpcMock({ data: null, error: new Error('수락 실패') });
     mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
 
     await expect(acceptInvite('tok_abc')).rejects.toThrow('수락 실패');
@@ -162,16 +222,11 @@ describe('getMyConnections', () => {
     const result = await getMyConnections();
 
     expect(mock.rpc).toHaveBeenCalledWith('get_my_connections');
-    expect(result).toHaveLength(2);
+    expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       userId: 'conn-001',
       nickname: '연결된사람',
       connectedAt: '2026-06-16T00:00:00Z',
-    });
-    expect(result[1]).toEqual({
-      userId: 'conn-002',
-      nickname: null,
-      connectedAt: '2026-06-15T00:00:00Z',
     });
   });
 
@@ -188,6 +243,25 @@ describe('getMyConnections', () => {
     mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
 
     await expect(getMyConnections()).rejects.toThrow('연결 목록 조회 실패');
+  });
+});
+
+describe('disconnect', () => {
+  it('disconnect_connection RPC를 호출한다', async () => {
+    const mock = makeRpcMock({ data: null, error: null });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    await disconnect();
+
+    expect(mock.rpc).toHaveBeenCalledWith('disconnect_connection');
+  });
+
+  it('RPC 오류 시 throw한다', async () => {
+    const dbError = new Error('연결 해제 실패');
+    const mock = makeRpcMock({ data: null, error: dbError });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(disconnect()).rejects.toThrow('연결 해제 실패');
   });
 });
 
