@@ -1,7 +1,0 @@
-{
-  "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"/Users/choesuhun/Desktop/Code/letter-app/src/features/delivery\"}",
-  "error": "EISDIR: illegal operation on a directory, read '/Users/choesuhun/Desktop/Code/letter-app/src/features/delivery'",
-  "timestamp": "2026-06-16T23:17:44.084Z",
-  "retry_count": 2
-}

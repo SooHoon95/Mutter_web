@@ -13,3 +13,14 @@ test-results
 .vite
 *.log
 .vercel
+
+# 로컬 툴 상태(oh-my-claudecode) — 버전관리 불필요(노이즈)
+.omc/
+
+# 보안: 키·인증서·시크릿류 (절대 커밋 금지)
+*.pem
+*.key
+*.p8
+*.p12
+secrets.*
+*.secret
