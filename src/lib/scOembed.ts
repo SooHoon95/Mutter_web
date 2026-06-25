@@ -13,7 +13,8 @@ export interface ScValidationOk {
 /** 검증 실패 결과와 거부 사유 */
 export interface ScValidationFail {
   ok: false;
-  reason: 'non-200' | 'embed-disabled' | 'private' | 'geo' | 'invalid-url' | 'network';
+  // 'geo'는 두지 않는다 — SC는 지역 제한도 403으로 응답하므로 401/403은 모두 'private'로 통합한다.
+  reason: 'non-200' | 'embed-disabled' | 'private' | 'invalid-url' | 'network';
 }
 
 export type ScValidation = ScValidationOk | ScValidationFail;
@@ -79,10 +80,9 @@ function isEmbedDisabled(data: ScOembedResponse): boolean {
  * 거부 사유:
  * - invalid-url: soundcloud.com 호스트가 아닌 URL
  * - network: fetch 자체 실패(오프라인, DNS 불가)
- * - private: 401 / 403 — 비공개 트랙
+ * - private: 401 / 403 — 비공개 트랙 또는 지역 제한(SC는 둘 다 403으로 응답하므로 구분 불가, private로 통합)
  * - non-200: 404 등 — 존재하지 않거나 삭제된 트랙
  * - embed-disabled: 200이지만 embed html이 비어 있음
- * - geo: 지역 제한 (SC는 geo 제한 시 403 또는 특정 메시지 반환; 현재 403→private로 분류)
  */
 export async function validateScUrl(
   url: string,

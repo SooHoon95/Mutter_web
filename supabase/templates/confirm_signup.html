@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+  <body style="margin:0;background:#faf7f0;font-family:-apple-system,'Apple SD Gothic Neo',Segoe UI,Roboto,sans-serif;color:#221d14;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7f0;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:420px;background:#ffffff;border:1px solid rgba(70,55,20,0.1);border-radius:20px;padding:32px 28px;">
+            <tr>
+              <td style="font-size:20px;font-weight:700;color:#221d14;padding-bottom:8px;">회원가입 인증</td>
+            </tr>
+            <tr>
+              <td style="font-size:14px;line-height:1.6;color:#6e6555;padding-bottom:20px;">
+                아래 6자리 코드를 가입 화면에 입력하면 가입이 완료됩니다.
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:8px 0 20px;">
+                <div style="display:inline-block;font-size:34px;font-weight:800;letter-spacing:10px;color:#221d14;background:#f1e6c6;border:1px solid rgba(198,161,58,0.4);border-radius:14px;padding:16px 24px;">
+                  {{ .Token }}
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size:12px;line-height:1.6;color:#9a8f78;padding-bottom:20px;">
+                코드는 1시간 동안 유효합니다. 본인이 요청하지 않았다면 이 메일을 무시하세요.
+              </td>
+            </tr>
+            <tr>
+              <td style="border-top:1px solid rgba(70,55,20,0.1);padding-top:18px;font-size:13px;line-height:1.6;color:#6e6555;">
+                또는 이 링크로도 인증할 수 있어요:<br />
+                <a href="{{ .ConfirmationURL }}" style="color:#a4842a;font-weight:600;word-break:break-all;">가입 인증 링크 열기</a>
+              </td>
+            </tr>
+          </table>
+          <div style="font-size:11px;color:#9a8f78;padding-top:16px;">연출되는 편지 · mutter</div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

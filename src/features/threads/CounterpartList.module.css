@@ -21,40 +21,40 @@
   align-items: flex-start;
   gap: 0.25rem;
   padding: 1rem 1.25rem;
-  background: #fff;
-  border: 1px solid #ece8e0;
-  border-radius: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
   text-align: left;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
 
 .button:hover {
-  border-color: #8b6914;
-  background: #fcfaf5;
+  border-color: var(--text-brand);
+  background: var(--bg-secondary);
 }
 
 .nickname {
   font-size: 1rem;
   font-weight: 500;
-  color: #2c2416;
+  color: var(--text-primary);
 }
 
 .meta {
   font-size: 0.8rem;
-  color: #8a7a5e;
+  color: var(--text-tertiary);
 }
 
 .empty {
   padding: 3rem 1rem;
   text-align: center;
-  color: #8a7a5e;
+  color: var(--text-tertiary);
   font-size: 0.95rem;
 }
 
 .error {
   padding: 2rem 1rem;
   text-align: center;
-  color: #b94040;
+  color: var(--text-error);
   font-size: 0.95rem;
 }

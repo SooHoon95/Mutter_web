@@ -4,8 +4,9 @@ import { stubGetLetterByToken } from './helpers/mocks';
 // 베이스라인 스모크. T10(US-010)에서 happy/불행 경로 시나리오로 확장한다.
 test('랜딩이 렌더되고 편지 쓰기 CTA가 보인다', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: '연출되는 편지' })).toBeVisible();
-  await expect(page.getByRole('link', { name: '편지 쓰기' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /음악 한 곡/ })).toBeVisible();
+  // 히어로 + 최종 CTA 둘 다 "편지 쓰기"를 포함하므로 첫 번째(히어로)로 특정한다.
+  await expect(page.getByRole('link', { name: '편지 쓰기' }).first()).toBeVisible();
 });
 
 test('수신 라우트는 무인증으로 열린다(인코그니토 컨텍스트)', async ({ page }) => {

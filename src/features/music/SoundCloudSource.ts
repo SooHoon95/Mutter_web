@@ -44,6 +44,25 @@ export function buildEmbedSrc(trackUrl: string): string {
 // 동적 스크립트 로드는 한 번만 — 동시 호출이 와도 같은 Promise를 공유한다.
 let apiLoadPromise: Promise<void> | null = null;
 
+// viewer가 등록하는 iframe 부착 호스트(전역 기본값).
+// iOS PWA 풀스크린에서 iframe이 document.body 직속에 붙으면 Widget postMessage 채널이
+// 끊겨 무음이 되는 사례가 있어, viewer가 "본문 안에 있지만 시각적으로 숨긴" 호스트를
+// 등록하고 모든 SC iframe이 그 안에 mount되도록 한다(SoundCloudSourceOptions.container 미지정 시).
+let defaultContainer: HTMLElement | null = null;
+
+/**
+ * viewer가 SC iframe을 붙일 기본 컨테이너를 등록한다.
+ * unmount 시 null로 해제해 떠도는 참조를 남기지 않는다.
+ * options.container를 명시하면 그 값이 우선한다(테스트·특수 케이스).
+ */
+export function setSoundCloudContainer(el: HTMLElement | null): void {
+  defaultContainer = el;
+}
+
+// READY 이벤트가 끝내 오지 않을 때(SC 장애·차단) load()가 영원히 매달리는 것을 막는 상한.
+// 이 시간 안에 READY가 없으면 load()를 reject → FallbackTrackSource가 CC0로 전환한다(무음0).
+const READY_TIMEOUT_MS = 8000;
+
 function loadWidgetApi(): Promise<void> {
   if (typeof window !== 'undefined' && window.SC) return Promise.resolve();
   if (apiLoadPromise) return apiLoadPromise;
@@ -64,10 +83,15 @@ function loadWidgetApi(): Promise<void> {
 
 /** 테스트·환경 주입용 옵션. iframe 부착 컨테이너와 위젯 팩토리를 교체할 수 있다. */
 export interface SoundCloudSourceOptions {
-  /** iframe을 붙일 컨테이너(기본: document.body). viewer는 nowplaying 바를 넘긴다. */
+  /**
+   * iframe을 붙일 컨테이너. 미지정 시 viewer가 등록한 기본 컨테이너
+   * (setSoundCloudContainer)를 쓰고, 그조차 없으면 최후에 document.body로 폴백한다.
+   */
   container?: HTMLElement;
   /** SC.Widget(iframe) 대체. 미지정 시 동적 로드된 window.SC.Widget 사용. */
   widgetFactory?: (iframe: HTMLIFrameElement) => SCWidget;
+  /** READY 대기 상한(ms). 테스트에서 짧게 주입. 기본 READY_TIMEOUT_MS. */
+  readyTimeoutMs?: number;
 }
 
 export class SoundCloudSource implements TrackSource {
@@ -102,7 +126,9 @@ export class SoundCloudSource implements TrackSource {
     iframe.allow = 'autoplay; encrypted-media';
     iframe.style.width = '100%';
     iframe.style.border = '0';
-    (this.options.container ?? document.body).appendChild(iframe);
+    // 컨테이너 우선순위: 명시 옵션 > viewer 등록 기본값 > document.body 최후 폴백.
+    const host = this.options.container ?? defaultContainer ?? document.body;
+    host.appendChild(iframe);
     this.iframe = iframe;
 
     // 3) 위젯 핸들 생성.
@@ -110,11 +136,34 @@ export class SoundCloudSource implements TrackSource {
     this.widget = widget;
 
     // 4) READY를 기다려 이벤트 바인딩을 끝낸다(이후 seekTo/setVolume 안전).
-    await new Promise<void>((resolve) => {
+    //    - ERROR(삭제·geo·embed-disabled)면 즉시 reject → FallbackTrackSource가 CC0로 전환.
+    //    - READY가 끝내 안 오면(SC 장애·차단) 타임아웃으로 reject → 무음0 폴백 발동.
+    const timeoutMs = this.options.readyTimeoutMs ?? READY_TIMEOUT_MS;
+    await new Promise<void>((resolve, reject) => {
       const events = this.scEvents();
+      let settled = false;
+
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        reject(new Error('[SoundCloudSource] READY 타임아웃 — SC 장애/차단 의심'));
+      }, timeoutMs);
+
       widget.bind(events.READY, () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
         this.bindWidgetEvents(widget);
         resolve();
+      });
+
+      // ERROR가 READY 전에 오면 로드 실패로 간주(폴백 트리거). READY 후 ERROR는
+      // bindWidgetEvents에서 재바인딩되어 재생 중 실패도 감지한다.
+      widget.bind(events.ERROR, () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(new Error('[SoundCloudSource] Widget ERROR — 트랙 재생 불가(삭제/geo/embed-disabled)'));
       });
     });
   }
@@ -165,6 +214,7 @@ export class SoundCloudSource implements TrackSource {
       this.widget.unbind(events.PLAY_PROGRESS);
       this.widget.unbind(events.FINISH);
       this.widget.unbind(events.READY);
+      this.widget.unbind(events.ERROR);
     }
     this.progressCbs.clear();
     this.finishCbs.clear();
@@ -205,6 +255,11 @@ export class SoundCloudSource implements TrackSource {
       for (const cb of this.progressCbs) cb(ms);
     });
     widget.bind(events.FINISH, () => {
+      for (const cb of this.finishCbs) cb();
+    });
+    // READY 이후의 ERROR(재생 중 트랙 삭제·geo 차단 등). load는 이미 성공했으므로
+    // CC0 재폴백은 불가하지만, finish로 surface해 "재생 중" UI가 무음을 가리지 않게 한다.
+    widget.bind(events.ERROR, () => {
       for (const cb of this.finishCbs) cb();
     });
   }

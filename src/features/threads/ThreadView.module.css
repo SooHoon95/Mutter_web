@@ -1,5 +1,28 @@
 /* ThreadView — 특정 상대와 주고받은 편지 스레드 */
 
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 0019 답장 플로우: 상단 "답장 쓰기" CTA(골드 채움). */
+.replyAction {
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.replyAction:hover {
+  opacity: 0.88;
+}
+
 .list {
   list-style: none;
   margin: 0;
@@ -14,9 +37,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  background: #fff;
-  border: 1px solid #ece8e0;
-  border-radius: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
   gap: 1rem;
 }
 
@@ -31,25 +54,25 @@
 .badge {
   flex-shrink: 0;
   padding: 0.15rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   font-size: 0.75rem;
   font-weight: 600;
 }
 
 .badgeSent {
-  background: #e8f0e8;
-  color: #3a6b3a;
+  background: var(--success-50);
+  color: var(--success-700);
 }
 
 .badgeReceived {
-  background: #f3ecdc;
-  color: #8b6914;
+  background: var(--brand-100);
+  color: var(--text-brand);
 }
 
 .title {
   font-size: 1rem;
   font-weight: 500;
-  color: #2c2416;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -57,35 +80,35 @@
 
 .date {
   font-size: 0.8rem;
-  color: #8a7a5e;
+  color: var(--text-tertiary);
 }
 
 .openLink {
   flex-shrink: 0;
   padding: 0.4rem 0.8rem;
-  border: 1.5px solid #8b6914;
-  border-radius: 6px;
-  color: #8b6914;
+  border: 1.5px solid var(--border-brand);
+  border-radius: var(--radius-sm);
+  color: var(--text-brand);
   font-size: 0.875rem;
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
 
 .openLink:hover {
-  background: #8b6914;
-  color: #fff;
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
 }
 
 .empty {
   padding: 3rem 1rem;
   text-align: center;
-  color: #8a7a5e;
+  color: var(--text-tertiary);
   font-size: 0.95rem;
 }
 
 .error {
   padding: 2rem 1rem;
   text-align: center;
-  color: #b94040;
+  color: var(--text-error);
   font-size: 0.95rem;
 }

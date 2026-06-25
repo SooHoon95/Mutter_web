@@ -19,44 +19,44 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.75rem 1rem;
-  background: #fff;
-  border: 1px solid #ece8e0;
-  border-radius: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
 
 .option:hover {
-  border-color: #8b6914;
-  background: #fcfaf5;
+  border-color: var(--text-brand);
+  background: var(--bg-secondary);
 }
 
 .optionChecked {
-  border-color: #8b6914;
-  background: #fcfaf5;
+  border-color: var(--text-brand);
+  background: var(--bg-secondary);
 }
 
 .radio {
-  accent-color: #8b6914;
+  accent-color: var(--brand-700);
   cursor: pointer;
 }
 
 .nickname {
   font-size: 0.95rem;
   font-weight: 500;
-  color: #2c2416;
+  color: var(--text-primary);
 }
 
 .empty {
   padding: 1.5rem 1rem;
   text-align: center;
-  color: #8a7a5e;
+  color: var(--text-tertiary);
   font-size: 0.9rem;
 }
 
 .error {
   padding: 1.5rem 1rem;
   text-align: center;
-  color: #b94040;
+  color: var(--text-error);
   font-size: 0.9rem;
 }

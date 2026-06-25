@@ -9,7 +9,7 @@
 .label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #555;
+  color: var(--text-secondary);
   margin: 0;
   /* global.css의 p 색상(--muted)을 덮어쓰지 않도록 명시 */
   line-height: 1.4;
@@ -41,7 +41,7 @@
   padding: 10px 12px;
   border-width: 2px;
   border-style: solid;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   /* 배경·색상은 인라인 style로 오버라이드됨 */
   background: transparent;
@@ -53,7 +53,7 @@
 
 .chip:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .chip:active {

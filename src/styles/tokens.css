@@ -1,0 +1,291 @@
+/* ──────────────────────────────────────────────────────────────────
+   tokens.css — letter-app 디자인 시스템 SSOT (단일 진실 원천)
+   ────────────────────────────────────────────────────────────────────
+   출처: Untitled UI v2.0 (Free Figma kit) — Tailwind v4 팔레트 + Inter.
+   사용자가 고른 테마(메탈릭 골드 #D4AF37)를 프로젝트 디자인 토큰으로 채택.
+
+   원칙:
+   - 이 파일은 **원시 토큰(primitive)과 의미 토큰(semantic)** 만 정의한다.
+     컴포넌트는 절대 하드코딩 색을 쓰지 말고 여기 변수를 참조한다.
+   - 베이스 엘리먼트(h1/p…) 스타일과 앱 셸은 global.css(애플리케이션 레이어)가
+     이 토큰 위에서 정의한다. tokens.css는 cascade를 건드리지 않는다.
+   - 폰트(Inter/JetBrains Mono)는 index.html의 <link>로 로드한다(렌더 차단 회피).
+
+   주의(디자인 시스템 일관성 수정):
+   - 원본 킷의 focus-ring/--ring-brand 는 Untitled UI 기본 보라(rgba 158,119,237)였다.
+     골드 브랜드와 충돌하므로 골드(rgba 212,175,55)로 교정했다.
+   ────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── BASE — black / white ───────────────────────────────────────── */
+  --base-white: #ffffff;
+  --base-black: #000000;
+
+  /* ── BRAND — gold (primary #D4AF37, 메탈릭 골드) ──────────────────── */
+  --brand-25:  #fffdf2;
+  --brand-50:  #fbf5cc;
+  --brand-100: #f5e792;
+  --brand-200: #ecd25a;
+  --brand-300: #e0be32;
+  --brand-400: #dcb633;
+  --brand-500: #dab23a;
+  --brand-600: #d4af37;   /* primary — metallic gold */
+  --brand-700: #ad8d27;
+  --brand-800: #846b1d;
+  --brand-900: #5e4d18;
+  --brand-950: #312809;
+
+  /* ── GRAY — neutrals ────────────────────────────────────────────── */
+  --gray-25:  #fcfcfd;
+  --gray-50:  #f9fafb;
+  --gray-100: #f2f4f7;
+  --gray-200: #eaecf0;
+  --gray-300: #d0d5dd;
+  --gray-400: #98a2b3;
+  --gray-500: #667085;
+  --gray-600: #475467;
+  --gray-700: #344054;
+  --gray-800: #1d2939;
+  --gray-900: #101828;
+  --gray-950: #0c111d;
+
+  /* ── SEMANTIC PALETTE — error / warning / success / info ─────────── */
+  --error-25:  #fffbfa;
+  --error-50:  #fef3f2;
+  --error-100: #fee4e2;
+  --error-200: #fecdca;
+  --error-300: #fda29b;
+  --error-400: #f97066;
+  --error-500: #f04438;
+  --error-600: #d92d20;
+  --error-700: #b42318;
+  --error-800: #912018;
+  --error-900: #7a271a;
+
+  --warning-25:  #fffcf5;
+  --warning-50:  #fffaeb;
+  --warning-100: #fef0c7;
+  --warning-200: #fedf89;
+  --warning-300: #fec84b;
+  --warning-400: #fdb022;
+  --warning-500: #f79009;
+  --warning-600: #dc6803;
+  --warning-700: #b54708;
+  --warning-800: #93370d;
+  --warning-900: #7a2e0e;
+
+  --success-25:  #f6fef9;
+  --success-50:  #ecfdf3;
+  --success-100: #dcfae6;
+  --success-200: #abefc6;
+  --success-300: #75e0a7;
+  --success-400: #47cd89;
+  --success-500: #17b26a;
+  --success-600: #079455;
+  --success-700: #067647;
+  --success-800: #085d3a;
+  --success-900: #074d31;
+
+  --blue-25:  #f5faff;
+  --blue-50:  #eff8ff;
+  --blue-100: #d1e9ff;
+  --blue-200: #b2ddff;
+  --blue-300: #84caff;
+  --blue-400: #53b1fd;
+  --blue-500: #2e90fa;
+  --blue-600: #1570ef;
+  --blue-700: #175cd3;
+  --blue-800: #1849a9;
+  --blue-900: #194185;
+
+  /* ── SEMANTIC TOKENS — text / surface / border ──────────────────── */
+  --text-primary:     var(--gray-900);
+  --text-secondary:   var(--gray-700);
+  --text-tertiary:    var(--gray-500);
+  --text-quaternary:  var(--gray-400);
+  --text-disabled:    var(--gray-300);
+  --text-placeholder: var(--gray-500);
+  --text-on-brand:    var(--base-white);
+  --text-brand:       var(--brand-700);
+  --text-error:       var(--error-700);
+  --text-success:     var(--success-700);
+
+  --bg-primary:      var(--base-white);
+  --bg-secondary:    var(--gray-50);
+  --bg-tertiary:     var(--gray-100);
+  --bg-quaternary:   var(--gray-200);
+  --bg-active:       var(--gray-50);
+  --bg-disabled:     var(--gray-100);
+  --bg-overlay:      var(--gray-900);
+  --bg-brand:        var(--brand-600);
+  --bg-brand-solid:  var(--brand-600);
+  --bg-brand-subtle: var(--brand-50);
+
+  --border-primary:   var(--gray-300);
+  --border-secondary: var(--gray-200);
+  --border-tertiary:  var(--gray-100);
+  --border-disabled:  var(--gray-300);
+  --border-brand:     var(--brand-600);
+  --border-error:     var(--error-600);
+
+  /* ── RADIUS — Tailwind-style scale ──────────────────────────────── */
+  --radius-none: 0px;
+  --radius-xxs:  2px;
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   10px;
+  --radius-xl:   12px;
+  --radius-2xl:  16px;
+  --radius-3xl:  20px;
+  --radius-4xl:  24px;
+  --radius-full: 9999px;
+
+  /* ── SPACING — 4px base ─────────────────────────────────────────── */
+  --space-0:   0px;
+  --space-0_5: 2px;
+  --space-1:   4px;
+  --space-1_5: 6px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-24:  96px;
+  --space-32:  128px;
+
+  /* ── SHADOWS ────────────────────────────────────────────────────── */
+  --shadow-xs:  0 1px 2px 0 rgba(16, 24, 40, 0.05);
+  --shadow-sm:  0 1px 2px 0 rgba(16, 24, 40, 0.06), 0 1px 3px 0 rgba(16, 24, 40, 0.1);
+  --shadow-md:  0 2px 4px -2px rgba(16, 24, 40, 0.06), 0 4px 8px -2px rgba(16, 24, 40, 0.1);
+  --shadow-lg:  0 4px 6px -2px rgba(16, 24, 40, 0.03), 0 12px 16px -4px rgba(16, 24, 40, 0.08);
+  --shadow-xl:  0 8px 8px -4px rgba(16, 24, 40, 0.03), 0 20px 24px -4px rgba(16, 24, 40, 0.08);
+  --shadow-2xl: 0 24px 48px -12px rgba(16, 24, 40, 0.18);
+  --shadow-3xl: 0 32px 64px -12px rgba(16, 24, 40, 0.14);
+  /* focus rings — 골드 브랜드로 교정(원본 보라에서 변경) */
+  --shadow-focus-brand: 0 0 0 4px rgba(212, 175, 55, 0.24);
+  --shadow-focus-gray:  0 0 0 4px rgba(152, 162, 179, 0.14);
+  --shadow-focus-error: 0 0 0 4px rgba(240, 68, 56, 0.24);
+  --ring-brand: 0 0 0 4px rgba(212, 175, 55, 0.24);
+
+  /* ── TYPOGRAPHY — typeface + scale ──────────────────────────────── */
+  /* 한국어는 -apple-system(Apple SD Gothic Neo) 등 시스템 폰트로 폴백한다. */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Pretendard', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Display sizes — tracked tighter */
+  --display-2xl-size: 72px;  --display-2xl-lh: 90px;  --display-2xl-tracking: -0.02em;
+  --display-xl-size:  60px;  --display-xl-lh:  72px;  --display-xl-tracking:  -0.02em;
+  --display-lg-size:  48px;  --display-lg-lh:  60px;  --display-lg-tracking:  -0.02em;
+  --display-md-size:  36px;  --display-md-lh:  44px;  --display-md-tracking:  -0.02em;
+  --display-sm-size:  30px;  --display-sm-lh:  38px;  --display-sm-tracking:   0;
+  --display-xs-size:  24px;  --display-xs-lh:  32px;  --display-xs-tracking:   0;
+
+  /* Body sizes */
+  --text-xl-size: 20px;  --text-xl-lh: 30px;
+  --text-lg-size: 18px;  --text-lg-lh: 28px;
+  --text-md-size: 16px;  --text-md-lh: 24px;
+  --text-sm-size: 14px;  --text-sm-lh: 20px;
+  --text-xs-size: 12px;  --text-xs-lh: 18px;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   REFINEMENT LAYER — 세련된 "편지" 스킨 프리미티브
+   ────────────────────────────────────────────────────────────────────
+   Untitled UI 위에 입히는 감성 레터 스킨. 따뜻한 종이 뉴트럴 + 명조 디스플레이
+   + 골드 포일 그라데이션 + 웜 그림자. 적용(의미 토큰 리스킨)은 global.css가 한다.
+   ────────────────────────────────────────────────────────────────── */
+:root {
+  /* 명조 디스플레이 — 헤드라인/워드마크용(한글 포함). 본문 UI는 Inter 유지. */
+  --font-display: 'Nanum Myeongjo', 'Gowun Batang', Georgia, 'Times New Roman',
+    'Apple SD Gothic Neo', serif;
+
+  /* 웜 뉴트럴 — 아이보리/종이 톤 */
+  --warm-25:  #fdfcf8;
+  --warm-50:  #faf7f0;
+  --warm-100: #f4efe4;
+  --warm-150: #ece4d4;
+  --warm-200: #e2d8c4;
+
+  --ink:      #221d14;   /* 따뜻한 잉크 블랙 (heading/강조 텍스트) */
+  --ink-mid:  #463f30;   /* 본문 */
+  --ink-soft: #6e6555;   /* 보조 텍스트 */
+  --ink-faint:#9a8f78;   /* 희미한 텍스트 */
+
+  /* 골드 — 정제 + 포일 그라데이션 */
+  --gold:          #c6a13a;
+  --gold-deep:     #a4842a;
+  --gold-soft:     #f1e6c6;
+  --gold-gradient: linear-gradient(135deg, #e0c66f 0%, #c6a13a 52%, #ad8a2c 100%);
+  --on-gold:       #2c2407;   /* 골드 위 잉크 — 포일 엠보스 느낌 */
+
+  /* 헤어라인 + 웜 그림자 + 골드 포커스 링 */
+  --hairline:        rgba(70, 55, 20, 0.1);
+  --hairline-strong: rgba(70, 55, 20, 0.16);
+  --shadow-soft: 0 1px 2px rgba(60, 48, 20, 0.05), 0 10px 30px -14px rgba(60, 48, 20, 0.2);
+  --shadow-card: 0 1px 3px rgba(60, 48, 20, 0.05), 0 18px 40px -20px rgba(60, 48, 20, 0.22);
+  --shadow-gold: 0 10px 26px -10px rgba(176, 138, 42, 0.55);
+  --focus-gold:  0 0 0 4px rgba(198, 161, 58, 0.22);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   SEMANTIC TYPE 유틸리티 클래스 (.uui-*)
+   필요 시 컴포넌트에서 직접 붙여 쓰는 타이포 프리셋. 비침투적.
+   ────────────────────────────────────────────────────────────────── */
+.uui-display-2xl,
+.uui-display-xl,
+.uui-display-lg,
+.uui-display-md,
+.uui-display-sm,
+.uui-display-xs,
+.uui-text-xl,
+.uui-text-lg,
+.uui-text-md,
+.uui-text-sm,
+.uui-text-xs {
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.uui-display-2xl { font-size: var(--display-2xl-size); line-height: var(--display-2xl-lh); letter-spacing: var(--display-2xl-tracking); font-weight: var(--weight-semibold); }
+.uui-display-xl  { font-size: var(--display-xl-size);  line-height: var(--display-xl-lh);  letter-spacing: var(--display-xl-tracking);  font-weight: var(--weight-semibold); }
+.uui-display-lg  { font-size: var(--display-lg-size);  line-height: var(--display-lg-lh);  letter-spacing: var(--display-lg-tracking);  font-weight: var(--weight-semibold); }
+.uui-display-md  { font-size: var(--display-md-size);  line-height: var(--display-md-lh);  letter-spacing: var(--display-md-tracking);  font-weight: var(--weight-semibold); }
+.uui-display-sm  { font-size: var(--display-sm-size);  line-height: var(--display-sm-lh);  font-weight: var(--weight-semibold); }
+.uui-display-xs  { font-size: var(--display-xs-size);  line-height: var(--display-xs-lh);  font-weight: var(--weight-semibold); }
+
+.uui-text-xl { font-size: var(--text-xl-size); line-height: var(--text-xl-lh); font-weight: var(--weight-regular); }
+.uui-text-lg { font-size: var(--text-lg-size); line-height: var(--text-lg-lh); font-weight: var(--weight-regular); }
+.uui-text-md { font-size: var(--text-md-size); line-height: var(--text-md-lh); font-weight: var(--weight-regular); }
+.uui-text-sm { font-size: var(--text-sm-size); line-height: var(--text-sm-lh); font-weight: var(--weight-regular); }
+.uui-text-xs { font-size: var(--text-xs-size); line-height: var(--text-xs-lh); font-weight: var(--weight-regular); }
+
+/* ──────────────────────────────────────────────────────────────────
+   LANDING DARK SKIN — Warm Dark + Cinematic Reveal 전용 토큰
+   Landing.module.css에서만 참조한다. 다른 라우트/컴포넌트 영향 없음.
+   ────────────────────────────────────────────────────────────────── */
+:root {
+  --landing-bg:         #120e0b;   /* 딥 웜블랙 — 순수 #000 아닌 갈색기 있는 어둠 */
+  --landing-text:       #f5f0e8;   /* 크림화이트 H1 */
+  --landing-muted:      #a89880;   /* 보조 텍스트 */
+  --landing-gold:       #c9a96e;   /* 랜딩 전용 골드 (기존 --gold 보다 밝게) */
+  --landing-gold-glow:  linear-gradient(135deg, #c9a96e 0%, #e8c97a 100%);
+  --landing-amber-glow: rgba(201, 129, 58, 0.18);   /* 좌상단 메시 글로우 */
+  --landing-rose-glow:  rgba(181, 107, 107, 0.12);  /* 우하단 메시 글로우 */
+  --landing-glass-bg:   rgba(255, 255, 255, 0.06);  /* 글래스 카드 배경 */
+  --landing-glass-border: rgba(255, 255, 255, 0.10); /* 글래스 카드 테두리 */
+  --landing-section-2:  #1a1410;   /* 두 번째 섹션 배경 (약간 밝음) */
+  --landing-section-3:  #221c15;   /* 세 번째 섹션 배경 */
+}

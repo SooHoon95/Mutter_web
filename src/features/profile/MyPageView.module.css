@@ -38,8 +38,8 @@
 .input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #d0d0d0;
-  border-radius: 6px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
   font-size: 1rem;
   background: transparent;
   outline: none;
@@ -47,15 +47,15 @@
 }
 
 .input:focus {
-  border-color: #1a1a1a;
+  border-color: var(--bg-brand);
 }
 
 .btnSave {
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: none;
-  background: #1a1a1a;
-  color: #f5f5f5;
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
   font-size: 0.875rem;
   cursor: pointer;
   white-space: nowrap;
@@ -73,14 +73,14 @@
 
 .divider {
   border: none;
-  border-top: 1px solid #e8e8e8;
+  border-top: 1px solid var(--border-secondary);
   margin: 4px 0;
 }
 
 .btnLogout {
   padding: 10px 16px;
-  border-radius: 6px;
-  border: 1px solid #d0d0d0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-primary);
   background: transparent;
   font-size: 0.9375rem;
   cursor: pointer;
@@ -89,15 +89,15 @@
 }
 
 .btnLogout:hover {
-  background: #f5f5f5;
+  background: var(--bg-tertiary);
 }
 
 .btnDelete {
   padding: 10px 16px;
-  border-radius: 6px;
-  border: 1px solid #d44;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--error-600);
   background: transparent;
-  color: #c33;
+  color: var(--text-error);
   font-size: 0.9375rem;
   cursor: pointer;
   transition: background 0.1s;
@@ -105,7 +105,7 @@
 }
 
 .btnDelete:hover {
-  background: #fff0f0;
+  background: var(--error-50);
 }
 
 .btnDelete:disabled {
@@ -115,7 +115,7 @@
 
 .errorMsg {
   font-size: 0.875rem;
-  color: #c33;
+  color: var(--text-error);
 }
 
 .modal {
@@ -130,8 +130,8 @@
 }
 
 .modalCard {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
   padding: 28px 24px;
   max-width: 360px;
   width: 100%;
@@ -161,8 +161,8 @@
 
 .btnCancel {
   padding: 8px 16px;
-  border-radius: 6px;
-  border: 1px solid #d0d0d0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-primary);
   background: transparent;
   font-size: 0.9375rem;
   cursor: pointer;
@@ -170,10 +170,10 @@
 
 .btnConfirmDelete {
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: none;
-  background: #c33;
-  color: #fff;
+  background: var(--error-600);
+  color: var(--bg-primary);
   font-size: 0.9375rem;
   cursor: pointer;
   transition: opacity 0.15s;

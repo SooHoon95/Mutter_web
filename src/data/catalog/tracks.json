@@ -1,99 +1,99 @@
 [
   {
-    "_note": "시드 카탈로그 — 실제 음원 검증·다운로드는 별도. Pixabay 자체 제작 음원만 수록(KOMCA/FKMP 관리곡 배제 정책). 음원 URL은 플레이스홀더.",
+    "_note": "폴백 카탈로그 — '무음 편지 0' 보장용. 현재 음원은 저작물 차용 없이 자체 합성한 앰비언트 패드(CC0). 추후 큐레이션된 실제 CC0 음원으로 교체 가능하나, 교체 전까지 이 합성음이 항상 비-무음 폴백을 보장한다.",
     "id": "pixabay-calm-001",
     "source": "hosted",
-    "title": "Calm Piano Melody",
-    "author": "Aleksey Chistilin",
+    "title": "잔잔한 패드",
+    "author": "Mutter (합성)",
     "license": "CC0",
-    "url": "/audio/pixabay-calm-001.mp3",
+    "url": "/audio/pixabay-calm-001.m4a",
     "mood": "잔잔",
     "provenance": {
-      "sourceUrl": "https://pixabay.com/music/solo-piano-calm-piano-music-241963/",
+      "sourceUrl": "internal://synth/pixabay-calm-001",
       "licenseName": "CC0 1.0 Universal",
-      "licenseTextSnapshot": "No rights reserved. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission. See https://creativecommons.org/publicdomain/zero/1.0/",
-      "acquiredAt": "2026-06-16",
-      "author": "Aleksey Chistilin"
+      "licenseTextSnapshot": "Self-synthesized tone (no third-party work). Released to the public domain under CC0 1.0. No rights reserved. https://creativecommons.org/publicdomain/zero/1.0/",
+      "acquiredAt": "2026-06-18",
+      "author": "Mutter (합성)"
     }
   },
   {
     "id": "pixabay-warm-002",
     "source": "hosted",
-    "title": "Warm Acoustic",
-    "author": "Lesfm",
+    "title": "따뜻한 패드",
+    "author": "Mutter (합성)",
     "license": "CC0",
-    "url": "/audio/pixabay-warm-002.mp3",
+    "url": "/audio/pixabay-warm-002.m4a",
     "mood": "따뜻",
     "provenance": {
-      "sourceUrl": "https://pixabay.com/music/acoustic-group-warm-acoustic-10707/",
+      "sourceUrl": "internal://synth/pixabay-warm-002",
       "licenseName": "CC0 1.0 Universal",
-      "licenseTextSnapshot": "No rights reserved. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission. See https://creativecommons.org/publicdomain/zero/1.0/",
-      "acquiredAt": "2026-06-16",
-      "author": "Lesfm"
+      "licenseTextSnapshot": "Self-synthesized tone (no third-party work). Released to the public domain under CC0 1.0. No rights reserved. https://creativecommons.org/publicdomain/zero/1.0/",
+      "acquiredAt": "2026-06-18",
+      "author": "Mutter (합성)"
     }
   },
   {
     "id": "pixabay-nostalgia-003",
     "source": "hosted",
-    "title": "Nostalgia",
-    "author": "Pold Music",
-    "license": "CC-BY",
-    "url": "/audio/pixabay-nostalgia-003.mp3",
+    "title": "그리운 패드",
+    "author": "Mutter (합성)",
+    "license": "CC0",
+    "url": "/audio/pixabay-nostalgia-003.m4a",
     "mood": "그리움",
     "provenance": {
-      "sourceUrl": "https://pixabay.com/music/ambient-nostalgia-242400/",
-      "licenseName": "CC-BY 4.0",
-      "licenseTextSnapshot": "You are free to: Share — copy and redistribute the material in any medium or format. Adapt — remix, transform, and build upon the material for any purpose, even commercially. Attribution required: credit the creator, provide a link to the license, and indicate if changes were made. See https://creativecommons.org/licenses/by/4.0/",
-      "acquiredAt": "2026-06-16",
-      "author": "Pold Music"
+      "sourceUrl": "internal://synth/pixabay-nostalgia-003",
+      "licenseName": "CC0 1.0 Universal",
+      "licenseTextSnapshot": "Self-synthesized tone (no third-party work). Released to the public domain under CC0 1.0. No rights reserved. https://creativecommons.org/publicdomain/zero/1.0/",
+      "acquiredAt": "2026-06-18",
+      "author": "Mutter (합성)"
     }
   },
   {
     "id": "pixabay-excitement-004",
     "source": "hosted",
-    "title": "Gentle Hope",
-    "author": "SoulProdMusic",
+    "title": "설레는 패드",
+    "author": "Mutter (합성)",
     "license": "CC0",
-    "url": "/audio/pixabay-excitement-004.mp3",
+    "url": "/audio/pixabay-excitement-004.m4a",
     "mood": "설렘",
     "provenance": {
-      "sourceUrl": "https://pixabay.com/music/beats-gentle-hope-12297/",
+      "sourceUrl": "internal://synth/pixabay-excitement-004",
       "licenseName": "CC0 1.0 Universal",
-      "licenseTextSnapshot": "No rights reserved. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission. See https://creativecommons.org/publicdomain/zero/1.0/",
-      "acquiredAt": "2026-06-16",
-      "author": "SoulProdMusic"
+      "licenseTextSnapshot": "Self-synthesized tone (no third-party work). Released to the public domain under CC0 1.0. No rights reserved. https://creativecommons.org/publicdomain/zero/1.0/",
+      "acquiredAt": "2026-06-18",
+      "author": "Mutter (합성)"
     }
   },
   {
     "id": "pixabay-longing-005",
     "source": "hosted",
-    "title": "Missing You",
-    "author": "Lofium",
+    "title": "사무치는 패드",
+    "author": "Mutter (합성)",
     "license": "CC0",
-    "url": "/audio/pixabay-longing-005.mp3",
+    "url": "/audio/pixabay-longing-005.m4a",
     "mood": "그리움",
     "provenance": {
-      "sourceUrl": "https://pixabay.com/music/lo-fi-missing-you-160765/",
+      "sourceUrl": "internal://synth/pixabay-longing-005",
       "licenseName": "CC0 1.0 Universal",
-      "licenseTextSnapshot": "No rights reserved. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission. See https://creativecommons.org/publicdomain/zero/1.0/",
-      "acquiredAt": "2026-06-16",
-      "author": "Lofium"
+      "licenseTextSnapshot": "Self-synthesized tone (no third-party work). Released to the public domain under CC0 1.0. No rights reserved. https://creativecommons.org/publicdomain/zero/1.0/",
+      "acquiredAt": "2026-06-18",
+      "author": "Mutter (합성)"
     }
   },
   {
     "id": "pixabay-peaceful-006",
     "source": "hosted",
-    "title": "Peaceful Garden",
-    "author": "Daddy_s_Music",
-    "license": "CC-BY",
-    "url": "/audio/pixabay-peaceful-006.mp3",
+    "title": "평온한 패드",
+    "author": "Mutter (합성)",
+    "license": "CC0",
+    "url": "/audio/pixabay-peaceful-006.m4a",
     "mood": "잔잔",
     "provenance": {
-      "sourceUrl": "https://pixabay.com/music/ambient-peaceful-garden-112226/",
-      "licenseName": "CC-BY 4.0",
-      "licenseTextSnapshot": "You are free to: Share — copy and redistribute the material in any medium or format. Adapt — remix, transform, and build upon the material for any purpose, even commercially. Attribution required: credit the creator, provide a link to the license, and indicate if changes were made. See https://creativecommons.org/licenses/by/4.0/",
-      "acquiredAt": "2026-06-16",
-      "author": "Daddy_s_Music"
+      "sourceUrl": "internal://synth/pixabay-peaceful-006",
+      "licenseName": "CC0 1.0 Universal",
+      "licenseTextSnapshot": "Self-synthesized tone (no third-party work). Released to the public domain under CC0 1.0. No rights reserved. https://creativecommons.org/publicdomain/zero/1.0/",
+      "acquiredAt": "2026-06-18",
+      "author": "Mutter (합성)"
     }
   }
 ]

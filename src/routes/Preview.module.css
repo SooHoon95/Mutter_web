@@ -1,0 +1,21 @@
+/* Preview — 보낸 편지 읽기 전용 미리보기 (/preview/:id) */
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.empty {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 0.95rem;
+}
+
+.error {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-error);
+  font-size: 0.95rem;
+}

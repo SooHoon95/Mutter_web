@@ -44,9 +44,17 @@ export function InboxList(): React.ReactElement {
             <p className={styles.sender}>보낸이: {item.senderNickname ?? '알 수 없음'}</p>
             <p className={styles.savedAt}>{formatDate(item.savedAt)} 저장</p>
           </div>
-          <Link to={`/l/${item.token}`} className={styles.openLink}>
-            열기
-          </Link>
+          <div className={styles.actions}>
+            {/* 0019 답장: 보낸이를 알면 그 사람에게 바로 답장 쓰기로 이동. */}
+            {item.senderId !== null && (
+              <Link to={`/create?to=${item.senderId}`} className={styles.replyLink}>
+                답장
+              </Link>
+            )}
+            <Link to={`/l/${item.token}`} className={styles.openLink}>
+              열기
+            </Link>
+          </div>
         </li>
       ))}
     </ul>

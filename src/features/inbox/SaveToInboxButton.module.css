@@ -5,18 +5,18 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 1rem;
-  border: 1.5px solid var(--tpl-accent, #8b6914);
-  border-radius: 6px;
+  border: 1.5px solid var(--tpl-accent, var(--text-brand));
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--tpl-accent, #8b6914);
+  color: var(--tpl-accent, var(--text-brand));
   font-size: 0.875rem;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 
 .button:hover:not(:disabled) {
-  background: var(--tpl-accent, #8b6914);
-  color: #fff;
+  background: var(--tpl-accent, var(--bg-brand));
+  color: var(--text-on-brand);
 }
 
 .button:disabled {
@@ -30,7 +30,7 @@
   gap: 0.4rem;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
-  color: var(--tpl-muted, #8a7a5e);
+  color: var(--tpl-muted, var(--text-tertiary));
 }
 
 .wrapper {

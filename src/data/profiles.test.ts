@@ -10,7 +10,7 @@ vi.mock('./supabase', () => ({
 }));
 
 import { getSupabase } from './supabase';
-import { getMyProfile, updateNickname, deleteMyAccount } from './profiles';
+import { getMyProfile, upsertNickname, deleteMyAccount } from './profiles';
 
 const mockGetSupabase = vi.mocked(getSupabase);
 
@@ -38,6 +38,8 @@ function makeChain(terminal: { single?: unknown; maybeSingle?: unknown; rpc?: un
 
   chain['select'] = vi.fn(self);
   chain['update'] = vi.fn(self);
+  chain['upsert'] = vi.fn(self);
+  chain['eq'] = vi.fn(self);
   chain['single'] = vi.fn(() =>
     Promise.resolve(terminal.single ?? { data: null, error: null }),
   );
@@ -78,7 +80,7 @@ describe('getMyProfile', () => {
       }) as unknown as ReturnType<typeof getSupabase>,
     );
 
-    const result = await getMyProfile();
+    const result = await getMyProfile('user-abc');
     expect(result).toEqual({
       id: 'user-abc',
       nickname: '테스트닉네임',
@@ -94,7 +96,7 @@ describe('getMyProfile', () => {
       }) as unknown as ReturnType<typeof getSupabase>,
     );
 
-    const result = await getMyProfile();
+    const result = await getMyProfile('user-abc');
     expect(result).toBeNull();
   });
 
@@ -106,12 +108,12 @@ describe('getMyProfile', () => {
       }) as unknown as ReturnType<typeof getSupabase>,
     );
 
-    await expect(getMyProfile()).rejects.toThrow('DB 오류');
+    await expect(getMyProfile('user-abc')).rejects.toThrow('DB 오류');
   });
 });
 
-describe('updateNickname', () => {
-  it('닉네임을 업데이트하고 domain Profile을 반환한다', async () => {
+describe('upsertNickname', () => {
+  it('닉네임을 upsert하고 domain Profile을 반환한다', async () => {
     const updatedRow = { ...sampleRow, nickname: '새닉네임', updated_at: '2026-06-16T01:00:00Z' };
     mockGetSupabase.mockReturnValue(
       makeSupabaseMock({
@@ -119,20 +121,20 @@ describe('updateNickname', () => {
       }) as unknown as ReturnType<typeof getSupabase>,
     );
 
-    const result = await updateNickname('새닉네임');
+    const result = await upsertNickname('user-abc', '새닉네임');
     expect(result.nickname).toBe('새닉네임');
     expect(result.id).toBe('user-abc');
   });
 
   it('Supabase 오류 시 throw한다', async () => {
-    const dbError = new Error('update 실패');
+    const dbError = new Error('upsert 실패');
     mockGetSupabase.mockReturnValue(
       makeSupabaseMock({
         terminal: { single: { data: null, error: dbError } },
       }) as unknown as ReturnType<typeof getSupabase>,
     );
 
-    await expect(updateNickname('닉네임')).rejects.toThrow('update 실패');
+    await expect(upsertNickname('user-abc', '닉네임')).rejects.toThrow('upsert 실패');
   });
 });
 

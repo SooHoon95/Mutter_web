@@ -1,0 +1,99 @@
+/* 이름 설정 페이지 — 셸 없는 클린 전체화면. Login/Welcome과 동일한 웜+골드 톤. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 2.75rem 1.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-3xl);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 0.95rem;
+  font-size: 1rem;
+  font-family: inherit;
+  text-align: center;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  background: var(--bg-primary);
+  color: var(--ink);
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
+}
+
+.input:focus {
+  border-color: var(--gold);
+  box-shadow: var(--focus-gold);
+}
+
+.error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-error);
+}
+
+.button {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--gold-gradient);
+  color: var(--on-gold);
+  cursor: pointer;
+  box-shadow: var(--shadow-gold);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+.button:disabled {
+  background: var(--warm-150);
+  color: var(--ink-faint);
+  box-shadow: none;
+  cursor: not-allowed;
+}

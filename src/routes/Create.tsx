@@ -2,14 +2,18 @@
 // RequireAuth는 router.tsx에서 이미 감싸므로 여기서 중복 적용하지 않는다.
 // /create/:id → 기존 초안 편집 (id 없으면 신규 초안).
 //
+// 컴포즈 모델은 "테마 즉시적용 WYSIWYG": 템플릿을 고르면 그 자리에서 편지지에 반영되고,
+// 사용자는 테마(폰트·색·종이결)가 입혀진 편지지 위에서 제목·본문을 바로 타이핑한다.
+// 음악은 편지당 1곡. 단락 추가/이동/삭제 UI는 없다(저장 시 빈 줄 기준으로 자동 분리).
+//
 // 흐름: 작성 → "저장" → (저장되면) "보내기" 섹션에서 전달 링크 발급 → URL 복사 → 전달.
 
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useLetterDraft, ParagraphEditor } from '@/features/compose';
-import { TemplatePicker, TemplatePreview, DEFAULT_TEMPLATE_ID } from '@/features/templates';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { useLetterDraft, MusicCueEditor } from '@/features/compose';
+import { TemplatePicker, TemplateThemed, DEFAULT_TEMPLATE_ID } from '@/features/templates';
 import { LinkManager } from '@/features/delivery';
-import { SendToConnection } from '@/features/connections';
+import { SendToConnection, useConnections } from '@/features/connections';
 import styles from './Create.module.css';
 
 // 보내기 방식 — 'link'는 연결 안 된 사람용 전달 링크, 'connection'은 연결된 사람 직접 발송.
@@ -17,23 +21,58 @@ type SendMode = 'link' | 'connection';
 
 export default function Create(): React.ReactElement {
   const { id } = useParams<{ id?: string }>();
-  const [sendMode, setSendMode] = useState<SendMode>('link');
+  // 0019 답장 플로우: /create?to=<userId>로 진입하면 "연결된 사람에게 보내기"를 기본 탭으로,
+  // 그 상대를 SendToConnection에서 자동 선택한다(연결된 경우).
+  const [searchParams] = useSearchParams();
+  const replyTo = searchParams.get('to');
+  const [sendMode, setSendMode] = useState<SendMode>(replyTo ? 'connection' : 'link');
+
+  // 답장 상대가 연결 목록에 있는지 확인 — 없으면 전달 링크 모드로 전환한다.
+  const { connections, isLoading: isConnectionsLoading } = useConnections();
+  const isReplyToConnected = replyTo !== null && connections.some((c) => c.userId === replyTo);
+
+  // 연결 목록 로딩 완료 후, 답장 상대가 연결 안 돼 있으면 링크 모드로 자동 전환.
+  useEffect(() => {
+    if (replyTo && !isConnectionsLoading && !isReplyToConnected) {
+      setSendMode('link');
+    }
+  }, [replyTo, isConnectionsLoading, isReplyToConnected]);
+
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const {
     draft,
+    isLoading,
     isSaving,
     saveError,
     setTitle,
+    setBody,
     setTemplateId,
-    addParagraph,
-    updateParagraphText,
-    deleteParagraph,
-    moveParagraph,
     setCue,
     save,
   } = useLetterDraft(id ?? null, DEFAULT_TEMPLATE_ID);
 
   function handleSave(): void {
-    void save();
+    void save().then((result) => {
+      // 빈 제목으로 차단되면 제목 입력으로 포커스를 옮긴다.
+      if (!result.ok && result.reason === 'empty-title') {
+        titleInputRef.current?.focus();
+      }
+    });
+  }
+
+  // 기존 편지를 불러오는 중에는 빈 폼 대신 안내를 표시한다.
+  // (로딩 중 저장이 빈 초안으로 기존 편지를 덮어쓰는 것도 hook에서 함께 막는다.)
+  if (isLoading) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.header}>
+          <h1 className={styles.heading}>편지 쓰기</h1>
+        </div>
+        <p className={styles.loadingHint} role="status" aria-live="polite">
+          편지를 불러오는 중…
+        </p>
+      </main>
+    );
   }
 
   return (
@@ -42,6 +81,16 @@ export default function Create(): React.ReactElement {
         <h1 className={styles.heading}>편지 쓰기</h1>
       </div>
 
+      {/* 0019 답장 모드 안내 — /create?to=<id>로 들어왔을 때만. */}
+      {replyTo && (
+        <p className={styles.replyChip} role="note">
+          {isReplyToConnected
+            ? <>↩︎ 답장을 쓰고 있어요. 저장한 뒤 <strong>’연결된 사람에게 보내기’</strong>에서 상대가 자동으로 선택돼요.</>
+            : <>↩︎ 답장을 쓰고 있어요. 상대와 연결되지 않아 <strong>전달 링크</strong>로 보내세요.</>
+          }
+        </p>
+      )}
+
       {/* 저장 오류 표시 */}
       {saveError && (
         <div className={styles.errorBanner} role="alert">
@@ -49,45 +98,40 @@ export default function Create(): React.ReactElement {
         </div>
       )}
 
-      {/* 템플릿 선택 — T6 US-006 (이제 draft.templateId로 저장됨) */}
+      {/* 템플릿 선택 — 선택 즉시 아래 편지지에 반영(WYSIWYG) */}
       <section className={styles.templateSection}>
         <TemplatePicker selectedId={draft.templateId} onSelect={setTemplateId} />
-        <TemplatePreview
-          templateId={draft.templateId}
-          title={draft.title}
-          sampleText={draft.paragraphs[0]?.text}
-        />
       </section>
 
-      {/* 편지 제목 */}
-      <div className={styles.titleSection}>
-        <label htmlFor="letter-title" className={styles.label}>
-          제목
-        </label>
+      {/* 편지지 — 테마가 입혀진 상태로 제목·본문을 바로 타이핑한다. */}
+      <TemplateThemed templateId={draft.templateId} className={styles.paper}>
         <input
-          id="letter-title"
+          ref={titleInputRef}
           type="text"
-          className={styles.titleInput}
-          placeholder="편지 제목을 입력하세요"
+          className={styles.paperTitle}
+          placeholder="편지 제목"
+          aria-label="편지 제목"
           value={draft.title}
           onChange={(e) => setTitle(e.target.value)}
         />
-      </div>
-
-      {/* 단락 + 음악 큐 에디터 */}
-      <section className={styles.paragraphSection}>
-        <h2 className={styles.sectionHeading}>단락별 내용 + 음악 큐</h2>
-        <p className={styles.sectionDesc}>
-          각 단락에 어울리는 음악 큐를 지정하면 수신자가 그 단락을 읽을 때 음악이 차오릅니다.
-        </p>
-        <ParagraphEditor
-          paragraphs={draft.paragraphs}
-          onTextChange={updateParagraphText}
-          onDelete={deleteParagraph}
-          onMove={moveParagraph}
-          onCueChange={setCue}
-          onAddParagraph={addParagraph}
+        <hr className={styles.paperDivider} />
+        <textarea
+          className={styles.paperBody}
+          placeholder="여기에 편지를 써 내려가세요. 빈 줄로 문단을 나누면 받는 사람에게도 그대로 보여요."
+          aria-label="편지 본문"
+          value={draft.body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={10}
         />
+      </TemplateThemed>
+
+      {/* 음악 — 편지당 1곡 */}
+      <section className={styles.musicSection}>
+        <h2 className={styles.sectionHeading}>편지 음악</h2>
+        <p className={styles.sectionDesc}>
+          편지에 어울리는 음악 한 곡을 고르세요. 수신자가 편지를 읽는 동안 흐릅니다.
+        </p>
+        <MusicCueEditor cue={draft.cue} onChange={setCue} />
       </section>
 
       {/* 저장 — 작성 영역 맨 아래. 저장해야 아래 "보내기"에서 링크를 만들 수 있다. */}
@@ -136,8 +180,8 @@ export default function Create(): React.ReactElement {
             {sendMode === 'link' ? (
               <>
                 <p className={styles.sectionDesc}>
-                  전달 링크를 만들어 수신자에게 보내세요. 암호는 기본으로 켜져 있고, 링크를 연 첫
-                  기기에 귀속됩니다.
+                  전달 링크를 만들어 수신자에게 보내세요. 암호는 기본으로 켜져 있어요. 받는 사람은
+                  어느 기기·폰·PC에서든 열 수 있어요.
                 </p>
                 <LinkManager letterId={draft.letterId} />
               </>
@@ -146,7 +190,7 @@ export default function Create(): React.ReactElement {
                 <p className={styles.sectionDesc}>
                   연결된 사람을 골라 링크 없이 바로 받은 편지함으로 보낼 수 있어요.
                 </p>
-                <SendToConnection letterId={draft.letterId} />
+                <SendToConnection letterId={draft.letterId} preselectId={replyTo} />
               </>
             )}
           </>

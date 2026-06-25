@@ -27,8 +27,37 @@ export default function Viewer(): React.ReactElement {
     return removeNoIndex;
   }, []);
 
-  const { status, letter, errorMessage, submitting, submitPassword } =
+  const { status, letter, errorMessage, revealAt, submitting, submitPassword } =
     useLetterViewer(token);
+
+  if (status === 'notYet') {
+    // 0018 예약 공개: reveal_at 이전 — 본문/암호 없이 "이 시각에 열려요"만 안내.
+    const revealText = revealAt
+      ? new Date(revealAt).toLocaleString('ko-KR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : null;
+    return (
+      <div className={styles.center}>
+        <div className={styles.sealedCard} role="status" aria-live="polite">
+          <p className={styles.sealedIcon} aria-hidden="true">
+            🔒
+          </p>
+          <p className={styles.sealedTitle}>아직 열 수 없는 편지예요</p>
+          {revealText && (
+            <p className={styles.sealedWhen}>
+              <strong>{revealText}</strong>에 열려요
+            </p>
+          )}
+          <p className={styles.sealedHint}>그때 다시 이 링크로 찾아와 주세요.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (status === 'loading') {
     return (

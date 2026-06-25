@@ -5,15 +5,15 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 1.25rem;
-  background: #fcfaf5;
-  border: 1px solid #ece8e0;
-  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
 }
 
 .desc {
   margin: 0;
   font-size: 0.875rem;
-  color: #6b5d44;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -21,9 +21,9 @@
   align-self: flex-start;
   padding: 0.6rem 1.2rem;
   border: none;
-  border-radius: 8px;
-  background: #8b6914;
-  color: #fff;
+  border-radius: var(--radius-md);
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
@@ -41,30 +41,38 @@
 
 .result {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  padding: 0.75rem;
-  background: #fff;
-  border: 1px solid #ece8e0;
-  border-radius: 8px;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0.875rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
 }
 
 .url {
-  flex: 1 1 12rem;
-  min-width: 0;
   font-size: 0.8125rem;
-  color: #2c2416;
+  color: var(--text-primary);
   word-break: break-all;
+  line-height: 1.5;
+  /* 선택해 수동 복사 가능하도록 */
+  user-select: text;
+  cursor: text;
+}
+
+/* 복사/공유 버튼을 가로로 나란히 배치 */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .copyBtn {
   flex-shrink: 0;
   padding: 0.4rem 0.9rem;
-  border: 1.5px solid #8b6914;
-  border-radius: 6px;
+  border: 1.5px solid var(--border-brand);
+  border-radius: var(--radius-sm);
   background: none;
-  color: #8b6914;
+  color: var(--text-brand);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -72,24 +80,43 @@
 }
 
 .copyBtn:hover {
-  background: #8b6914;
-  color: #fff;
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
+}
+
+/* 네이티브 공유 버튼 — copyBtn과 같은 크기, 보조 스타일 */
+.shareBtn {
+  flex-shrink: 0;
+  padding: 0.4rem 0.9rem;
+  border: 1.5px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.shareBtn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .error {
   margin: 0;
   font-size: 0.8125rem;
-  color: #b94040;
+  color: var(--text-error);
 }
 
 /* 연결 해제 버튼 — 연결된 상태일 때만 노출 */
 .disconnectBtn {
   align-self: flex-start;
   padding: 0.5rem 1rem;
-  border: 1.5px solid #b94040;
-  border-radius: 8px;
+  border: 1.5px solid var(--error-600);
+  border-radius: var(--radius-md);
   background: none;
-  color: #b94040;
+  color: var(--error-600);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -97,8 +124,8 @@
 }
 
 .disconnectBtn:hover:not(:disabled) {
-  background: #b94040;
-  color: #fff;
+  background: var(--error-600);
+  color: var(--bg-primary);
 }
 
 .disconnectBtn:disabled {
@@ -110,5 +137,5 @@
 .hint {
   margin: 0;
   font-size: 0.8rem;
-  color: #8a7a5e;
+  color: var(--text-tertiary);
 }

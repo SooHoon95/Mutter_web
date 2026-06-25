@@ -30,8 +30,11 @@ const EMPTY_FORM: TakedownForm = {
   reason: '',
 };
 
-/** 연락처 이메일 — 폴백 mailto: 링크에도 사용 */
-const CONTACT_EMAIL = 'copyright@letter-app.example.com';
+/** 연락처 이메일 — 폴백 mailto: 링크에도 사용.
+ *  빌드 시 VITE_COPYRIGHT_EMAIL 환경 변수로 주입된다.
+ *  미설정 시 mutter.app 도메인으로 폴백한다. */
+const CONTACT_EMAIL =
+  import.meta.env.VITE_COPYRIGHT_EMAIL || 'copyright@mutter.app';
 
 type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -51,6 +54,13 @@ export default function Takedown(): React.ReactElement {
     e.preventDefault();
     setStatus('submitting');
     setErrorMsg(null);
+
+    // 서버 유효성 검사와 동기화: 신고 사유 최소 20자 (REASON_TOO_SHORT 방지)
+    if (form.reason.trim().length < 20) {
+      setStatus('error');
+      setErrorMsg('신고 사유는 20자 이상 구체적으로 작성해 주세요.');
+      return;
+    }
 
     try {
       const sb = getSupabase();
@@ -213,9 +223,13 @@ export default function Takedown(): React.ReactElement {
                   value={form.reason}
                   onChange={handleChange}
                   required
+                  minLength={20}
                   rows={5}
                   placeholder="침해 내용을 구체적으로 설명해 주세요. 귀하가 해당 저작물의 권리자임을 확인할 수 있는 정보를 포함하면 처리가 빨라집니다."
                 />
+                <p className={styles.fieldHint}>
+                  최소 20자 이상 구체적으로 작성해 주세요.
+                </p>
               </div>
 
               {status === 'error' && errorMsg && (

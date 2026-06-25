@@ -7,8 +7,9 @@
  * 수신 라우트(/l/:token)와 takedown 라우트는 이 셸을 쓰지 않는다(수신자에게 제작 UI 비노출).
  */
 import type { ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
+import { signOut } from '@/data/auth';
 import { Footer } from './Footer';
 
 interface AppShellProps {
@@ -17,6 +18,17 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps): ReactNode {
   const { session, loading } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleSignOut(): Promise<void> {
+    try {
+      await signOut();
+    } catch (err) {
+      // 로그아웃 실패는 드묾 — 세션이 이미 끊겼을 수 있으니 로그인으로 보낸다.
+      console.error('[AppShell] 로그아웃 실패:', err);
+    }
+    navigate('/login');
+  }
 
   return (
     <div className="app-shell">
@@ -39,6 +51,13 @@ export function AppShell({ children }: AppShellProps): ReactNode {
               <NavLink to="/me" className="app-shell__navlink">
                 마이페이지
               </NavLink>
+              <button
+                type="button"
+                className="app-shell__logout"
+                onClick={() => void handleSignOut()}
+              >
+                로그아웃
+              </button>
             </>
           )}
           {!loading && !session && (

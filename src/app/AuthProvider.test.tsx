@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from './AuthProvider';
 // data/auth 모킹
 vi.mock('@/data/auth', () => ({
   onAuthChange: vi.fn(),
+  revalidateSession: vi.fn(() => Promise.resolve()),
 }));
 
 import { onAuthChange } from '@/data/auth';

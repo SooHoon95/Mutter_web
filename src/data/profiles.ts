@@ -44,16 +44,17 @@ function rowToProfile(row: ProfileRow): Profile {
 // ---------------------------------------------------------------------------
 
 /**
- * 현재 로그인 사용자의 프로필을 반환한다.
- * 프로필 행이 없으면(신규 가입 직후 등) null을 반환한다.
- * RLS에 의해 본인 행만 조회 가능하다.
+ * 사용자 프로필을 반환한다. 프로필 행이 없으면(행이 비워진 경우 등) null.
+ * `.eq('id', userId)`로 명시 필터한다 — RLS만 의존하지 않아 RLS 오설정 시에도
+ * 타인 행이 새지 않고, 0행이면 maybeSingle이 null을 안전 반환한다.
  */
-export async function getMyProfile(): Promise<Profile | null> {
+export async function getMyProfile(userId: string): Promise<Profile | null> {
   const sb = getSupabase();
 
   const { data, error } = await sb
     .from('profiles')
     .select('*')
+    .eq('id', userId)
     .maybeSingle<ProfileRow>();
 
   if (error) throw error;
@@ -62,15 +63,22 @@ export async function getMyProfile(): Promise<Profile | null> {
 }
 
 /**
- * 닉네임을 업데이트한다.
- * RLS가 본인 행만 update를 허용한다.
+ * 닉네임을 upsert한다(없으면 생성, 있으면 갱신).
+ *
+ * 근본 원인 수정: 기존 `.update()`는 profiles 행이 없을 때(트리거 미실행·행 비움 등)
+ * 0행 매칭 → `.single()`이 에러 → "저장 실패"였다. upsert는 행 유무와 무관하게
+ * 동작하므로 가입 트리거(0006)에 의존하지 않고도 항상 성공한다.
+ * RLS(profiles_self_rw)가 `with check (auth.uid() = id)`로 본인 행만 허용한다.
  */
-export async function updateNickname(nickname: string): Promise<Profile> {
+export async function upsertNickname(userId: string, nickname: string): Promise<Profile> {
   const sb = getSupabase();
 
   const { data, error } = await sb
     .from('profiles')
-    .update({ nickname, updated_at: new Date().toISOString() })
+    .upsert(
+      { id: userId, nickname, updated_at: new Date().toISOString() },
+      { onConflict: 'id' },
+    )
     .select()
     .single<ProfileRow>();
 

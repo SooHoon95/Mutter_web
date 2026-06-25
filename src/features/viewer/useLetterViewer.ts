@@ -1,20 +1,20 @@
 // useLetterViewer — 수신 편지 로드 상태 머신 (T8 viewer).
 //
-// openByToken(token, password, deviceId())을 호출해 편지 본문을 가져온다.
-// 인증에 의존하지 않는다(인코그니토 OK — capability-links: 토큰/암호/claim-bind로만 통제).
+// openByToken(token, password)을 호출해 편지 본문을 가져온다.
+// 인증에 의존하지 않는다(인코그니토 OK — capability-links: 토큰/암호로만 통제).
+// 마이그레이션 0011: claim-and-bind 제거 — getDeviceId() 호출 삭제.
 //
 // 상태 전이:
 //   idle/loading → ready                 (성공)
 //                → needPassword           (암호 필요: 첫 시도가 암호 없이 실패)
-//                → error(정규화 메시지)    (revoke/expiry/device-mismatch/not-found 등)
+//                → error(정규화 메시지)    (revoke/expiry/not-found 등)
 //
 // 암호 필요 판단: 첫 시도(암호 없이)가 "암호가 올바르지 않습니다." 로 정규화돼 돌아오면
 // 그 링크는 암호 보호된 것으로 보고 PasswordGate를 띄운다. 사용자가 암호를 넣으면
 // submitPassword(pw)로 재시도한다(같은 openByToken 경로).
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { openByToken } from '@/data/links';
-import { getDeviceId } from '@/lib/deviceId';
+import { openByToken, LinkNotYetError } from '@/data/links';
 import type { MusicCue, Paragraph } from '@/data/types';
 
 // ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ export interface ViewerLetter {
   audioDisabled: boolean;
 }
 
-export type ViewerStatus = 'loading' | 'needPassword' | 'error' | 'ready';
+export type ViewerStatus = 'loading' | 'needPassword' | 'notYet' | 'error' | 'ready';
 
 export interface UseLetterViewerResult {
   status: ViewerStatus;
@@ -46,6 +46,8 @@ export interface UseLetterViewerResult {
   letter: ViewerLetter | null;
   /** status==='error'일 때 사용자 메시지(정규화됨). */
   errorMessage: string | null;
+  /** status==='notYet'일 때 공개 가능 시각(ISO8601). 예약 공개(0018). */
+  revealAt: string | null;
   /** 암호 재시도 중 여부(PasswordGate 버튼 비활성화용). */
   submitting: boolean;
   /** 암호 입력 후 재시도. needPassword 상태에서 PasswordGate가 호출한다. */
@@ -132,6 +134,7 @@ export function useLetterViewer(token: string | undefined): UseLetterViewerResul
   const [status, setStatus] = useState<ViewerStatus>('loading');
   const [letter, setLetter] = useState<ViewerLetter | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [revealAt, setRevealAt] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // 마지막 시도가 암호 없이였는지 추적 — WRONG_PASSWORD가 오면 needPassword로 전이.
@@ -149,13 +152,20 @@ export function useLetterViewer(token: string | undefined): UseLetterViewerResul
 
       triedWithoutPassword.current = password === undefined;
       try {
-        const payload = await openByToken(token, password, getDeviceId());
+        const payload = await openByToken(token, password);
         if (!aliveRef.current) return;
         setLetter(normalizeLetter(payload));
         setStatus('ready');
         setErrorMessage(null);
       } catch (err) {
         if (!aliveRef.current) return;
+        // 0018 예약 공개: 아직 열 수 없는 편지 → 봉인 화면(공개 시각 표시).
+        if (err instanceof LinkNotYetError) {
+          setRevealAt(err.revealAt);
+          setStatus('notYet');
+          setErrorMessage(null);
+          return;
+        }
         const message = err instanceof Error ? err.message : '편지를 불러올 수 없습니다.';
         // 암호 없이 시도했는데 암호 오류가 나면 → 암호 보호된 링크. PasswordGate로.
         if (triedWithoutPassword.current && message === WRONG_PASSWORD_MESSAGE) {
@@ -190,5 +200,5 @@ export function useLetterViewer(token: string | undefined): UseLetterViewerResul
     [attempt],
   );
 
-  return { status, letter, errorMessage, submitting, submitPassword };
+  return { status, letter, errorMessage, revealAt, submitting, submitPassword };
 }

@@ -5,9 +5,9 @@
   align-items: flex-start;
   gap: 8px;
   padding: 10px 12px;
-  border: 1px solid #c8a630;
-  border-radius: 8px;
-  background: #fdf8e6;
+  border: 1px solid var(--warning-300);
+  border-radius: var(--radius-md);
+  background: var(--warning-50);
   font-size: 0.875rem;
 }
 
@@ -15,7 +15,7 @@
   font-size: 1rem;
   flex-shrink: 0;
   margin-top: 1px;
-  color: #a07800;
+  color: var(--warning-700);
 }
 
 .body {
@@ -26,23 +26,23 @@
 
 .message {
   margin: 0;
-  color: #5c4500;
+  color: var(--warning-800);
   line-height: 1.5;
 }
 
 .switchBtn {
   align-self: flex-start;
   padding: 4px 10px;
-  border: 1px solid #a07800;
-  border-radius: 6px;
+  border: 1px solid var(--warning-600);
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: #a07800;
+  color: var(--warning-700);
   font-size: 0.8125rem;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 
 .switchBtn:hover {
-  background: #a07800;
-  color: #fff;
+  background: var(--warning-600);
+  color: var(--text-on-brand);
 }

@@ -13,16 +13,16 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 1rem;
-  border: 1px solid var(--color-border, #2a2a2a);
-  border-radius: 0.5rem;
-  background: var(--color-surface, #18181b);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
 }
 
 .issueForm h3 {
   margin: 0;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-text-secondary, #a1a1aa);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -35,8 +35,22 @@
 
 .fieldRow label {
   font-size: 0.875rem;
-  color: var(--color-text, #e4e4e7);
+  color: var(--text-primary);
   min-width: 5rem;
+}
+
+.fieldCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-tertiary);
 }
 
 .toggle {
@@ -49,30 +63,30 @@
 .toggle input[type='checkbox'] {
   width: 1rem;
   height: 1rem;
-  accent-color: var(--color-accent, #7c6fe0);
+  accent-color: var(--brand-600);
 }
 
 .input {
   flex: 1;
-  background: var(--color-input-bg, #09090b);
-  border: 1px solid var(--color-border, #2a2a2a);
-  border-radius: 0.375rem;
-  color: var(--color-text, #e4e4e7);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
   font-size: 0.875rem;
   padding: 0.375rem 0.625rem;
   outline: none;
 }
 
 .input:focus {
-  border-color: var(--color-accent, #7c6fe0);
+  border-color: var(--brand-600);
 }
 
 .issueBtn {
   align-self: flex-start;
-  background: var(--color-accent, #7c6fe0);
-  color: #fff;
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
   border: none;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-xs);
   font-size: 0.875rem;
   font-weight: 600;
   padding: 0.5rem 1rem;
@@ -89,7 +103,7 @@
 
 .error {
   font-size: 0.8125rem;
-  color: var(--color-error, #f87171);
+  color: var(--error-400);
 }
 
 /* 링크 목록 ----------------------------------------------------------------- */
@@ -105,9 +119,9 @@
   flex-direction: column;
   gap: 0.375rem;
   padding: 0.75rem;
-  border: 1px solid var(--color-border, #2a2a2a);
-  border-radius: 0.375rem;
-  background: var(--color-surface, #18181b);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-xs);
+  background: var(--bg-secondary);
 }
 
 .linkItem.revoked {
@@ -116,7 +130,7 @@
 
 .linkUrl {
   font-size: 0.8125rem;
-  color: var(--color-text-secondary, #a1a1aa);
+  color: var(--text-secondary);
   word-break: break-all;
   font-family: monospace;
 }
@@ -126,22 +140,38 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   font-size: 0.75rem;
-  color: var(--color-text-secondary, #a1a1aa);
+  color: var(--text-secondary);
 }
 
 .badge {
-  background: var(--color-badge-bg, #27272a);
-  border-radius: 9999px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
   padding: 0.125rem 0.5rem;
 }
 
 .badge.lock {
-  color: var(--color-accent, #7c6fe0);
+  color: var(--brand-600);
 }
 
 .badge.expired,
 .badge.revoked {
-  color: var(--color-error, #f87171);
+  color: var(--error-400);
+}
+
+/* 예약 공개(0018): 공개 예정 링크 — 골드 외곽선 배지로 "봉인됨"을 표현. */
+.badge.scheduled {
+  color: var(--text-brand);
+  border: 1px solid var(--border-brand);
+  background: transparent;
+  font-weight: 600;
+}
+
+/* 폼 필드 하단 보조 설명. */
+.fieldHint {
+  margin: -0.25rem 0 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  line-height: 1.4;
 }
 
 .actions {
@@ -155,21 +185,21 @@
   font-size: 0.75rem;
   font-weight: 600;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-xs);
   padding: 0.25rem 0.625rem;
   cursor: pointer;
   transition: opacity 0.15s;
 }
 
 .copyBtn {
-  background: var(--color-surface-2, #27272a);
-  color: var(--color-text, #e4e4e7);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .revokeBtn {
   background: transparent;
-  color: var(--color-error, #f87171);
-  border: 1px solid var(--color-error, #f87171);
+  color: var(--error-400);
+  border: 1px solid var(--error-400);
 }
 
 .revokeBtn:disabled,
@@ -180,7 +210,7 @@
 
 .emptyState {
   font-size: 0.875rem;
-  color: var(--color-text-secondary, #a1a1aa);
+  color: var(--text-secondary);
   text-align: center;
   padding: 1rem 0;
 }

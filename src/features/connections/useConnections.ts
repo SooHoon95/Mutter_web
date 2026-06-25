@@ -12,6 +12,9 @@ import {
 import type { Connection } from '@/data/connections';
 
 const CONNECTIONS_QUERY_KEY = ['connections'] as const;
+// useThreads와 동일한 키 — 직접 발송 후 상대 목록/스레드를 무효화해 stale을 막는다.
+const COUNTERPARTS_QUERY_KEY = ['counterparts'] as const;
+const THREAD_QUERY_KEY = ['thread'] as const;
 
 interface UseConnectionsReturn {
   connections: Connection[];
@@ -42,6 +45,8 @@ export function useConnections(): UseConnectionsReturn {
 
   const createInviteMutation = useMutation<string, Error, void>({
     mutationFn: createInvite,
+    // 초대 생성 성공 → 연결 상태가 바뀔 수 있으므로 목록을 재조회한다.
+    onSuccess: invalidate,
   });
 
   const acceptMutation = useMutation<void, Error, string>({
@@ -58,6 +63,11 @@ export function useConnections(): UseConnectionsReturn {
 
   const sendMutation = useMutation<void, Error, { letterId: string; recipientId: string }>({
     mutationFn: ({ letterId, recipientId }) => sendToConnection(letterId, recipientId),
+    // 발송 성공 → 상대 목록/스레드가 바뀌므로(새 교류·새 상대) 무효화해 재조회한다.
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: COUNTERPARTS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: THREAD_QUERY_KEY });
+    },
   });
 
   return {

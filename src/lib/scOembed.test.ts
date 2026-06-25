@@ -7,19 +7,19 @@ import { validateScUrl } from './scOembed';
 // ---------------------------------------------------------------------------
 
 function makeFetch(status: number, body: unknown): typeof fetch {
-  return async (_url: RequestInfo | URL) => {
+  return (async () => {
     return {
       status,
       ok: status >= 200 && status < 300,
       json: async () => body,
     } as Response;
-  };
+  }) as typeof fetch;
 }
 
 function makeNetworkErrorFetch(): typeof fetch {
-  return async (_url: RequestInfo | URL) => {
+  return (async () => {
     throw new TypeError('Failed to fetch');
-  };
+  }) as typeof fetch;
 }
 
 const VALID_SC_URL = 'https://soundcloud.com/artist/track-name';

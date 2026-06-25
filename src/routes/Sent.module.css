@@ -1,0 +1,241 @@
+/* Sent 라우트 — 보낸 편지 페이지 레이아웃 */
+
+.page {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1.5rem;
+}
+
+.empty {
+  font-size: 0.9375rem;
+  color: var(--text-tertiary);
+}
+
+.errorMsg {
+  font-size: 0.9375rem;
+  color: var(--text-error);
+}
+
+/* 편지 목록 */
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* 개별 편지 카드 */
+.card {
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-xl);
+  padding: 1rem 1.125rem;
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-soft);
+}
+
+/* 카드 헤더 행 */
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.cardMeta {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardDate {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin: 0.25rem 0 0;
+}
+
+.cardRecipient {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin: 0.2rem 0 0;
+}
+
+/* 읽음 확인(0017): "열어봤어요" 라인 — 받은이 라인보다 골드로 강조. */
+.cardOpened {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-brand);
+  margin: 0.3rem 0 0;
+}
+
+/* 카드 우측 버튼 그룹 */
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* #4 이어쓰기 — 골드 채움 1차 액션. */
+.btnEdit {
+  padding: 0.375rem 0.75rem;
+  border: 1.5px solid var(--bg-brand);
+  border-radius: var(--radius-full);
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.btnEdit:hover {
+  opacity: 0.88;
+}
+
+.btnLink {
+  padding: 0.375rem 0.75rem;
+  border: 1.5px solid var(--border-brand);
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--text-brand);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btnLink:hover {
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
+}
+
+.btnDeleteCard {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-tertiary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.btnDeleteCard:hover {
+  border-color: var(--error-600);
+  color: var(--text-error);
+  background: var(--error-50);
+}
+
+/* 링크 관리 패널 영역 */
+.linkPanel {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--hairline);
+}
+
+/* ── 삭제 확인 모달 ─────────────────────────────────────────────── */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1.25rem;
+}
+
+.modalCard {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: 1.75rem 1.5rem;
+  max-width: 360px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: var(--shadow-card);
+}
+
+.modalTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.modalBody {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.btnCancel {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-primary);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.btnCancel:hover {
+  background: var(--bg-tertiary);
+}
+
+.btnCancel:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btnConfirmDelete {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--error-600);
+  color: var(--bg-primary);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btnConfirmDelete:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.btnConfirmDelete:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

@@ -10,9 +10,9 @@
   align-self: flex-start;
   padding: 0.6rem 1.4rem;
   border: none;
-  border-radius: 8px;
-  background: #8b6914;
-  color: #fff;
+  border-radius: var(--radius-md);
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
@@ -31,12 +31,12 @@
 .error {
   margin: 0;
   font-size: 0.8125rem;
-  color: #b94040;
+  color: var(--text-error);
 }
 
 .success {
   margin: 0;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #3a6b3a;
+  color: var(--success-700);
 }

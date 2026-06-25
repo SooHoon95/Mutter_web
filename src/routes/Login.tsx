@@ -1,25 +1,64 @@
 /**
  * src/routes/Login.tsx
  *
- * 매직링크 로그인 페이지.
+ * 로그인/회원가입 (이메일+비밀번호, 코드 인증) + 소셜 OAuth. Postone과 동일 모델:
+ *  - 회원가입: 이메일+비밀번호 → 6자리 코드 메일 → 코드 입력 → 가입 완료+로그인.
+ *  - 로그인: 이메일+비밀번호.
+ *  - 폴백: 비밀번호 없는(구) 계정 → "이메일 코드로 로그인"(sendMagicLink → 코드 입력).
  *
- * 흐름:
- * 1. 이메일 입력 → "링크 보내기" 클릭
- * 2. sendMagicLink() 호출 → Supabase가 이메일 발송
- * 3. 발송 성공 → "메일함 확인" 상태로 전환(재발송 없이 안내만)
- * 4. 사용자가 메일의 링크 클릭 → Supabase가 세션 생성 → onAuthStateChange 발화
- *    → AuthProvider가 session 업데이트 → RequireAuth가 원래 경로(/create 등)로 복귀
- *
- * 이미 로그인된 경우: useEffect에서 state.from 또는 '/'으로 리다이렉트.
+ * 코드는 "Magic Link" 이메일 템플릿의 {{ .Token }} 으로 전달된다(requestEmailCode/sendMagicLink 동일).
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { sendMagicLink, signInWithProvider } from '@/data/auth';
+import {
+  signInWithPassword,
+  requestEmailCode,
+  verifyEmailOtp,
+  setUserPassword,
+  sendMagicLink,
+  signInWithProvider,
+} from '@/data/auth';
 import { useAuth } from '@/app/AuthProvider';
 import styles from './Login.module.css';
 
 interface LocationState {
   from?: { pathname: string };
+}
+
+type Mode = 'login' | 'signup';
+
+/** Supabase 인증 에러 메시지를 사용자 친화 한국어로 정규화. */
+function authErrorMessage(err: unknown, mode: Mode): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  const m = raw.toLowerCase();
+  if (m.includes('invalid login credentials')) return '이메일 또는 비밀번호가 올바르지 않습니다.';
+  if (m.includes('email not confirmed')) return '이메일 인증을 먼저 완료해 주세요.';
+  if (m.includes('already registered') || m.includes('already been registered'))
+    return '이미 가입된 이메일이에요. 로그인해 주세요.';
+  if (m.includes('password should be') || m.includes('at least 6'))
+    return '비밀번호는 6자 이상이어야 해요.';
+  if (m.includes('rate limit') || m.includes('too many') || m.includes('exceeded'))
+    return '요청이 많아요. 잠시 후 다시 시도해 주세요.';
+  return mode === 'signup'
+    ? '회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+    : '로그인에 실패했습니다.';
+}
+
+/** 소셜 OAuth 에러를 사용자 친화 한국어로 정규화. */
+function socialErrorMessage(err: unknown, provider: 'google' | 'kakao'): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  const m = raw.toLowerCase();
+  const label = provider === 'google' ? 'Google' : 'Kakao';
+  // 제공자 미설정(Supabase Providers에서 아직 enable 안 됨) — 설정 완료 전 흔한 케이스.
+  if (
+    m.includes('provider is not enabled') ||
+    m.includes('unsupported provider') ||
+    m.includes('not enabled') ||
+    m.includes('validation_failed')
+  ) {
+    return `${label} 로그인이 아직 준비 중이에요. 잠시 후 다시 시도하거나 이메일로 로그인해 주세요.`;
+  }
+  return `${label} 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.`;
 }
 
 export default function Login(): React.ReactNode {
@@ -28,70 +67,197 @@ export default function Login(): React.ReactNode {
   const location = useLocation();
   const state = location.state as LocationState | null;
 
+  const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [awaitingCode, setAwaitingCode] = useState(false); // 가입 후 코드 입력 단계
+  const [code, setCode] = useState('');
   const [socialLoading, setSocialLoading] = useState<'google' | 'kakao' | null>(null);
+  // 자동 리다이렉트 가드(race-safe). 세션 생성이 navigate('/set-nickname')보다 먼저 전파돼도
+  // ref는 동기적으로 즉시 반영되므로 effect가 '/'로 가로채 이동하는 것을 막는다.
+  const justSignedUpRef = useRef(false);
 
   async function handleSocialLogin(provider: 'google' | 'kakao'): Promise<void> {
     setError(null);
     setSocialLoading(provider);
     try {
       await signInWithProvider(provider);
-      // 리다이렉트가 발생하므로 이후 코드는 실행되지 않는다
     } catch (err) {
-      const message = err instanceof Error ? err.message : '소셜 로그인에 실패했습니다.';
-      setError(message);
+      setError(socialErrorMessage(err, provider));
       setSocialLoading(null);
     }
   }
 
-  // 이미 로그인된 상태라면 원래 경로 또는 '/'으로 이동
+  // 이미 로그인된 상태면 원래 경로 또는 '/'으로 이동.
+  // 단, 방금 가입을 마친 경우(signedUp)에는 자동 이동을 막고 "가입 완료" 화면을 띄운다
+  // (사용자가 "시작하기"를 누르면 그때 이동).
   useEffect(() => {
-    if (!loading && session) {
-      const destination = state?.from?.pathname ?? '/';
-      navigate(destination, { replace: true });
+    if (!loading && session && !justSignedUpRef.current) {
+      navigate(state?.from?.pathname ?? '/', { replace: true });
     }
   }, [session, loading, navigate, state]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     setError(null);
-    setSending(true);
+    setNotice(null);
+    setBusy(true);
     try {
-      await sendMagicLink(email.trim());
-      setSent(true);
+      if (mode === 'signup') {
+        // signInWithOtp로 6자리 코드 발송(Magic Link 템플릿 .Token). 비번은 코드 인증 후 설정.
+        await requestEmailCode(email.trim());
+        setAwaitingCode(true);
+        setNotice(`${email.trim()}로 6자리 인증 코드를 보냈어요.`);
+      } else {
+        await signInWithPassword(email.trim(), password);
+      }
     } catch (err) {
-      const message = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
-      setError(message);
+      setError(authErrorMessage(err, mode));
     } finally {
-      setSending(false);
+      setBusy(false);
     }
   }
 
-  if (sent) {
+  // 코드 검증 — 성공 시 세션 생성. 이어서 비밀번호를 설정해 이후 비번 로그인 가능하게 한다.
+  async function handleVerifyCode(e: React.FormEvent<HTMLFormElement>): Promise<void> {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      await verifyEmailOtp(email.trim(), code.trim());
+      // 세션이 생성되면 useEffect가 '/'로 자동 이동하므로, 그 전에 가드를 켜서
+      // 대신 이름 설정 페이지(/set-nickname)로 보낸다. ref는 즉시(동기) 반영 → race-safe.
+      justSignedUpRef.current = true;
+      // 코드 인증으로 로그인됨 → 비밀번호 설정(실패해도 로그인 자체는 유지).
+      if (password.length >= 6) {
+        try {
+          await setUserPassword(password);
+        } catch {
+          // 비번 설정 실패는 치명적이지 않음 — 세션은 이미 생성됐다. 사용자에게 비차단 안내.
+          setNotice('로그인은 됐지만 비밀번호 설정에 실패했어요. 마이페이지에서 다시 설정해 주세요.');
+        }
+      }
+      // 이름 설정 페이지로 진입(거기서 "시작하기" → 저장 → /welcome → 메인).
+      navigate('/set-nickname', { replace: true });
+    } catch {
+      setError('코드가 올바르지 않거나 만료되었습니다. 다시 확인해 주세요.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleResend(): Promise<void> {
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    try {
+      await requestEmailCode(email.trim());
+      setNotice('인증 코드를 다시 보냈어요.');
+    } catch (err) {
+      setError(authErrorMessage(err, 'signup'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 폴백: 비밀번호 없는(구) 계정 — 이메일 코드로 로그인.
+  // sendMagicLink도 동일한 코드 메일을 발송하므로, 코드 입력 화면으로 이어진다.
+  async function handleMagicLink(): Promise<void> {
+    setError(null);
+    setNotice(null);
+    if (!email.trim()) {
+      setError('이메일을 먼저 입력해 주세요.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await sendMagicLink(email.trim());
+      setAwaitingCode(true);
+      setNotice(`${email.trim()}로 6자리 인증 코드를 보냈어요.`);
+    } catch (err) {
+      setError(authErrorMessage(err, 'login'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 가입 후 코드 입력 단계.
+  if (awaitingCode) {
     return (
       <main className={styles.page}>
         <div className={styles.card}>
-          <div className={styles.successBox}>
-            <p className={styles.successTitle}>메일함을 확인해주세요</p>
-            <p className={styles.successDesc}>
-              <strong>{email}</strong>으로 로그인 링크를 보냈습니다.
-              <br />
-              링크를 클릭하면 자동으로 로그인됩니다.
-            </p>
+          <h1 className={styles.title}>인증 코드 입력</h1>
+          <p className={styles.subtitle}>
+            <strong>{email}</strong>로 보낸 6자리 코드를 입력해 인증하면 로그인돼요.
+          </p>
+
+          <form className={styles.form} onSubmit={(e) => void handleVerifyCode(e)}>
+            <label className={styles.label} htmlFor="otp">
+              인증 코드
+            </label>
+            <input
+              id="otp"
+              className={styles.input}
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]*"
+              maxLength={6}
+              required
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              disabled={busy}
+              autoFocus
+            />
+            {error && <p className={styles.error}>{error}</p>}
+            {notice && <p className={styles.notice}>{notice}</p>}
+            <button
+              className={styles.button}
+              type="submit"
+              disabled={busy || code.trim().length < 6}
+            >
+              {busy ? '확인 중…' : '인증하고 시작하기'}
+            </button>
+          </form>
+
+          <div className={styles.switchRow}>
+            코드가 안 왔나요?{' '}
+            <button type="button" className={styles.linkBtn} onClick={() => void handleResend()} disabled={busy}>
+              다시 보내기
+            </button>
           </div>
+          <button
+            type="button"
+            className={styles.linkBtnMuted}
+            onClick={() => {
+              setAwaitingCode(false);
+              setCode('');
+              setError(null);
+              setNotice(null);
+            }}
+          >
+            ← 이메일 다시 입력
+          </button>
         </div>
       </main>
     );
   }
 
+  const isSignup = mode === 'signup';
+
   return (
     <main className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.title}>편지 쓰기</h1>
-        <p className={styles.subtitle}>이메일로 로그인 링크를 보내드립니다.</p>
+        <h1 className={styles.title}>{isSignup ? '회원가입' : '로그인'}</h1>
+        <p className={styles.subtitle}>
+          {isSignup
+            ? '가입 시 6자리 코드를 한 번 받고, 이후엔 비밀번호로 로그인해요.'
+            : '이메일과 비밀번호로 로그인하세요.'}
+        </p>
 
         <div className={styles.socialButtons}>
           <button
@@ -133,13 +299,81 @@ export default function Login(): React.ReactNode {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="your@email.com"
-            disabled={sending}
+            disabled={busy}
           />
+
+          <label className={styles.label} htmlFor="password">
+            비밀번호
+          </label>
+          <input
+            id="password"
+            className={styles.input}
+            type="password"
+            autoComplete={isSignup ? 'new-password' : 'current-password'}
+            required
+            minLength={6}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={isSignup ? '6자 이상' : '비밀번호'}
+            disabled={busy}
+          />
+
           {error && <p className={styles.error}>{error}</p>}
-          <button className={styles.button} type="submit" disabled={sending || email.trim() === ''}>
-            {sending ? '보내는 중…' : '로그인 링크 받기'}
+          {notice && <p className={styles.notice}>{notice}</p>}
+
+          <button
+            className={styles.button}
+            type="submit"
+            disabled={busy || email.trim() === '' || password.length < 6}
+          >
+            {busy ? '처리 중…' : isSignup ? '가입하기' : '로그인'}
           </button>
         </form>
+
+        <div className={styles.switchRow}>
+          {isSignup ? (
+            <>
+              이미 계정이 있으신가요?{' '}
+              <button
+                type="button"
+                className={styles.linkBtn}
+                onClick={() => {
+                  setMode('login');
+                  setError(null);
+                  setNotice(null);
+                }}
+              >
+                로그인
+              </button>
+            </>
+          ) : (
+            <>
+              계정이 없으신가요?{' '}
+              <button
+                type="button"
+                className={styles.linkBtn}
+                onClick={() => {
+                  setMode('signup');
+                  setError(null);
+                  setNotice(null);
+                }}
+              >
+                회원가입
+              </button>
+            </>
+          )}
+        </div>
+
+        {!isSignup && (
+          <button
+            type="button"
+            className={styles.linkBtnMuted}
+            onClick={() => void handleMagicLink()}
+            disabled={busy}
+          >
+            이메일 코드로 로그인
+          </button>
+        )}
       </div>
     </main>
   );

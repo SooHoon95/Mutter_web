@@ -10,20 +10,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import type { LetterPayload } from '@/data/links';
 
-// openByToken·getDeviceId 모킹
+// openByToken 모킹 (device-lock은 0011에서 제거됨 — deviceId 인자 없음).
+// 0018: LinkNotYetError는 instanceof 검사에 쓰이므로 실제 클래스로 모킹한다.
 vi.mock('@/data/links', () => ({
   openByToken: vi.fn(),
-}));
-vi.mock('@/lib/deviceId', () => ({
-  getDeviceId: vi.fn(() => 'device-test-001'),
+  LinkNotYetError: class LinkNotYetError extends Error {
+    revealAt: string;
+    constructor(revealAt: string) {
+      super('NOT_YET_REVEALED');
+      this.name = 'LinkNotYetError';
+      this.revealAt = revealAt;
+    }
+  },
 }));
 
-import { openByToken } from '@/data/links';
-import { getDeviceId } from '@/lib/deviceId';
+import { openByToken, LinkNotYetError } from '@/data/links';
 import { useLetterViewer } from './useLetterViewer';
 
 const mockOpenByToken = vi.mocked(openByToken);
-const mockGetDeviceId = vi.mocked(getDeviceId);
 
 const samplePayload: LetterPayload = {
   id: 'letter-abc',
@@ -88,8 +92,8 @@ describe('useLetterViewer', () => {
     });
 
     await waitFor(() => expect(result.current.status).toBe('ready'));
-    // 재시도는 평문 암호 + deviceId를 RPC 경로로 넘긴다.
-    expect(mockOpenByToken).toHaveBeenLastCalledWith('tok', 'correct-pw', 'device-test-001');
+    // 재시도는 평문 암호를 RPC 경로로 넘긴다(deviceId 없음).
+    expect(mockOpenByToken).toHaveBeenLastCalledWith('tok', 'correct-pw');
   });
 
   it('needPassword에서 틀린 암호 제출 시 error로 전이한다(정규화 메시지 노출)', async () => {
@@ -118,6 +122,16 @@ describe('useLetterViewer', () => {
     expect(result.current.errorMessage).toBe('이 링크는 발신자에 의해 무효화되었습니다.');
   });
 
+  it('0018: LinkNotYetError면 notYet으로 전이하고 revealAt을 채운다(예약 공개)', async () => {
+    mockOpenByToken.mockRejectedValue(new LinkNotYetError('2026-06-25T00:00:00Z'));
+
+    const { result } = renderHook(() => useLetterViewer('tok'));
+
+    await waitFor(() => expect(result.current.status).toBe('notYet'));
+    expect(result.current.revealAt).toBe('2026-06-25T00:00:00Z');
+    expect(result.current.errorMessage).toBeNull();
+  });
+
   it('token이 없으면 error로 전이한다', async () => {
     const { result } = renderHook(() => useLetterViewer(undefined));
 
@@ -126,15 +140,14 @@ describe('useLetterViewer', () => {
     expect(mockOpenByToken).not.toHaveBeenCalled();
   });
 
-  it('openByToken에 token·deviceId를 전달한다(claim-and-bind 경로)', async () => {
+  it('openByToken에 token을 전달한다(암호 없이 최초 시도)', async () => {
     mockOpenByToken.mockResolvedValue(samplePayload);
 
     renderHook(() => useLetterViewer('my-token'));
 
     await waitFor(() =>
-      expect(mockOpenByToken).toHaveBeenCalledWith('my-token', undefined, 'device-test-001'),
+      expect(mockOpenByToken).toHaveBeenCalledWith('my-token', undefined),
     );
-    expect(mockGetDeviceId).toHaveBeenCalled();
   });
 
   it('payload에 cues 배열이 제공되면 단락별 cue 필드보다 우선 사용한다', async () => {

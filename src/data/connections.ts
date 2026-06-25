@@ -10,15 +10,20 @@ import { getSupabase } from './supabase';
 // RPC 반환 타입 (DB row와 1:1)
 // ---------------------------------------------------------------------------
 
-/** get_connect_invite RPC가 반환하는 row 구조 */
+/**
+ * get_connect_invite RPC가 반환하는 row 구조.
+ * 독점 1:1 필드(viewer_has_connection / inviter_has_connection)는 0010 마이그레이션에서
+ * 추가됐다. 0009(4컬럼) 시그니처가 배포된 환경에서는 이 두 컬럼이 누락될 수 있으므로
+ * optional로 둔다 — rowToInvite가 누락 시 false로 안전 폴백한다(아래 매핑 참조).
+ */
 interface ConnectInviteRow {
   inviter_id: string;
   inviter_nickname: string | null;
   is_self: boolean;
   already_connected: boolean;
   // 독점 1:1 필드 — 뷰어(수락자) / 초대자 중 누군가가 이미 다른 연결을 가지고 있는지.
-  viewer_has_connection: boolean;
-  inviter_has_connection: boolean;
+  viewer_has_connection?: boolean;
+  inviter_has_connection?: boolean;
 }
 
 /** get_my_connections RPC가 반환하는 row 구조 */
@@ -64,8 +69,10 @@ function rowToInvite(row: ConnectInviteRow): ConnectInvite {
     inviterNickname: row.inviter_nickname,
     isSelf: row.is_self,
     alreadyConnected: row.already_connected,
-    viewerHasConnection: row.viewer_has_connection,
-    inviterHasConnection: row.inviter_has_connection,
+    // 4컬럼(0009) 시그니처가 배포돼 이 두 컬럼이 누락되면 1:1 배타성이 조용히 꺼지지 않도록
+    // === true로 명시 매핑한다(undefined → false). 6컬럼(0010/0013)에서는 그대로 반영.
+    viewerHasConnection: row.viewer_has_connection === true,
+    inviterHasConnection: row.inviter_has_connection === true,
   };
 }
 
@@ -96,18 +103,54 @@ const ACCEPT_ERROR_MESSAGES: Record<string, string> = {
   INVITE_NOT_FOUND: '초대를 찾을 수 없어요.',
 };
 
+// send_to_connection RPC가 raise exception으로 던지는 내부 코드.
+// links.ts normalizeOpenError와 같은 정책: 내부 코드를 UI에 노출하지 않고 한국어로 변환.
+const SEND_ERROR_MESSAGES: Record<string, string> = {
+  CANNOT_SEND_SELF: '본인에게는 보낼 수 없어요.',
+  FORBIDDEN: '이 편지를 보낼 권한이 없어요.',
+  NOT_CONNECTED: '연결된 사람이 아니에요. 먼저 연결해 주세요.',
+  TOKEN_INVALID: '발송에 실패했어요. 잠시 후 다시 시도해 주세요.',
+};
+
+/**
+ * Supabase RPC 에러는 Error 인스턴스가 아닌 plain object {message, code}로 올 수 있다.
+ * .message 필드를 우선 추출해 코드 매칭이 실패하지 않게 한다(links.ts와 동일 패턴).
+ */
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'object' && err !== null && 'message' in err) {
+    return String((err as { message: unknown }).message);
+  }
+  return String(err);
+}
+
 /**
  * RPC 에러에 알려진 에러 코드가 포함돼 있으면 사용자 메시지로 변환한다.
  * 알 수 없는 에러는 원본 메시지를 그대로 throw한다.
  */
 function normalizeAcceptError(err: unknown): Error {
-  const message = err instanceof Error ? err.message : String(err);
+  const message = errorMessage(err);
   for (const [code, userMsg] of Object.entries(ACCEPT_ERROR_MESSAGES)) {
     if (message.includes(code)) {
       return new Error(userMsg);
     }
   }
   return err instanceof Error ? err : new Error(message);
+}
+
+/**
+ * send_to_connection 내부 코드(FORBIDDEN/NOT_CONNECTED/TOKEN_INVALID/CANNOT_SEND_SELF)를
+ * 사용자 친화적 한국어 메시지로 변환한다. 알 수 없는 에러는 일반 메시지로 정규화한다.
+ */
+function normalizeSendError(err: unknown): Error {
+  const message = errorMessage(err);
+  for (const [code, userMsg] of Object.entries(SEND_ERROR_MESSAGES)) {
+    if (message.includes(code)) {
+      return new Error(userMsg);
+    }
+  }
+  // 내부 코드 비노출 — 알 수 없는 에러는 일반 메시지로.
+  return new Error('편지를 보내지 못했어요. 잠시 후 다시 시도해 주세요.');
 }
 
 // ---------------------------------------------------------------------------
@@ -190,5 +233,7 @@ export async function sendToConnection(
     p_recipient: recipientId,
     p_token: token,
   });
-  if (error) throw error;
+  // 내부 Postgres 코드(FORBIDDEN/NOT_CONNECTED/TOKEN_INVALID/CANNOT_SEND_SELF)를 그대로
+  // UI에 노출하지 않고 한국어 메시지로 정규화해 re-throw한다(links.ts normalizeOpenError 정책).
+  if (error) throw normalizeSendError(error);
 }

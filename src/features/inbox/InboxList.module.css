@@ -14,9 +14,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  background: #fff;
-  border: 1px solid #ece8e0;
-  border-radius: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
   gap: 1rem;
 }
 
@@ -28,7 +28,7 @@
 .title {
   font-size: 1rem;
   font-weight: 500;
-  color: #2c2416;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -36,42 +36,67 @@
 
 .sender {
   font-size: 0.8rem;
-  color: #6b5d45;
+  color: var(--text-secondary);
   margin-top: 0.2rem;
 }
 
 .savedAt {
   font-size: 0.8rem;
-  color: #8a7a5e;
+  color: var(--text-tertiary);
   margin-top: 0.2rem;
+}
+
+/* 0019 답장 + 열기 액션 묶음 */
+.actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .openLink {
   flex-shrink: 0;
   padding: 0.4rem 0.8rem;
-  border: 1.5px solid #8b6914;
-  border-radius: 6px;
-  color: #8b6914;
+  border: 1.5px solid var(--text-brand);
+  border-radius: var(--radius-sm);
+  color: var(--text-brand);
   font-size: 0.875rem;
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
 
 .openLink:hover {
-  background: #8b6914;
-  color: #fff;
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
+}
+
+/* 0019 답장 링크 — 골드 채움으로 행동 유도. */
+.replyLink {
+  flex-shrink: 0;
+  padding: 0.4rem 0.8rem;
+  border: 1.5px solid var(--bg-brand);
+  border-radius: var(--radius-sm);
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.replyLink:hover {
+  opacity: 0.88;
 }
 
 .empty {
   padding: 3rem 1rem;
   text-align: center;
-  color: #8a7a5e;
+  color: var(--text-tertiary);
   font-size: 0.95rem;
 }
 
 .error {
   padding: 2rem 1rem;
   text-align: center;
-  color: #b94040;
+  color: var(--text-error);
   font-size: 0.95rem;
 }

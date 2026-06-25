@@ -31,3 +31,46 @@
   word-break: keep-all;
   line-height: 1.5;
 }
+
+/* 0018 예약 공개 — 봉인 화면(시네마틱 다크 톤에 골드 강조). */
+.sealedCard {
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.sealedIcon {
+  margin: 0;
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.sealedTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #f0ece2;
+}
+
+.sealedWhen {
+  margin: 0;
+  font-size: 1rem;
+  color: #e8e4da;
+  word-break: keep-all;
+  line-height: 1.5;
+}
+
+.sealedWhen strong {
+  color: #d4af37;
+  font-weight: 700;
+}
+
+.sealedHint {
+  margin: 0.2rem 0 0;
+  font-size: 0.875rem;
+  color: #aab3bf;
+  word-break: keep-all;
+  line-height: 1.5;
+}

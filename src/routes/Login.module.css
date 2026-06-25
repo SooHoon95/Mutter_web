@@ -1,7 +1,7 @@
 /* src/routes/Login.module.css
  *
  * 로그인 페이지 전용 스타일. global.css를 오염시키지 않도록 CSS Module로 격리.
- * 디자인 시스템 토큰(색상·간격)은 T6에서 확정되므로 여기서는 기능 우선 최소 스타일.
+ * 디자인 시스템 토큰(웜 아이보리 + 골드)을 사용한 정제 스타일.
  */
 
 .page {
@@ -14,26 +14,35 @@
   box-sizing: border-box;
 }
 
+/* 부양된 화이트 로그인 카드 */
 .card {
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  padding: 2.25rem 1.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-3xl);
+  box-shadow: var(--shadow-card);
 }
 
 .title {
-  font-size: 1.5rem;
+  font-family: var(--font-display);
+  font-size: 1.65rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
   margin: 0;
   text-align: center;
 }
 
 .subtitle {
-  margin: 0;
-  font-size: 0.875rem;
+  margin: -0.5rem 0 0;
+  font-size: 0.9rem;
   text-align: center;
-  opacity: 0.7;
+  color: var(--ink-soft);
 }
 
 .form {
@@ -43,47 +52,63 @@
 }
 
 .label {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-mid);
 }
 
 .input {
   width: 100%;
-  padding: 0.625rem 0.875rem;
+  padding: 0.75rem 0.95rem;
   font-size: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  color: inherit;
+  font-family: inherit;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  background: var(--bg-primary);
+  color: var(--ink);
   box-sizing: border-box;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
 }
 
 .input:focus {
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: var(--gold);
+  box-shadow: var(--focus-gold);
 }
 
 .button {
-  padding: 0.625rem 1rem;
+  padding: 0.8rem 1rem;
   font-size: 1rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
   border: none;
-  border-radius: 0.5rem;
-  background: #fff;
-  color: #0f0f10;
+  border-radius: var(--radius-lg);
+  background: var(--gold-gradient);
+  color: var(--on-gold);
   cursor: pointer;
-  transition: opacity 0.15s;
+  box-shadow: var(--shadow-gold);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
 }
 
 .button:disabled {
-  opacity: 0.5;
+  background: var(--warm-150);
+  color: var(--ink-faint);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
 .error {
   font-size: 0.875rem;
-  color: #f87171;
+  color: var(--text-error);
   text-align: center;
 }
 
@@ -92,21 +117,73 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem;
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  background: var(--gold-soft);
   text-align: center;
 }
 
 .successTitle {
-  font-size: 1.125rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
   font-weight: 700;
+  color: var(--ink);
   margin: 0;
 }
 
 .successDesc {
   font-size: 0.875rem;
   margin: 0;
-  opacity: 0.75;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--gold-deep);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* 로그인↔회원가입 전환 줄 */
+.switchRow {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+/* 비밀번호 없이 이메일 링크 폴백 — 약하게 */
+.linkBtnMuted {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  color: var(--ink-faint);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.linkBtnMuted:hover:not(:disabled) {
+  color: var(--ink-soft);
+}
+
+/* 가입 인증/링크 발송 안내 */
+.notice {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--gold-deep);
+  background: var(--gold-soft);
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.85rem;
+  margin: 0;
 }
 
 .socialButtons {
@@ -119,17 +196,22 @@
 .socialButtonGoogle,
 .socialButtonKakao {
   width: 100%;
-  padding: 0.625rem 1rem;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
   font-weight: 600;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: filter 0.15s, box-shadow 0.15s, transform 0.15s;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+.socialButtonGoogle:hover:not(:disabled),
+.socialButtonKakao:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
 /* 브랜드 로고는 텍스트와 무관하게 고정 크기 유지 */
@@ -142,20 +224,22 @@
 .socialButtonKakao:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
-/* Google: 흰 배경 + 테두리 */
+/* Google: 흰 배경 + 테두리 (브랜드 가이드라인 준수) */
 .socialButtonGoogle {
   background: #ffffff;
   color: #3c4043;
   border: 1px solid #dadce0;
+  box-shadow: 0 1px 2px rgba(60, 48, 20, 0.06);
 }
 
 .socialButtonGoogle:hover:not(:disabled) {
   background: #f8f8f8;
 }
 
-/* Kakao: 카카오 노란색 배경 */
+/* Kakao: 카카오 노란색 배경 (브랜드 로고색 유지) */
 .socialButtonKakao {
   background: #fee500;
   color: #000000;
@@ -163,7 +247,7 @@
 }
 
 .socialButtonKakao:hover:not(:disabled) {
-  background: #f0d900;
+  filter: brightness(0.97);
 }
 
 /* 구분선 */
@@ -179,13 +263,13 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--hairline);
 }
 
 .dividerText {
   position: relative;
   padding: 0 0.75rem;
   font-size: 0.8125rem;
-  color: rgba(255, 255, 255, 0.45);
-  background: transparent;
+  color: var(--ink-faint);
+  background: var(--bg-primary);
 }

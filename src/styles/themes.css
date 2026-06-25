@@ -67,6 +67,31 @@
 }
 
 /*
+ * WYSIWYG 입력 — Create 작성 화면에서 편지지(.templateScoped) 위에 직접 타이핑한다.
+ * 배경을 투명하게 비워 종이결을 그대로 살리고, 테마 폰트·색·줄 간격을 상속받게 한다.
+ * (textarea는 본문, input은 제목용. 크기·여백은 라우트 CSS에서 보강한다.)
+ */
+.templateScoped input,
+.templateScoped textarea {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--tpl-fg);
+  font-family: var(--tpl-font-family);
+  font-size: var(--tpl-font-size);
+  line-height: var(--tpl-line-height);
+  padding: 0;
+  margin: 0;
+}
+
+/* 플레이스홀더 — 본문 색과 같은 톤이되 흐리게(muted 색) 표시 */
+.templateScoped input::placeholder,
+.templateScoped textarea::placeholder {
+  color: var(--tpl-muted);
+  opacity: 0.7;
+}
+
+/*
  * 폰트 로드: 한국어 폰트는 시스템 폰트 스택으로 처리한다.
  * Nanum Myeongjo 등은 사용자 디바이스에 없을 수 있어,
  * 필요 시 T8 수신자 뷰에서 font-display: swap으로 구글 폰트를 레이지 로드한다.

@@ -10,20 +10,106 @@
 .reader {
   max-width: 40rem;
   margin: 0 auto;
-  padding: 2rem 1.25rem 1rem;
+  /* 좌우/상하 본문 여백. safe-area를 포함해 노치/홈바 기기에서도 가장자리에 붙지 않는다. */
+  padding: clamp(1.5rem, 5vw, 2.5rem) max(1.25rem, env(safe-area-inset-right))
+    clamp(2rem, 7vw, 3rem) max(1.25rem, env(safe-area-inset-left));
 }
 
-/* 단락별 음악 큐 표시(♪). 재생 중 단락은 강조. */
-.cue {
+/* SC iframe 부착 호스트 — 시각적으로 숨기되 DOM/렌더는 유지한다.
+   display:none·visibility:hidden은 일부 브라우저에서 iframe 오디오를 멈추므로 쓰지 않고,
+   화면 밖으로 밀어내 0 크기로 만든다(postMessage 채널·오디오는 살아 있음). */
+.scHost {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  left: -9999px;
+  top: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ── 상단 고정 음악 플레이어 바 ───────────────────────────────────── */
+.player {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: max(0.7rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right))
+    0.7rem max(1.25rem, env(safe-area-inset-left));
+  /* 템플릿 배경색을 반투명으로 깔아 본문 위에서도 가독 유지 */
+  background: color-mix(in srgb, var(--tpl-bg, #faf8f3) 88%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid color-mix(in srgb, var(--tpl-muted, #8a7a5e) 28%, transparent);
+}
+
+.playerToggle {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 999px;
+  background: var(--tpl-accent, #8b6914);
+  color: var(--tpl-bg, #faf8f3);
   font-size: 0.85rem;
-  color: var(--tpl-muted, #8a7a5e);
+  line-height: 1;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.15s;
+}
+
+.playerToggle:hover {
+  filter: brightness(1.08);
+}
+
+.playerToggle:active {
+  transform: scale(0.94);
+}
+
+/* 이퀄라이저 막대 */
+.playerBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+}
+
+.playerBars span {
+  width: 3px;
+  height: 5px;
+  border-radius: 2px;
+  background: var(--tpl-accent, #8b6914);
+  animation: playerEq 1s ease-in-out infinite;
+}
+
+.playerBars span:nth-child(2) { animation-delay: 0.15s; }
+.playerBars span:nth-child(3) { animation-delay: 0.3s; }
+.playerBars span:nth-child(4) { animation-delay: 0.1s; }
+
+/* 일시정지 시 막대 정지(낮은 높이로 고정) */
+.playerBarsPaused span {
+  animation: none;
+  height: 5px;
   opacity: 0.5;
 }
 
-.cueActive {
+.playerLabel {
   font-size: 0.85rem;
-  color: var(--tpl-accent, #8b6914);
-  opacity: 1;
+  font-weight: 600;
+  color: var(--tpl-fg, #2c2416);
+  opacity: 0.85;
+}
+
+@keyframes playerEq {
+  0%, 100% { height: 5px; }
+  50% { height: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playerBars span { animation: none; height: 10px; }
 }
 
 /* T9: 권리자 요청으로 오디오 비활성화 시 표시하는 안내 배너. */

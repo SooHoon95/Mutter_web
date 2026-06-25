@@ -9,6 +9,6 @@
 .heading {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #2c2416;
+  color: var(--text-primary);
   margin: 0 0 1.5rem;
 }

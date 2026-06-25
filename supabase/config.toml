@@ -2,7 +2,7 @@
 # https://supabase.com/docs/guides/local-development/cli/config
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
-project_id = "letter-app"
+project_id = "mutter"
 
 [api]
 enabled = true
@@ -206,7 +206,9 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# true: 회원가입 시 "Confirm signup" 인증 메일 발송(기본 템플릿=링크, 무료티어 OK).
+#       인증 완료 후부터는 이메일+비밀번호로 매번 메일 없이 로그인.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
@@ -225,6 +227,15 @@ otp_expiry = 3600
 # pass = "env(SENDGRID_API_KEY)"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
+
+# 매직링크/로그인 이메일 — 6자리 코드({{ .Token }})를 본문에 노출하려면 아래 주석 해제.
+# ⚠️ 단, Supabase 무료 티어 + 기본 이메일 제공자에서는 템플릿 수정이 막혀 있다
+#    (config push 시 400: "Email template modification is not available for free tier ...").
+#    커스텀 SMTP([auth.email.smtp])를 구성한 뒤에만 활성화할 수 있다.
+#    템플릿 본문은 supabase/templates/magic_link.html 에 준비돼 있다.
+# [auth.email.template.magic_link]
+# subject = "편지 로그인 코드 {{ .Token }}"
+# content_path = "./supabase/templates/magic_link.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

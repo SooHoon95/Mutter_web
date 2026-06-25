@@ -1,12 +1,17 @@
 // 보낸 편지 목록 + 전달 링크 관리 (T7 US-007).
 // 각 편지마다 LinkManager를 표시해 링크 발급·revoke·복사를 지원한다.
+// 편지별 삭제 버튼 — 삭제 시 발급한 링크도 함께 제거된다(deleteLetter).
 
-import { useState, useEffect } from 'react';
-import { listMyLetters } from '../data/letters';
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { listMyLetters, deleteLetter } from '../data/letters';
 import { getMySentWithRecipients } from '../data/threads';
 import type { SentWithRecipient } from '../data/threads';
+import { getMyLetterOpens } from '../data/opens';
+import type { LetterOpenSummary } from '../data/opens';
 import type { Letter } from '../data/types';
 import { LinkManager } from '../features/delivery';
+import styles from './Sent.module.css';
 
 /**
  * letter_id별 수신자 닉네임 목록을 묶는다.
@@ -24,19 +29,33 @@ function groupRecipients(rows: SentWithRecipient[]): Map<string, string[]> {
   return byLetter;
 }
 
-export default function Sent() {
+export default function Sent(): React.ReactElement {
   const [letters, setLetters] = useState<Letter[]>([]);
   const [recipients, setRecipients] = useState<Map<string, string[]>>(new Map());
+  // 읽음 확인(0017): letterId → 열람 요약(횟수/최근 시각).
+  const [opens, setOpens] = useState<Map<string, LetterOpenSummary>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  useEffect(() => {
+  // 삭제 모달 상태
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const loadData = useCallback(() => {
     setLoading(true);
-    Promise.all([listMyLetters(), getMySentWithRecipients()])
-      .then(([myLetters, sentRows]) => {
+    // 읽음 확인(0017)은 부가 정보다. 실패해도(미배포·일시 오류) 편지 목록은 보여야 하므로
+    // getMyLetterOpens만 non-fatal로 감싼다(빈 배열 폴백 → "열어봤어요" 배지만 생략).
+    Promise.all([
+      listMyLetters(),
+      getMySentWithRecipients(),
+      getMyLetterOpens().catch(() => [] as LetterOpenSummary[]),
+    ])
+      .then(([myLetters, sentRows, openRows]) => {
         setLetters(myLetters);
         setRecipients(groupRecipients(sentRows));
+        setOpens(new Map(openRows.map((o) => [o.letterId, o])));
       })
       .catch((err: unknown) =>
         setError(err instanceof Error ? err.message : '편지 목록 로드 실패'),
@@ -44,57 +63,75 @@ export default function Sent() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  function openDeleteModal(id: string): void {
+    setDeleteTargetId(id);
+    setDeleteError(null);
+  }
+
+  function closeDeleteModal(): void {
+    if (isDeleting) return;
+    setDeleteTargetId(null);
+    setDeleteError(null);
+  }
+
+  async function handleConfirmDelete(): Promise<void> {
+    if (!deleteTargetId) return;
+    setDeleteError(null);
+    setIsDeleting(true);
+    try {
+      await deleteLetter(deleteTargetId);
+      // 모달 닫고 확장 패널이 열려 있던 편지라면 초기화
+      setDeleteTargetId(null);
+      setExpanded((prev) => (prev === deleteTargetId ? null : prev));
+      // 목록 새로고침
+      loadData();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : '편지 삭제 실패');
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   if (loading) {
     return (
-      <main className="page">
-        <h1>보낸 편지</h1>
-        <p>불러오는 중…</p>
+      <main className={styles.page}>
+        <h1 className={styles.heading}>보낸 편지</h1>
+        <p className={styles.empty}>불러오는 중…</p>
       </main>
     );
   }
 
   if (error) {
     return (
-      <main className="page">
-        <h1>보낸 편지</h1>
-        <p style={{ color: 'var(--color-error, #f87171)' }}>{error}</p>
+      <main className={styles.page}>
+        <h1 className={styles.heading}>보낸 편지</h1>
+        <p className={styles.errorMsg}>{error}</p>
       </main>
     );
   }
 
   return (
-    <main className="page">
-      <h1>보낸 편지</h1>
+    <main className={styles.page}>
+      <h1 className={styles.heading}>보낸 편지</h1>
 
       {letters.length === 0 ? (
-        <p>작성한 편지가 없습니다.</p>
+        <p className={styles.empty}>작성한 편지가 없습니다.</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <ul className={styles.list}>
           {letters.map((letter) => (
-            <li
-              key={letter.id}
-              style={{
-                border: '1px solid var(--color-border, #2a2a2a)',
-                borderRadius: '0.5rem',
-                padding: '1rem',
-                background: 'var(--color-surface, #18181b)',
-              }}
-            >
+            <li key={letter.id} className={styles.card}>
               {/* 편지 헤더 */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: expanded === letter.id ? '1rem' : 0,
-                }}
-              >
-                <div>
-                  <strong style={{ fontSize: '1rem' }}>{letter.title || '(제목 없음)'}</strong>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary, #a1a1aa)', margin: '0.25rem 0 0' }}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardMeta}>
+                  <p className={styles.cardTitle}>{letter.title || '(제목 없음)'}</p>
+                  <p className={styles.cardDate}>
                     {new Date(letter.updatedAt).toLocaleString('ko-KR')}
                   </p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary, #a1a1aa)', margin: '0.25rem 0 0' }}>
+                  <p className={styles.cardRecipient}>
                     {(() => {
                       const names = recipients.get(letter.id);
                       return names && names.length > 0
@@ -102,30 +139,91 @@ export default function Sent() {
                         : '아직 받은 사람 없음';
                     })()}
                   </p>
+                  {/* 읽음 확인(0017): 누군가 이 편지를 열었으면 "열어봤어요" 표시. */}
+                  {(() => {
+                    const o = opens.get(letter.id);
+                    if (!o || o.openCount <= 0) return null;
+                    return (
+                      <p className={styles.cardOpened}>
+                        <span aria-hidden="true">👀</span> 열어봤어요 · {o.openCount}번 · 최근{' '}
+                        {new Date(o.lastOpenedAt).toLocaleString('ko-KR')}
+                      </p>
+                    );
+                  })()}
                 </div>
-                <button
-                  style={{
-                    fontSize: '0.8125rem',
-                    background: 'var(--color-surface-2, #27272a)',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    color: 'var(--color-text, #e4e4e7)',
-                    padding: '0.375rem 0.75rem',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() =>
-                    setExpanded((prev) => (prev === letter.id ? null : letter.id))
-                  }
-                >
-                  {expanded === letter.id ? '링크 닫기' : '링크 관리'}
-                </button>
+
+                <div className={styles.cardActions}>
+                  {/* 0019/#4 이어쓰기 — 저장한 편지를 다시 편집(보관함 역할). */}
+                  <Link to={`/create/${letter.id}`} className={styles.btnEdit}>
+                    이어쓰기
+                  </Link>
+                  <button
+                    type="button"
+                    className={styles.btnLink}
+                    onClick={() =>
+                      setExpanded((prev) => (prev === letter.id ? null : letter.id))
+                    }
+                  >
+                    {expanded === letter.id ? '링크 닫기' : '링크 관리'}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnDeleteCard}
+                    onClick={() => openDeleteModal(letter.id)}
+                    aria-label={`"${letter.title || '편지'}" 삭제`}
+                  >
+                    삭제
+                  </button>
+                </div>
               </div>
 
               {/* 링크 관리 패널 */}
-              {expanded === letter.id && <LinkManager letterId={letter.id} />}
+              {expanded === letter.id && (
+                <div className={styles.linkPanel}>
+                  <LinkManager letterId={letter.id} />
+                </div>
+              )}
             </li>
           ))}
         </ul>
+      )}
+
+      {/* 편지 삭제 확인 모달 */}
+      {deleteTargetId !== null && (
+        <div
+          className={styles.modal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-letter-modal-title"
+        >
+          <div className={styles.modalCard}>
+            <h2 id="delete-letter-modal-title" className={styles.modalTitle}>
+              편지를 삭제할까요?
+            </h2>
+            <p className={styles.modalBody}>
+              이 편지를 삭제할까요? 발급한 링크도 함께 삭제됩니다.
+            </p>
+            {deleteError && <p className={styles.errorMsg}>{deleteError}</p>}
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.btnCancel}
+                onClick={closeDeleteModal}
+                disabled={isDeleting}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className={styles.btnConfirmDelete}
+                onClick={() => void handleConfirmDelete()}
+                disabled={isDeleting}
+              >
+                {isDeleting ? '삭제 중…' : '삭제 확인'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );

@@ -15,7 +15,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { onAuthChange } from '@/data/auth';
+import { onAuthChange, revalidateSession } from '@/data/auth';
 
 interface AuthContextValue {
   session: Session | null;
@@ -38,9 +38,25 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     // 따라서 별도 getCurrentSession() 호출 없이 이 구독으로 초기 로딩을 처리할 수 있다.
     let unsubscribe = (): void => {};
     try {
-      unsubscribe = onAuthChange((_event, s) => {
+      unsubscribe = onAuthChange((event, s) => {
+        // 실제 "로그인이 일어난 순간"(SIGNED_IN)을 표시한다. 앱 재오픈 시 복원되는 세션은
+        // INITIAL_SESSION이라 표시하지 않는다. Home이 이 플래그를 보고 닉네임 유무와 무관하게
+        // 무조건 /set-nickname을 띄운다(값 있으면 prefill, 없으면 빈칸).
+        if (s && event === 'SIGNED_IN') {
+          try {
+            sessionStorage.setItem('letterapp:postLogin', '1');
+          } catch {
+            /* sessionStorage 불가 환경(시크릿 등) — 무시. Home의 닉네임 가드가 폴백. */
+          }
+        }
         setSession(s);
         setLoading(false);
+        // 로컬 세션이 서버에서 여전히 유효한지 검증(삭제된 유저 차단).
+        // 세션이 새로 잡히는 시점(초기 로드·로그인·토큰 갱신)마다 서버에 확인한다.
+        // 무효면 revalidateSession 내부에서 signOut → SIGNED_OUT 이벤트로 세션이 비워진다.
+        if (s && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+          void revalidateSession();
+        }
       });
     } catch (err) {
       // Supabase 환경변수 누락/초기화 실패 시에도 앱은 반드시 렌더돼야 한다.
@@ -50,8 +66,20 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       setLoading(false);
     }
 
+    // 탭으로 돌아오거나(focus) 다시 보일 때(visibilitychange) 재검증한다.
+    // 다른 탭/대시보드에서 유저가 삭제되면 새로고침 없이도 복귀 시 로그아웃된다.
+    const revalidateOnReturn = (): void => {
+      if (document.visibilityState === 'visible') void revalidateSession();
+    };
+    window.addEventListener('focus', revalidateOnReturn);
+    document.addEventListener('visibilitychange', revalidateOnReturn);
+
     // 구독 정리 — 컴포넌트 언마운트 시 메모리 누수 방지
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      window.removeEventListener('focus', revalidateOnReturn);
+      document.removeEventListener('visibilitychange', revalidateOnReturn);
+    };
   }, []);
 
   const value: AuthContextValue = {

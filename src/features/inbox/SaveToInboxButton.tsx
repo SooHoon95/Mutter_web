@@ -2,6 +2,7 @@
 // 비로그인 시 null 반환 — 수신 무마찰 원칙을 지키기 위해 아무것도 표시하지 않는다.
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/app/AuthProvider';
 import { saveToInbox } from '@/data/inbox';
 import styles from './SaveToInboxButton.module.css';
@@ -12,6 +13,7 @@ interface SaveToInboxButtonProps {
 
 export function SaveToInboxButton({ token }: SaveToInboxButtonProps): React.ReactElement | null {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +27,8 @@ export function SaveToInboxButton({ token }: SaveToInboxButtonProps): React.Reac
     try {
       await saveToInbox(token);
       setSaved(true);
+      // 받은 편지함 캐시를 무효화해 /inbox 진입 시 방금 저장한 편지가 바로 보이게 한다.
+      void queryClient.invalidateQueries({ queryKey: ['inbox'] });
     } catch (err) {
       setError(err instanceof Error ? err.message : '저장 중 오류가 발생했습니다.');
     } finally {

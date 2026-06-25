@@ -1,9 +1,10 @@
 /**
- * SyncEngine 단위 테스트.
+ * SyncEngine 단위 테스트 (단일트랙 모델).
  *
- * IntersectionObserver를 주입 가능한 fake로 교체하고(전역 교체 대신 observerFactory 주입),
- * fake TrackSource(sourceFactory 주입)로 단락 진입 → seekTo/전환/페이드/cleanup을 검증한다.
- * 실제 IO 트리거·SC iframe·오디오 재생은 jsdom 밖이라 수동 검증 필요.
+ * 편지는 음악 1곡만 가진다. cues에서 첫 유효 cue 1개를 골라 게이트 언락(▶) 시
+ * 처음부터 재생한다(스크롤 동기 없음). fake TrackSource(sourceFactory 주입)로
+ * 언락·재생·load 게이팅·일시정지/재개·cleanup을 검증한다.
+ * 실제 SC iframe·오디오 재생은 jsdom 밖이라 수동 검증 필요.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { MusicCue } from '@/data/types';
@@ -29,37 +30,6 @@ function makeFakeSource(): TrackSource & { volumes: number[] } {
   };
 }
 
-/** 콜백을 캡처해 수동으로 intersection을 발생시키는 fake IntersectionObserver. */
-function makeObserverHarness() {
-  let captured: IntersectionObserverCallback | null = null;
-  const disconnect = vi.fn();
-  const observe = vi.fn();
-  const factory = (cb: IntersectionObserverCallback): IntersectionObserver => {
-    captured = cb;
-    return {
-      observe,
-      disconnect,
-      unobserve: vi.fn(),
-      takeRecords: vi.fn().mockReturnValue([]),
-      root: null,
-      rootMargin: '',
-      thresholds: [],
-    } as unknown as IntersectionObserver;
-  };
-  // 특정 target이 교차했다고 알린다.
-  const enter = (target: Element) => {
-    captured?.(
-      [{ isIntersecting: true, target } as unknown as IntersectionObserverEntry],
-      {} as IntersectionObserver,
-    );
-  };
-  return { factory, enter, disconnect, observe };
-}
-
-function makeEls(n: number): HTMLElement[] {
-  return Array.from({ length: n }, () => document.createElement('div'));
-}
-
 beforeEach(() => {
   vi.useFakeTimers();
 });
@@ -68,121 +38,166 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('SyncEngine', () => {
-  it('단락 진입 시 해당 큐의 startMs로 seekTo한다', async () => {
-    const source = makeFakeSource();
-    const harness = makeObserverHarness();
-    const cues: Array<MusicCue | undefined> = [
-      { sourceType: 'hosted', ref: 't1', startMs: 0 },
-      { sourceType: 'hosted', ref: 't1', startMs: 42000 },
-    ];
-    const engine = new SyncEngine({
-      observerFactory: harness.factory,
-      sourceFactory: () => source,
-    });
-    const els = makeEls(2);
-    engine.attach(els, cues);
-
-    // 언락으로 첫 소스 준비(첫 cue startMs=0).
-    await engine.unlockAll();
-    await vi.runAllTimersAsync();
-    expect(source.seekTo).toHaveBeenCalledWith(0);
-
-    // 두 번째 단락(같은 트랙) 진입 → seekTo(42000), 추가 소스 생성 없음.
-    harness.enter(els[1]);
-    expect(source.seekTo).toHaveBeenLastCalledWith(42000);
-  });
-
-  it('같은 트랙이면 단일 활성 소스를 유지한다(소스 재생성 없음)', async () => {
+describe('SyncEngine (단일트랙)', () => {
+  it('첫 유효 cue 1개의 소스만 생성·preload한다', () => {
     const created: TrackSource[] = [];
-    const harness = makeObserverHarness();
     const cues: Array<MusicCue | undefined> = [
-      { sourceType: 'hosted', ref: 't1', startMs: 0 },
-      { sourceType: 'hosted', ref: 't1', startMs: 5000 },
-    ];
-    const engine = new SyncEngine({
-      observerFactory: harness.factory,
-      sourceFactory: () => {
-        const s = makeFakeSource();
-        created.push(s);
-        return s;
-      },
-    });
-    const els = makeEls(2);
-    engine.attach(els, cues);
-
-    await engine.unlockAll();
-    await vi.runAllTimersAsync();
-    harness.enter(els[1]);
-
-    expect(created).toHaveLength(1); // 같은 트랙 → 소스 하나만
-  });
-
-  it('다른 트랙으로 진입 시 풀의 소스로 전환 + 페이드(setVolume 램프)가 발생한다', async () => {
-    const created: Array<TrackSource & { volumes: number[] }> = [];
-    const harness = makeObserverHarness();
-    const cues: Array<MusicCue | undefined> = [
+      undefined,
       { sourceType: 'hosted', ref: 'trackA', startMs: 0 },
       { sourceType: 'hosted', ref: 'trackB', startMs: 0 },
     ];
     const engine = new SyncEngine({
-      observerFactory: harness.factory,
       sourceFactory: () => {
         const s = makeFakeSource();
         created.push(s);
         return s;
       },
     });
-    const els = makeEls(2);
-    engine.attach(els, cues);
+    engine.attach(cues);
 
-    // 풀 기반: attach 시점에 두 트랙 소스가 모두 미리 생성·로드된다(▶ 제스처에서 일괄 언락 위해).
-    expect(created).toHaveLength(2);
-
-    await engine.unlockAll(); // 모든 소스 언락 + 첫 소스(trackA) 재생
-    await vi.runAllTimersAsync();
-
-    // 다른 트랙(trackB) 단락 진입 → 이미 언락된 풀 소스로 전환 + 페이드.
-    harness.enter(els[1]);
-    await vi.runAllTimersAsync();
-
-    const prev = created[0]; // trackA
-    const next = created[1]; // trackB
-    // 이전 소스: full → 0 페이드아웃(마지막 0).
-    expect(prev.volumes[prev.volumes.length - 1]).toBe(0);
-    // 새 소스: 0 → full 페이드인(마지막 1).
-    expect(next.volumes[next.volumes.length - 1]).toBe(1);
-    // 전환 후 이전 소스는 정지하되 파괴하지 않는다(재진입 위해 풀에 유지).
-    expect(prev.pause).toHaveBeenCalled();
-    expect(prev.destroy).not.toHaveBeenCalled();
+    // 단일트랙: 둘째 cue(첫 유효)만 소스를 만든다. trackB는 무시.
+    expect(created).toHaveLength(1);
+    expect(created[0].load).toHaveBeenCalledOnce();
   });
 
-  it('destroy는 IntersectionObserver를 disconnect하고 활성 소스를 destroy한다', async () => {
+  it('unlockAll은 첫 유효 cue의 startMs로 seek해 처음부터 재생한다', async () => {
     const source = makeFakeSource();
-    const harness = makeObserverHarness();
-    const cues: Array<MusicCue | undefined> = [{ sourceType: 'hosted', ref: 't1', startMs: 0 }];
-    const engine = new SyncEngine({
-      observerFactory: harness.factory,
-      sourceFactory: () => source,
+    const cues: Array<MusicCue | undefined> = [
+      { sourceType: 'hosted', ref: 't1', startMs: 42000 },
+    ];
+    const engine = new SyncEngine({ sourceFactory: () => source });
+    engine.attach(cues);
+
+    const started = await engine.unlockAll();
+    await vi.runAllTimersAsync();
+
+    expect(source.unlock).toHaveBeenCalledOnce();
+    expect(source.seekTo).toHaveBeenCalledWith(42000);
+    expect(source.play).toHaveBeenCalled();
+    expect(started).toBe(true);
+  });
+
+  it('startMs가 없으면 0부터 재생한다', async () => {
+    const source = makeFakeSource();
+    const cues: Array<MusicCue | undefined> = [{ sourceType: 'hosted', ref: 't1' }];
+    const engine = new SyncEngine({ sourceFactory: () => source });
+    engine.attach(cues);
+
+    await engine.unlockAll();
+    await vi.runAllTimersAsync();
+    expect(source.seekTo).toHaveBeenCalledWith(0);
+  });
+
+  it('재생 가능한 cue가 없으면 unlockAll은 false를 반환한다(거짓 "재생 중" UI 방지)', async () => {
+    const source = makeFakeSource();
+    const engine = new SyncEngine({ sourceFactory: () => source });
+    // cue가 전혀 없는 편지 — 소스가 만들어지지 않는다.
+    engine.attach([undefined, undefined]);
+
+    const started = await engine.unlockAll();
+    await vi.runAllTimersAsync();
+    expect(started).toBe(false);
+    expect(source.play).not.toHaveBeenCalled();
+  });
+
+  it('unlockAll은 load 완료 전에는 재생(play)하지 않는다(느린 망 무음 방지)', async () => {
+    // load를 수동으로 resolve하는 deferred 소스 — READY 전 재생이 일어나지 않음을 못 박는다.
+    let resolveLoad!: () => void;
+    const loadGate = new Promise<void>((r) => {
+      resolveLoad = r;
     });
-    engine.attach(makeEls(1), cues);
+    const source = makeFakeSource();
+    source.load = vi.fn().mockReturnValue(loadGate);
+
+    const cues: Array<MusicCue | undefined> = [{ sourceType: 'hosted', ref: 't1', startMs: 0 }];
+    const engine = new SyncEngine({ sourceFactory: () => source });
+    engine.attach(cues);
+
+    // unlockAll 진행 중이지만 load가 아직 안 끝났으면 play()는 호출되지 않아야 한다.
+    const unlocking = engine.unlockAll();
+    await Promise.resolve(); // microtask 한 틱 — load가 막혀 있으므로 activate 미실행
+    expect(source.play).not.toHaveBeenCalled();
+
+    // load 완료 → 비로소 재생된다.
+    resolveLoad();
+    const started = await unlocking;
+    await vi.runAllTimersAsync();
+    expect(source.play).toHaveBeenCalled();
+    expect(started).toBe(true);
+  });
+
+  it('재생 시작 시 0 → full 페이드인이 발생한다', async () => {
+    const source = makeFakeSource();
+    const cues: Array<MusicCue | undefined> = [{ sourceType: 'hosted', ref: 't1', startMs: 0 }];
+    const engine = new SyncEngine({ sourceFactory: () => source });
+    engine.attach(cues);
+
+    await engine.unlockAll();
+    await vi.runAllTimersAsync();
+
+    // 페이드인: 단계적 램프(첫 단계는 full 미만) → 마지막은 정확히 full(1).
+    // computeFadeSteps는 시작값(0)을 배열에 포함하지 않으므로 첫 기록은 첫 램프 단계다.
+    expect(source.volumes.length).toBeGreaterThan(1);
+    expect(source.volumes[0]).toBeLessThan(1);
+    expect(source.volumes[source.volumes.length - 1]).toBe(1);
+  });
+
+  it('pause 후 unlockAll 중간 진입이면 강제 재생을 건너뛴다', async () => {
+    // load를 막아 두고 그 사이 pause() → load 완료 후에도 play 안 함.
+    let resolveLoad!: () => void;
+    const loadGate = new Promise<void>((r) => {
+      resolveLoad = r;
+    });
+    const source = makeFakeSource();
+    source.load = vi.fn().mockReturnValue(loadGate);
+
+    const cues: Array<MusicCue | undefined> = [{ sourceType: 'hosted', ref: 't1', startMs: 0 }];
+    const engine = new SyncEngine({ sourceFactory: () => source });
+    engine.attach(cues);
+
+    const unlocking = engine.unlockAll();
+    engine.pause(); // 사용자가 그새 일시정지
+    resolveLoad();
+    const started = await unlocking;
+    await vi.runAllTimersAsync();
+
+    expect(source.play).not.toHaveBeenCalled();
+    expect(started).toBe(false);
+  });
+
+  it('pause/resume는 단일 소스를 멈췄다 이어 재생한다', async () => {
+    const source = makeFakeSource();
+    const cues: Array<MusicCue | undefined> = [{ sourceType: 'hosted', ref: 't1', startMs: 0 }];
+    const engine = new SyncEngine({ sourceFactory: () => source });
+    engine.attach(cues);
+
+    await engine.unlockAll();
+    await vi.runAllTimersAsync();
+
+    engine.pause();
+    expect(engine.paused).toBe(true);
+    expect(source.pause).toHaveBeenCalled();
+
+    vi.mocked(source.play).mockClear();
+    engine.resume();
+    expect(engine.paused).toBe(false);
+    expect(source.play).toHaveBeenCalled();
+  });
+
+  it('destroy는 단일 소스를 destroy하고 상태를 비운다', async () => {
+    const source = makeFakeSource();
+    const cues: Array<MusicCue | undefined> = [{ sourceType: 'hosted', ref: 't1', startMs: 0 }];
+    const engine = new SyncEngine({ sourceFactory: () => source });
+    engine.attach(cues);
     await engine.unlockAll();
     await vi.runAllTimersAsync();
 
     engine.destroy();
 
-    expect(harness.disconnect).toHaveBeenCalledOnce();
     expect(source.destroy).toHaveBeenCalled();
-  });
-
-  it('attach는 모든 단락 엘리먼트를 observe한다', () => {
-    const harness = makeObserverHarness();
-    const engine = new SyncEngine({
-      observerFactory: harness.factory,
-      sourceFactory: makeFakeSource,
-    });
-    const els = makeEls(3);
-    engine.attach(els, [undefined, undefined, undefined]);
-    expect(harness.observe).toHaveBeenCalledTimes(3);
+    // destroy 후 resume은 no-op(소스 없음).
+    vi.mocked(source.play).mockClear();
+    engine.resume();
+    expect(source.play).not.toHaveBeenCalled();
   });
 });

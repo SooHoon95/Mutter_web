@@ -22,16 +22,28 @@ export function LinkManager({ letterId }: LinkManagerProps) {
   const [passwordEnabled, setPasswordEnabled] = useState(true); // 암호 기본 ON
   const [password, setPassword] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
+  const [revealAt, setRevealAt] = useState(''); // 0018 예약 공개(이 시각 이후에만 열림)
   const [copied, setCopied] = useState<string | null>(null);
+  // P2: 암호 보호 ON이지만 암호 미입력 시 노출할 검증 오류 메시지
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   async function handleIssue(e: React.FormEvent) {
     e.preventDefault();
+    // P2: 암호 보호 체크 ON이면 반드시 암호를 입력해야 한다.
+    // 빈 상태로 발급하면 암호 없는 링크가 발급되어 수신자 무마찰 원칙에 위배된다.
+    if (passwordEnabled && !password.trim()) {
+      setValidationError('암호 보호를 켰다면 암호를 입력해 주세요.');
+      return;
+    }
+    setValidationError(null);
     await issue({
       password: passwordEnabled && password.trim() ? password.trim() : undefined,
       expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
+      revealAt: revealAt ? new Date(revealAt).toISOString() : undefined,
     });
     setPassword('');
     setExpiresAt('');
+    setRevealAt('');
   }
 
   async function handleCopy(token: string) {
@@ -89,10 +101,26 @@ export function LinkManager({ letterId }: LinkManagerProps) {
           />
         </div>
 
+        {/* 예약 공개 (선택) — 이 시각 이후에만 열린다(0018). 생일·기념일 편지용. */}
+        <div className={styles.fieldRow}>
+          <label>예약 공개</label>
+          <input
+            className={styles.input}
+            type="datetime-local"
+            value={revealAt}
+            onChange={(e) => setRevealAt(e.target.value)}
+            aria-describedby="reveal-hint"
+          />
+        </div>
+        <p id="reveal-hint" className={styles.fieldHint}>
+          설정하면 그 시각 전엔 수신자가 열 수 없어요(예: 생일에 열리는 편지). 시각은 내 기기 시간 기준이에요.
+        </p>
+
         <button className={styles.issueBtn} type="submit" disabled={loading}>
           {loading ? '발급 중…' : '링크 발급'}
         </button>
 
+        {validationError && <p className={styles.error}>{validationError}</p>}
         {error && <p className={styles.error}>{error}</p>}
       </form>
 
@@ -124,14 +152,20 @@ export function LinkManager({ letterId }: LinkManagerProps) {
                     만료: {new Date(link.expiresAt).toLocaleString('ko-KR')}
                   </span>
                 )}
+                {/* 0018 예약 공개: 살아있는 링크가 아직 공개 전이면 공개 예정 시각 배지. */}
+                {link.revealAt &&
+                  !isRevoked &&
+                  !isExpired &&
+                  new Date(link.revealAt) > new Date() && (
+                    <span className={`${styles.badge} ${styles.scheduled}`}>
+                      🔒 {new Date(link.revealAt).toLocaleString('ko-KR')} 공개 예정
+                    </span>
+                  )}
                 {isExpired && (
                   <span className={`${styles.badge} ${styles.expired}`}>만료됨</span>
                 )}
                 {isRevoked && (
                   <span className={`${styles.badge} ${styles.revoked}`}>무효화됨</span>
-                )}
-                {link.claimedDeviceId && !isRevoked && (
-                  <span className={styles.badge}>열람됨 (기기 귀속)</span>
                 )}
               </div>
 

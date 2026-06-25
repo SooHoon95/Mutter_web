@@ -136,6 +136,23 @@ describe('getInvite', () => {
     expect(result.inviterHasConnection).toBe(true);
   });
 
+  it('4컬럼(0009) 시그니처로 두 1:1 컬럼이 누락돼도 false로 안전 폴백한다', async () => {
+    // 0009(4컬럼)가 배포된 환경: viewer_has_connection/inviter_has_connection 컬럼이 없다.
+    const legacyRow = {
+      inviter_id: 'user-001',
+      inviter_nickname: '초대한사람',
+      is_self: false,
+      already_connected: false,
+    };
+    const mock = makeRpcMock({ data: [legacyRow], error: null });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    const result = await getInvite('tok_abc');
+    // undefined → false로 명시 매핑(=== true). 배타성이 조용히 꺼지지 않는다.
+    expect(result.viewerHasConnection).toBe(false);
+    expect(result.inviterHasConnection).toBe(false);
+  });
+
   it('빈 결과면 throw한다', async () => {
     const mock = makeRpcMock({ data: [], error: null });
     mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
@@ -280,11 +297,58 @@ describe('sendToConnection', () => {
     });
   });
 
-  it('RPC 오류 시 throw한다', async () => {
-    const dbError = new Error('발송 실패');
-    const mock = makeRpcMock({ data: null, error: dbError });
+  it('FORBIDDEN 에러를 사용자 메시지로 정규화한다', async () => {
+    const mock = makeRpcMock({ data: null, error: new Error('FORBIDDEN') });
     mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
 
-    await expect(sendToConnection('letter-1', 'recipient-1')).rejects.toThrow('발송 실패');
+    await expect(sendToConnection('letter-1', 'recipient-1')).rejects.toThrow(
+      '이 편지를 보낼 권한이 없어요.',
+    );
+  });
+
+  it('NOT_CONNECTED 에러를 사용자 메시지로 정규화한다', async () => {
+    const mock = makeRpcMock({ data: null, error: new Error('NOT_CONNECTED') });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(sendToConnection('letter-1', 'recipient-1')).rejects.toThrow(
+      '연결된 사람이 아니에요. 먼저 연결해 주세요.',
+    );
+  });
+
+  it('CANNOT_SEND_SELF 에러를 사용자 메시지로 정규화한다', async () => {
+    const mock = makeRpcMock({ data: null, error: new Error('CANNOT_SEND_SELF') });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(sendToConnection('letter-1', 'recipient-1')).rejects.toThrow(
+      '본인에게는 보낼 수 없어요.',
+    );
+  });
+
+  it('TOKEN_INVALID 에러를 사용자 메시지로 정규화한다', async () => {
+    const mock = makeRpcMock({ data: null, error: new Error('TOKEN_INVALID') });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(sendToConnection('letter-1', 'recipient-1')).rejects.toThrow(
+      '발송에 실패했어요. 잠시 후 다시 시도해 주세요.',
+    );
+  });
+
+  it('알 수 없는 RPC 오류는 내부 코드 비노출 메시지로 정규화한다', async () => {
+    const mock = makeRpcMock({ data: null, error: new Error('INTERNAL_DB_ERROR_42P01') });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(sendToConnection('letter-1', 'recipient-1')).rejects.toThrow(
+      '편지를 보내지 못했어요. 잠시 후 다시 시도해 주세요.',
+    );
+  });
+
+  it('plain object 에러({message})도 코드 매칭해 정규화한다', async () => {
+    // Supabase RPC 에러는 Error 인스턴스가 아닌 plain object로 올 수 있다.
+    const mock = makeRpcMock({ data: null, error: { message: 'NOT_CONNECTED', code: 'P0001' } });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    await expect(sendToConnection('letter-1', 'recipient-1')).rejects.toThrow(
+      '연결된 사람이 아니에요. 먼저 연결해 주세요.',
+    );
   });
 });

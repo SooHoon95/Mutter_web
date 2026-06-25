@@ -53,4 +53,6 @@ export interface DeliveryLink {
   claimedDeviceId?: string;
   expiresAt?: string;
   revokedAt?: string;
+  /** 예약 공개(0018): 이 시각 이후에만 열림. 미설정이면 즉시 공개. */
+  revealAt?: string;
 }

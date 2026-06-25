@@ -1,7 +1,7 @@
 // 마이페이지 뷰. 닉네임 편집·로그아웃·계정 삭제를 제공한다.
 // 이메일은 세션에서 읽고, 프로필(닉네임)은 useProfile hook으로 관리한다.
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
 import { signOut } from '@/data/auth';
@@ -17,6 +17,12 @@ export function MyPageView(): React.ReactElement {
   const [nicknameInput, setNicknameInput] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // 현재 닉네임을 입력칸에 미리 채운다 — 한 글자 고치려고 전체를 다시 칠 필요 없게.
+  // 프로필이 로드/변경될 때만 동기화(사용자가 편집 중인 값은 덮지 않도록 nickname 의존).
+  useEffect(() => {
+    if (profile?.nickname) setNicknameInput(profile.nickname);
+  }, [profile?.nickname]);
+
   // 계정 삭제 확인 모달 표시 여부
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -27,7 +33,8 @@ export function MyPageView(): React.ReactElement {
     setSaveError(null);
     try {
       await updateNickname(nicknameInput.trim());
-      setNicknameInput('');
+      // 저장 성공 → 캐시 무효화로 profile이 갱신되고 useEffect가 입력칸을 동기화한다.
+      // (입력칸을 비우지 않는다 — 방금 저장한 값을 그대로 보여줌)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : '저장 실패');
     }
@@ -50,7 +57,13 @@ export function MyPageView(): React.ReactElement {
     setIsDeleting(true);
     try {
       await deleteMyAccount();
-      await signOut();
+      // 계정(auth.users)이 삭제되면 JWT가 즉시 무효화되어 signOut이 실패할 수 있다.
+      // 삭제가 성공한 이상 signOut은 베스트에포트로 처리하고 무조건 홈으로 보낸다.
+      try {
+        await signOut();
+      } catch {
+        /* 세션이 이미 죽음 — 무시 */
+      }
       navigate('/');
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : '계정 삭제 실패');
@@ -66,10 +79,10 @@ export function MyPageView(): React.ReactElement {
     <main className={styles.container}>
       <h1>마이페이지</h1>
 
-      {/* 이메일 */}
+      {/* 이메일 — 소셜(이메일 미제공) 계정이면 비어 있으므로 안내 문구로 대체 */}
       <section className={styles.section}>
         <span className={styles.label}>이메일</span>
-        <span className={styles.value}>{email}</span>
+        <span className={styles.value}>{email || '소셜 로그인 (이메일 없음)'}</span>
       </section>
 
       <hr className={styles.divider} />

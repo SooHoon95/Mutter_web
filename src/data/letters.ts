@@ -154,3 +154,15 @@ export async function listMyLetters(): Promise<Letter[]> {
   if (error) throw error;
   return (data ?? []).map(rowToLetter);
 }
+
+/**
+ * 편지를 삭제한다.
+ * RLS가 owner_id = auth.uid()를 강제하므로 타계정 편지는 삭제되지 않는다.
+ * delivery_links 등 연관 행은 FK on delete cascade로 함께 정리된다.
+ */
+export async function deleteLetter(id: string): Promise<void> {
+  const sb = getSupabase();
+
+  const { error } = await sb.from('letters').delete().eq('id', id);
+  if (error) throw error;
+}

@@ -194,6 +194,23 @@ export async function stubListLinks(
   });
 }
 
+/**
+ * get_my_sent_with_recipients RPC 스텁 (Sent 페이지가 listMyLetters와 함께 호출).
+ * 받은이(수신자) 표시용. 기본 빈 배열 → "아직 받은 사람 없음".
+ */
+export async function stubSentWithRecipients(
+  page: Page,
+  rows: Array<{ letter_id: string; recipient_id: string | null; recipient_nickname: string | null }> = [],
+): Promise<void> {
+  await page.route('**/rest/v1/rpc/get_my_sent_with_recipients**', (route: Route) => {
+    void route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(rows),
+    });
+  });
+}
+
 // ---------------------------------------------------------------------------
 // SoundCloud oEmbed 스텁
 // ---------------------------------------------------------------------------
@@ -214,18 +231,34 @@ export async function stubScOembed(
   await page.route('**/soundcloud.com/oembed**', (route: Route) => {
     const { kind, title = '테스트 트랙', authorName = 'Test Artist' } = opts;
 
+    // CORS 헤더 — 실제 SC oEmbed는 크로스오리진 허용. webkit은 프리플라이트(OPTIONS)와
+    // ACAO 헤더가 없으면 응답 body를 JS에 노출하지 않아 .json()이 실패한다(chromium은 관대).
+    const cors = {
+      'access-control-allow-origin': '*',
+      'access-control-allow-methods': 'GET,OPTIONS',
+      'access-control-allow-headers': '*',
+    };
+    // 프리플라이트 OPTIONS는 204로 응답.
+    if (route.request().method() === 'OPTIONS') {
+      void route.fulfill({ status: 204, headers: cors });
+      return;
+    }
+
     if (kind === 'not-found') {
-      void route.fulfill({ status: 404 });
+      void route.fulfill({ status: 404, headers: cors });
       return;
     }
     if (kind === 'private') {
-      void route.fulfill({ status: 403 });
+      void route.fulfill({ status: 403, headers: cors });
       return;
     }
     if (kind === 'embed-disabled') {
       void route.fulfill({
         status: 200,
         contentType: 'application/json',
+        // 실제 SC oEmbed는 CORS 허용 헤더를 준다. webkit은 크로스오리진 fetch body를
+        // 읽으려면 이 헤더가 필요하므로(없으면 .json() 실패) 스텁도 동일하게 준다.
+        headers: cors,
         body: JSON.stringify({
           title,
           author_name: authorName,
@@ -239,6 +272,7 @@ export async function stubScOembed(
     void route.fulfill({
       status: 200,
       contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
       body: JSON.stringify({
         title,
         author_name: authorName,

@@ -2,8 +2,8 @@
 
 .page {
   min-height: 100vh;
-  background: #faf8f3;
-  color: #2c2416;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   padding: 2rem 1.25rem 4rem;
 }
 
@@ -28,7 +28,7 @@
   font-weight: 600;
   margin: 0 0 1rem;
   padding-bottom: 0.4rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--border-secondary);
 }
 
 /* 절차 안내 */
@@ -45,22 +45,22 @@
 
 .note {
   font-size: 0.85rem;
-  color: #7a6a55;
+  color: var(--text-tertiary);
   line-height: 1.6;
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--bg-tertiary);
   padding: 0.75rem 1rem;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   margin: 0;
 }
 
 .link {
-  color: #8b6914;
+  color: var(--text-brand);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .link:hover {
-  color: #6b4e0e;
+  color: var(--brand-700);
 }
 
 /* 폼 */
@@ -73,7 +73,7 @@
   font-size: 0.85rem;
   font-weight: 500;
   margin-bottom: 0.35rem;
-  color: #4a3c2e;
+  color: var(--text-secondary);
 }
 
 .input,
@@ -83,18 +83,18 @@
   padding: 0.6rem 0.75rem;
   font-size: 0.9rem;
   font-family: inherit;
-  color: #2c2416;
-  background: #fff;
-  border: 1px solid #d4c9b8;
-  border-radius: 6px;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xs);
   outline: none;
   transition: border-color 0.15s;
 }
 
 .input:focus,
 .textarea:focus {
-  border-color: #8b6914;
-  box-shadow: 0 0 0 2px rgba(139, 105, 20, 0.15);
+  border-color: var(--border-brand);
+  box-shadow: var(--shadow-focus-brand);
 }
 
 .textarea {
@@ -108,16 +108,16 @@
   font-size: 0.9rem;
   font-weight: 600;
   font-family: inherit;
-  color: #fff;
-  background: #8b6914;
+  color: var(--text-on-brand);
+  background: var(--bg-brand);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: #6b4e0e;
+  background: var(--brand-700);
 }
 
 .submitBtn:disabled {
@@ -127,9 +127,9 @@
 
 /* 성공 상태 */
 .success {
-  background: rgba(60, 120, 60, 0.06);
-  border: 1px solid rgba(60, 120, 60, 0.2);
-  border-radius: 8px;
+  background: var(--success-50);
+  border: 1px solid var(--success-700);
+  border-radius: var(--radius-md);
   padding: 1.25rem 1.5rem;
   line-height: 1.6;
   font-size: 0.9rem;
@@ -144,25 +144,25 @@
   padding: 0.45rem 1rem;
   font-size: 0.85rem;
   font-family: inherit;
-  color: #4a3c2e;
+  color: var(--text-secondary);
   background: transparent;
-  border: 1px solid #d4c9b8;
-  border-radius: 6px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xs);
   cursor: pointer;
 }
 
 .resetBtn:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--bg-tertiary);
 }
 
 /* 오류 메시지 */
 .errorMsg {
   font-size: 0.85rem;
-  color: #b94040;
+  color: var(--text-error);
   margin: 0 0 1rem;
   padding: 0.6rem 0.75rem;
-  background: rgba(185, 64, 64, 0.06);
-  border-radius: 6px;
+  background: var(--error-50);
+  border-radius: var(--radius-xs);
 }
 
 /* 이용 약관 */
@@ -175,5 +175,5 @@
 .tosList li {
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
-  color: #4a3c2e;
+  color: var(--text-secondary);
 }
