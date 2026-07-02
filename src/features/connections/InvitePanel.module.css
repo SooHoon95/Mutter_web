@@ -109,6 +109,30 @@
   color: var(--text-error);
 }
 
+/* 초대 취소 버튼 — shareBtn과 같은 크기, 경고 보조 스타일 */
+.revokeBtn {
+  flex-shrink: 0;
+  padding: 0.4rem 0.9rem;
+  border: 1.5px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.revokeBtn:hover:not(:disabled) {
+  border-color: var(--error-600);
+  color: var(--error-600);
+}
+
+.revokeBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* 연결 해제 버튼 — 연결된 상태일 때만 노출 */
 .disconnectBtn {
   align-self: flex-start;

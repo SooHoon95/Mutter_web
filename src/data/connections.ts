@@ -101,6 +101,7 @@ const ACCEPT_ERROR_MESSAGES: Record<string, string> = {
   ALREADY_CONNECTED_OTHER: '상대가 이미 다른 사람과 연결돼 있어요.',
   CANNOT_CONNECT_SELF: '본인은 연결할 수 없어요.',
   INVITE_NOT_FOUND: '초대를 찾을 수 없어요.',
+  INVITE_ALREADY_USED: '이미 사용된 초대 링크예요. 새 초대를 요청해 주세요.',
 };
 
 // send_to_connection RPC가 raise exception으로 던지는 내부 코드.
@@ -193,6 +194,17 @@ export async function acceptInvite(token: string): Promise<void> {
   const sb = getSupabase();
   const { error } = await sb.rpc('accept_connect_invite', { p_token: token });
   if (error) throw normalizeAcceptError(error);
+}
+
+/**
+ * 생성한 초대 링크를 취소(무효화)한다.
+ * RPC revoke_connect_invite(p_token) — DB에서 해당 초대를 삭제한다.
+ * 취소 후 같은 토큰으로는 수락할 수 없다.
+ */
+export async function revokeInvite(token: string): Promise<void> {
+  const sb = getSupabase();
+  const { error } = await sb.rpc('revoke_connect_invite', { p_token: token });
+  if (error) throw error;
 }
 
 /**

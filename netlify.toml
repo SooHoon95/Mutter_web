@@ -17,6 +17,13 @@
     Referrer-Policy = "no-referrer"
     X-Frame-Options = "DENY"
 
+# Universal Links(iOS) — AASA는 확장자 없는 정적 파일이라 content-type을 명시해야 앱이 인식한다.
+# 정적 파일이 존재하면 위 SPA 리라이트보다 우선 서빙된다. 실동작은 AASA 안의 TEAMID 교체 후.
+[[headers]]
+  for = "/.well-known/apple-app-site-association"
+  [headers.values]
+    Content-Type = "application/json"
+
 [[headers]]
   for = "/*"
   [headers.values]
