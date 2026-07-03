@@ -77,11 +77,12 @@ async function verifyKakaoIdToken(idToken: string): Promise<{ sub: string; email
 
 // ── 회원 find-or-create (카카오 sub 기준) ─────────────────────────────────────
 // R2: 같은 sub는 항상 같은 user. 구글(같은 이메일) 유저와는 병합하지 않는다(409 차단).
-async function resolveUserId(sub: string, email: string): Promise<string> {
+/// createdNew: 이 요청에서 새로 만든 유저인지 — 이후 단계(세션 발급) 실패 시 되돌림(고아 유저 방지)에 쓴다.
+async function resolveUserId(sub: string, email: string): Promise<{ userId: string; createdNew: boolean }> {
   // 1) 이미 매핑된 카카오 회원?
   const existing = await admin
     .from("kakao_identity_map").select("user_id").eq("kakao_sub", sub).maybeSingle();
-  if (existing.data) return existing.data.user_id;
+  if (existing.data) return { userId: existing.data.user_id, createdNew: false };
 
   // 2) 없으면 새 Supabase 유저 생성(이메일 확인됨 처리 → handle_new_user 트리거가 프로필 자동 생성).
   const created = await admin.auth.admin.createUser({
@@ -95,7 +96,7 @@ async function resolveUserId(sub: string, email: string): Promise<string> {
     // (a) 같은 sub 요청이 방금 먼저 만들었을 수도(동시 최초 로그인 레이스) → 매핑 재조회로 흡수.
     const raced = await admin
       .from("kakao_identity_map").select("user_id").eq("kakao_sub", sub).maybeSingle();
-    if (raced.data) return raced.data.user_id;
+    if (raced.data) return { userId: raced.data.user_id, createdNew: false };
     // (b) 그 이메일을 구글 등 "다른 로그인 방식" 유저가 이미 쓰는 경우 → R2상 병합 금지, 차단.
     throw new AppError("EMAIL_CONFLICT_DIFFERENT_PROVIDER", 409);
   }
@@ -112,9 +113,22 @@ async function resolveUserId(sub: string, email: string): Promise<string> {
   if (winner.data && winner.data.user_id !== newUserId) {
     // 레이스에서 졌다 → 방금 만든 중복 유저 제거하고 승자 반환.
     await admin.auth.admin.deleteUser(newUserId);
-    return winner.data.user_id;
+    return { userId: winner.data.user_id, createdNew: false };
   }
-  return newUserId;
+  return { userId: newUserId, createdNew: true };
+}
+
+/// 세션 발급까지 실패한 신규 유저 되돌리기 — "로그인 실패했는데 DB에 유저가 남는" 상태 방지.
+/// (매핑은 user_id FK cascade로 함께 삭제된다.)
+async function rollbackNewUser(userId: string) {
+  try {
+    await admin.from("kakao_identity_map").delete().eq("user_id", userId);
+    await admin.auth.admin.deleteUser(userId);
+    console.log(JSON.stringify({ evt: "kakao_login_rollback", user_id: userId }));
+  } catch {
+    // 되돌리기 실패는 로그만(다음 로그인 시도 시 매핑으로 재사용되므로 치명적이지 않음).
+    console.log(JSON.stringify({ evt: "kakao_login_rollback_failed", user_id: userId }));
+  }
 }
 
 // ── 세션 발급 (입장권 + 재발급권) ─────────────────────────────────────────────
@@ -158,8 +172,15 @@ Deno.serve(async (req) => {
     // 이메일은 검증된 클레임에서만. 없으면(동의 철회) 지금 정책은 차단.
     if (!email) throw new AppError("EMAIL_UNAVAILABLE", 400);
 
-    const userId = await resolveUserId(sub, email);
-    const session = await issueSession(email);
+    const { userId, createdNew } = await resolveUserId(sub, email);
+    let session: Awaited<ReturnType<typeof issueSession>>;
+    try {
+      session = await issueSession(email);
+    } catch (e) {
+      // 세션 발급 실패 → 이 요청에서 만든 유저라면 되돌린다(고아 유저 0).
+      if (createdNew) await rollbackNewUser(userId);
+      throw e;
+    }
 
     // 로깅: 토큰/이메일 원문 없이 결과만(관측성 AC4).
     console.log(JSON.stringify({ evt: "kakao_login", ok: true, user_id: userId }));
