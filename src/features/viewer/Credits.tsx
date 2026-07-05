@@ -47,12 +47,14 @@ function trackToEntry(track: Track): CreditEntry {
   };
 }
 
-/** soundcloud cue → CreditEntry. 카탈로그 프로비넌스 없음 → URL만 중립 표기. */
+/** soundcloud cue → CreditEntry. oEmbed 메타가 있으면 제목/저작자 표기, 출처는 원본 공개 URL만.
+ *  sourceUrl이 없으면(레거시) 출처 링크를 숨긴다 — ref(canonical)는 API JSON이라 링크로 부적합. */
 function scCueToEntry(cue: MusicCue): CreditEntry {
   return {
     key: `sc:${cue.ref}`,
-    title: 'SoundCloud 트랙',
-    sourceUrl: cue.ref,
+    title: cue.title ?? 'SoundCloud 트랙',
+    author: cue.author,
+    sourceUrl: cue.sourceUrl,
     licenseName: 'SoundCloud',
     attributionRequired: false,
   };

@@ -25,8 +25,13 @@ export interface Track {
 
 export interface MusicCue {
   sourceType: SourceType;
-  ref: string; // soundcloud: 트랙 URL / hosted: 카탈로그 trackId
+  ref: string; // soundcloud: 재생용 canonical URL(api.soundcloud.com/tracks/ID) / hosted: 카탈로그 trackId
   startMs?: number;
+  /** oEmbed 트랙 제목/저작자(크레딧 표기용). 붙일 때 저장. */
+  title?: string;
+  author?: string;
+  /** 발신자가 붙인 원본 공개 트랙 URL(출처 링크용). ref는 재생용 canonical이라 브라우저로 열면 API JSON이 뜬다. */
+  sourceUrl?: string;
 }
 
 export interface Paragraph {

@@ -70,8 +70,16 @@ export function MusicCueEditor({
       return;
     }
 
-    // 검증 통과 → soundcloud 큐 설정
-    onChange({ sourceType: 'soundcloud', ref: result.canonicalUrl, startMs: 0 });
+    // 검증 통과 → soundcloud 큐 설정. 재생용 canonical(ref)과 별도로 원본 붙인 URL(sourceUrl)을
+    // 출처 표기용으로 함께 저장한다(canonical은 브라우저로 열면 API JSON이라 출처엔 부적합).
+    onChange({
+      sourceType: 'soundcloud',
+      ref: result.canonicalUrl,
+      startMs: 0,
+      title: result.title || undefined,
+      author: result.author || undefined,
+      sourceUrl: scInput.trim(),
+    });
     setMode('idle');
     setScInput('');
     setIsValidating(false);

@@ -86,6 +86,10 @@ function normalizeCue(raw: unknown): MusicCue | undefined {
     sourceType: c.sourceType,
     ref: c.ref,
     startMs: typeof c.startMs === 'number' ? c.startMs : undefined,
+    // 크레딧/출처 표기용 메타 보존(없으면 undefined) — 없으면 뷰어가 폴백 처리.
+    title: typeof c.title === 'string' ? c.title : undefined,
+    author: typeof c.author === 'string' ? c.author : undefined,
+    sourceUrl: typeof c.sourceUrl === 'string' ? c.sourceUrl : undefined,
   };
 }
 
