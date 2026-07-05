@@ -25,18 +25,26 @@ interface AudioUnlockGateProps {
    * (Promise를 반환하지만, play() 호출 자체는 클릭 이벤트 틱에서 이뤄진다.)
    */
   onUnlock: () => Promise<void>;
+  /**
+   * 음악이 아직 준비(SC Widget READY) 전이면 true — ▶를 잠시 비활성화한다.
+   * iOS는 위젯이 READY인 제스처에서만 오디오가 언락되므로, 준비 전 탭을 막아
+   * "첫 탭에 소리 안 남 → 다시 재생해야 남" 문제를 예방한다(무음 편지엔 항상 false).
+   */
+  audioLoading?: boolean;
 }
 
 export function AudioUnlockGate({
   title,
   templateId,
   onUnlock,
+  audioLoading = false,
 }: AudioUnlockGateProps): React.ReactElement {
   const [opening, setOpening] = useState(false);
 
   function handleOpen(): void {
-    // 중복 클릭 방지. 단, onUnlock 호출은 이 클릭 틱 안에서 동기적으로 시작한다.
-    if (opening) return;
+    // 중복 클릭 방지 + 음악 준비 전 탭 무시(iOS 언락 실패 예방).
+    // onUnlock 호출은 이 클릭 틱 안에서 동기적으로 시작한다.
+    if (opening || audioLoading) return;
     setOpening(true);
     // iOS: 제스처 핸들러 내부에서 즉시 unlock을 시작해야 한다(await로 미루지 않음).
     // 단, onUnlock이 거부/실패하면 버튼이 "여는 중…"에 영구히 갇히지 않게 복구해 재시도를 허용한다.
@@ -54,15 +62,18 @@ export function AudioUnlockGate({
           type="button"
           className={styles.openButton}
           onClick={handleOpen}
-          disabled={opening}
+          disabled={opening || audioLoading}
+          aria-busy={audioLoading}
           aria-label="편지 열기"
         >
           <span className={styles.playIcon} aria-hidden="true">
             ▶
           </span>
-          {opening ? '여는 중…' : '편지 열기'}
+          {audioLoading ? '음악 준비 중…' : opening ? '여는 중…' : '편지 열기'}
         </button>
-        <p className={styles.hint}>편지를 열면 음악과 함께 재생됩니다.</p>
+        <p className={styles.hint}>
+          {audioLoading ? '잠시 후 음악과 함께 열 수 있어요.' : '편지를 열면 음악과 함께 재생됩니다.'}
+        </p>
       </div>
     </TemplateThemed>
   );

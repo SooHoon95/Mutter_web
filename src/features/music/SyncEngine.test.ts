@@ -200,4 +200,49 @@ describe('SyncEngine (단일트랙)', () => {
     engine.resume();
     expect(source.play).not.toHaveBeenCalled();
   });
+
+  // --- whenReady: 게이트 ▶ 활성화 게이팅 (iOS 첫 탭 무음 방지) --------------------
+
+  it('whenReady는 음악(cue)이 없으면 즉시 resolve한다', async () => {
+    const engine = new SyncEngine({ sourceFactory: () => makeFakeSource() });
+    engine.attach([undefined, undefined]); // 유효 cue 없음 → 무음
+    await expect(engine.whenReady()).resolves.toBeUndefined();
+  });
+
+  it('whenReady는 소스 load(SC READY 대응)가 끝난 뒤에 resolve한다', async () => {
+    // 수동으로 resolve하는 load — READY 지연을 재현.
+    let resolveLoad!: () => void;
+    const source = makeFakeSource();
+    vi.mocked(source.load).mockReturnValue(
+      new Promise<void>((r) => {
+        resolveLoad = r;
+      }),
+    );
+    const engine = new SyncEngine({ sourceFactory: () => source });
+    engine.attach([{ sourceType: 'hosted', ref: 't1', startMs: 0 }]);
+
+    let ready = false;
+    void engine.whenReady().then(() => {
+      ready = true;
+    });
+    await Promise.resolve();
+    expect(ready).toBe(false); // load 미완료 → 아직 준비 안 됨(게이트 잠금)
+
+    resolveLoad();
+    await vi.runAllTimersAsync();
+    expect(ready).toBe(true); // load 완료 → 준비됨(게이트 해제)
+  });
+
+  it('unlockAll은 언락 전에 볼륨 0으로 시작한다(포지션0 풀볼륨 블립 방지)', async () => {
+    const source = makeFakeSource();
+    const engine = new SyncEngine({ sourceFactory: () => source });
+    engine.attach([{ sourceType: 'hosted', ref: 't1', startMs: 0 }]);
+
+    await engine.unlockAll();
+    // 언락 직전 첫 setVolume은 0이어야 한다(블레스 재생을 무음으로).
+    expect(source.volumes[0]).toBe(0);
+    // 이후 페이드가 볼륨을 최종 1까지 올린다.
+    await vi.runAllTimersAsync();
+    expect(source.volumes[source.volumes.length - 1]).toBe(1);
+  });
 });

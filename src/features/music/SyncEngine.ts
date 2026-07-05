@@ -101,9 +101,17 @@ export class SyncEngine {
     const src = this.source;
     if (!src) return false;
 
+    // 0) 블레스 재생을 무음으로 시작한다 — activate의 페이드(0→1)가 볼륨을 올린다.
+    //    (제스처 시점 play()가 포지션0을 풀볼륨으로 잠깐 흘리는 블립 방지.)
+    try {
+      src.setVolume(0);
+    } catch {
+      /* ignore */
+    }
+
     // 1) 제스처 컨텍스트에서 언락(play를 동기적으로 호출하는 게 핵심 — iOS 제약).
-    //    SC unlock()의 widget.play()는 READY 전에 no-op이므로, load 완료를 기다린 뒤에야
-    //    재생해야 느린 망에서 무음으로 떨어지지 않는다.
+    //    게이트가 whenReady 이후에만 ▶를 활성화하므로 이 시점 위젯은 READY다 →
+    //    이 in-gesture play()가 iOS 미디어 요소를 "축복"해 이후 seek/play/fade가 허용된다.
     const unlockResult = Promise.resolve(src.unlock()).catch((err) =>
       console.error('[SyncEngine] 소스 언락 실패:', err),
     );
@@ -116,6 +124,16 @@ export class SyncEngine {
     }
 
     return this.started;
+  }
+
+  /**
+   * 소스 preload(SC의 경우 Widget READY 포함) 완료 Promise.
+   * 음악이 없으면 즉시 resolve. load 실패도 흡수되어(무음 허용) 반드시 정착한다.
+   * 게이트가 이 완료 후에만 ▶를 활성화하면, iOS에서 제스처 시점에 위젯이 READY라
+   * in-gesture play()가 실제로 오디오를 언락한다(첫 탭 무음 방지).
+   */
+  whenReady(): Promise<void> {
+    return this.loadPromise ?? Promise.resolve();
   }
 
   /** 현재 사용자 일시정지 상태(상단 플레이어 UI용). */

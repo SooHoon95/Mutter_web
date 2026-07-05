@@ -72,7 +72,7 @@ export function LetterView({ letter, token }: LetterViewProps): React.ReactEleme
 
   // 무음 허용(앱과 동일): SC 재생 실패 시 CC0 폴백 없이 무음으로 둔다
   // (SyncEngine이 소스 load 실패를 catch해 조용히 흘려보낸다).
-  const { isPlaying, unlock, togglePlay } = useScrollSync(effectiveCues);
+  const { isPlaying, audioReady, unlock, togglePlay } = useScrollSync(effectiveCues);
 
   // 음악 큐가 하나라도 있는지 — 상단 플레이어 노출 여부.
   const hasMusic = !audioDisabled && cues.some((c) => c != null);
@@ -149,7 +149,13 @@ export function LetterView({ letter, token }: LetterViewProps): React.ReactEleme
       ) : (
         /* 게이트: 언락 전까지 본문 위를 덮는다. 편지 테마로 스타일링된 "표지". */
         !unlocked && (
-          <AudioUnlockGate title={title} templateId={templateId} onUnlock={handleUnlock} />
+          <AudioUnlockGate
+            title={title}
+            templateId={templateId}
+            onUnlock={handleUnlock}
+            // 음악이 있는 편지에서만 준비 대기. 무음 편지는 즉시 열 수 있다(무마찰 유지).
+            audioLoading={hasMusic && !audioReady}
+          />
         )
       )}
     </TemplateThemed>

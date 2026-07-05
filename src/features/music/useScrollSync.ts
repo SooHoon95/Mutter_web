@@ -14,6 +14,11 @@ export interface UseScrollSyncResult {
   /** 재생 중 여부(언락 후 && 일시정지 아님). */
   isPlaying: boolean;
   /**
+   * 음악 소스 준비 완료 여부(SC Widget READY 또는 로드 실패로 정착, 무음이면 즉시 true).
+   * 게이트가 이 값으로 ▶ 활성화를 판단해, iOS에서 제스처 시점에 위젯이 READY이도록 보장한다.
+   */
+  audioReady: boolean;
+  /**
    * iOS 언락 트리거. **반드시 사용자 제스처(onClick 등) 핸들러에서 호출**해야 한다.
    * "편지 열기 ▶" 버튼이 이 함수를 호출한다(AudioUnlockGate).
    */
@@ -21,6 +26,10 @@ export interface UseScrollSyncResult {
   /** 상단 플레이어: 재생/일시정지 토글. */
   togglePlay: () => void;
 }
+
+// 게이트가 영구 잠기지 않도록 하는 안전 상한. SoundCloudSource.load는 8s READY 타임아웃이
+// 있어 whenReady가 항상 정착하지만, 예기치 못한 소스 구현에도 게이트가 열리게 하는 백스톱.
+const READY_SAFETY_MS = 9000;
 
 /**
  * @param cues          편지의 음악 큐 배열. 여기서 첫 유효 cue 1개만 재생한다.
@@ -33,6 +42,7 @@ export function useScrollSync(
 ): UseScrollSyncResult {
   const engineRef = useRef<SyncEngine | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
 
   // 엔진 생성 + attach(단일 소스 preload). cues가 바뀌면 재구성한다.
   useEffect(() => {
@@ -40,7 +50,21 @@ export function useScrollSync(
     engine.attach(cues);
     engineRef.current = engine;
 
+    // 준비 완료(SC READY/실패 정착·무음이면 즉시)를 반영. 안전 타임아웃으로 백스톱한다.
+    let alive = true;
+    setAudioReady(false);
+    const safety = setTimeout(() => {
+      if (alive) setAudioReady(true);
+    }, READY_SAFETY_MS);
+    void engine.whenReady().then(() => {
+      if (!alive) return;
+      clearTimeout(safety);
+      setAudioReady(true);
+    });
+
     return () => {
+      alive = false;
+      clearTimeout(safety);
       engine.destroy();
       engineRef.current = null;
     };
@@ -65,5 +89,5 @@ export function useScrollSync(
     }
   }, []);
 
-  return { isPlaying, unlock, togglePlay };
+  return { isPlaying, audioReady, unlock, togglePlay };
 }
