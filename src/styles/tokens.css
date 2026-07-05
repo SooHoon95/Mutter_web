@@ -223,20 +223,21 @@
   --ink-soft: #6e6555;   /* 보조 텍스트 */
   --ink-faint:#9a8f78;   /* 희미한 텍스트 */
 
-  /* 골드 — 정제 + 포일 그라데이션 */
-  --gold:          #c6a13a;
-  --gold-deep:     #a4842a;
-  --gold-soft:     #f1e6c6;
-  --gold-gradient: linear-gradient(135deg, #e0c66f 0%, #c6a13a 52%, #ad8a2c 100%);
-  --on-gold:       #2c2407;   /* 골드 위 잉크 — 포일 엠보스 느낌 */
+  /* 브랜드 accent — iOS 앱과 동일한 파스텔(로즈-모브 + 피치→핑크→라벤더).
+     변수명은 --gold* 유지(전 CSS가 참조)하되 값만 파스텔로 리스킨. */
+  --gold:          #c77bae;   /* 로즈-모브 accent (iOS Gold) */
+  --gold-deep:     #8e4e7e;   /* iOS GoldDeep — 진한 강조/텍스트 */
+  --gold-soft:     #f7e8f1;   /* iOS GoldSoft — 옅은 핑크 배경 */
+  --gold-gradient: linear-gradient(135deg, #ffe0c7 0%, #fbc4d9 50%, #d9c6f5 100%);   /* 피치→핑크→라벤더 (iOS MutterGradient) */
+  --on-gold:       #4a2038;   /* 그라데이션/accent 위 잉크 (iOS OnGold) */
 
   /* 헤어라인 + 웜 그림자 + 골드 포커스 링 */
   --hairline:        rgba(70, 55, 20, 0.1);
   --hairline-strong: rgba(70, 55, 20, 0.16);
   --shadow-soft: 0 1px 2px rgba(60, 48, 20, 0.05), 0 10px 30px -14px rgba(60, 48, 20, 0.2);
   --shadow-card: 0 1px 3px rgba(60, 48, 20, 0.05), 0 18px 40px -20px rgba(60, 48, 20, 0.22);
-  --shadow-gold: 0 10px 26px -10px rgba(176, 138, 42, 0.55);
-  --focus-gold:  0 0 0 4px rgba(198, 161, 58, 0.22);
+  --shadow-gold: 0 10px 26px -10px rgba(199, 123, 174, 0.5);   /* 로즈-모브 그림자 */
+  --focus-gold:  0 0 0 4px rgba(199, 123, 174, 0.22);          /* 로즈-모브 포커스 링 */
 }
 
 /* ──────────────────────────────────────────────────────────────────
@@ -280,10 +281,10 @@
   --landing-bg:         #120e0b;   /* 딥 웜블랙 — 순수 #000 아닌 갈색기 있는 어둠 */
   --landing-text:       #f5f0e8;   /* 크림화이트 H1 */
   --landing-muted:      #a89880;   /* 보조 텍스트 */
-  --landing-gold:       #c9a96e;   /* 랜딩 전용 골드 (기존 --gold 보다 밝게) */
-  --landing-gold-glow:  linear-gradient(135deg, #c9a96e 0%, #e8c97a 100%);
-  --landing-amber-glow: rgba(201, 129, 58, 0.18);   /* 좌상단 메시 글로우 */
-  --landing-rose-glow:  rgba(181, 107, 107, 0.12);  /* 우하단 메시 글로우 */
+  --landing-gold:       #e0a9cc;   /* 랜딩 accent — 다크 배경에서 읽히는 밝은 로즈(파스텔 정합) */
+  --landing-gold-glow:  linear-gradient(135deg, #ffe0c7 0%, #fbc4d9 50%, #d9c6f5 100%);  /* 앱 그라데이션 */
+  --landing-amber-glow: rgba(199, 123, 174, 0.18);   /* 좌상단 메시 글로우 — 로즈-모브 */
+  --landing-rose-glow:  rgba(217, 198, 245, 0.14);   /* 우하단 메시 글로우 — 라벤더 */
   --landing-glass-bg:   rgba(255, 255, 255, 0.06);  /* 글래스 카드 배경 */
   --landing-glass-border: rgba(255, 255, 255, 0.10); /* 글래스 카드 테두리 */
   --landing-section-2:  #1a1410;   /* 두 번째 섹션 배경 (약간 밝음) */
