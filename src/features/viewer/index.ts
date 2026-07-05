@@ -7,5 +7,3 @@ export { LetterView } from './LetterView';
 export { PasswordGate } from './PasswordGate';
 export { AudioUnlockGate } from './AudioUnlockGate';
 export { Credits } from './Credits';
-export { createFallbackSourceFactory } from './fallbackSourceFactory';
-export type { FallbackFactoryOptions } from './fallbackSourceFactory';

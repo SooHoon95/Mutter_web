@@ -1,7 +1,7 @@
 // LetterView — 수신 편지 본문 + 음악 1곡 재생 (T8 viewer 통합 지점).
 //
 // 합치는 것: T6 템플릿(TemplateThemed/Paginated) + 음악(useScrollSync/SyncEngine) +
-// T8 무음0 폴백(fallbackSourceFactory) + license-compliance 크레딧(Credits).
+// 무음 허용(SC 재생 실패 시 무음 — CC0 폴백 없음, 앱과 동일) + license-compliance 크레딧(Credits).
 //
 // 모델(단일트랙): 편지는 음악 1곡만 가진다. cues에서 첫 유효 cue 1개를 골라
 // 게이트 언락(▶) 시점에 처음부터 재생한다. 단락 스크롤로 곡이 바뀌거나 seek되지 않는다.
@@ -23,7 +23,6 @@ import { setSoundCloudContainer } from '@/features/music/SoundCloudSource';
 import { SaveToInboxButton } from '@/features/inbox';
 import type { ViewerLetter } from './useLetterViewer';
 import { recordLetterOpen } from '@/data/links';
-import { createFallbackSourceFactory } from './fallbackSourceFactory';
 import { AudioUnlockGate } from './AudioUnlockGate';
 import { Credits } from './Credits';
 import { Footer } from '@/components/Footer';
@@ -40,9 +39,6 @@ export function LetterView({ letter, token }: LetterViewProps): React.ReactEleme
 
   // 게이트 통과(언락) 여부. 통과 전엔 게이트가 본문을 덮는다(오디오 façade).
   const [unlocked, setUnlocked] = useState(false);
-
-  // 무음0 폴백 팩토리 — SC 실패 시 CC0로 대체. 마운트 동안 안정적이어야 하므로 ref로 고정.
-  const sourceFactoryRef = useRef(createFallbackSourceFactory());
 
   // SC iframe을 붙일 본문 내 숨김 호스트. document.body 직속이 아니라 viewer 트리 안에
   // 두어야 iOS PWA 풀스크린에서 Widget postMessage 채널이 끊기지 않는다(무음 방지).
@@ -74,10 +70,9 @@ export function LetterView({ letter, token }: LetterViewProps): React.ReactEleme
   // 재실행되지 않는다 — 그렇지 않으면 언락 직후 엔진이 파괴·재생성되며 오디오가 즉시 끊긴다.
   const effectiveCues = useMemo(() => (audioDisabled ? [] : cues), [audioDisabled, cues]);
 
-  const { isPlaying, unlock, togglePlay } = useScrollSync(
-    effectiveCues,
-    sourceFactoryRef.current,
-  );
+  // 무음 허용(앱과 동일): SC 재생 실패 시 CC0 폴백 없이 무음으로 둔다
+  // (SyncEngine이 소스 load 실패를 catch해 조용히 흘려보낸다).
+  const { isPlaying, unlock, togglePlay } = useScrollSync(effectiveCues);
 
   // 음악 큐가 하나라도 있는지 — 상단 플레이어 노출 여부.
   const hasMusic = !audioDisabled && cues.some((c) => c != null);

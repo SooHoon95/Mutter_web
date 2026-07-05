@@ -75,8 +75,10 @@ async function verifyKakaoIdToken(idToken: string): Promise<{ sub: string; email
   }
 }
 
-// ── 회원 find-or-create (카카오 sub 기준) ─────────────────────────────────────
-// R2: 같은 sub는 항상 같은 user. 구글(같은 이메일) 유저와는 병합하지 않는다(409 차단).
+// ── 회원 find-or-create (카카오 sub 기준, 실패 시 이메일로 재조정) ─────────────
+// 유니크 키 = 이메일. 같은 sub는 항상 같은 user이고, 그 이메일을 이미 쓰는 계정이 있으면
+// (웹 내장 카카오 OAuth·구글·이메일 등 어떤 경로로 만들어졌든) 그 기존 계정으로 로그인시킨다.
+// (0026: 0023의 "다른 provider 병합 금지 R2"를 대체 — 검증된 이메일끼리라 안전.)
 /// createdNew: 이 요청에서 새로 만든 유저인지 — 이후 단계(세션 발급) 실패 시 되돌림(고아 유저 방지)에 쓴다.
 async function resolveUserId(sub: string, email: string): Promise<{ userId: string; createdNew: boolean }> {
   // 1) 이미 매핑된 카카오 회원?
@@ -97,8 +99,20 @@ async function resolveUserId(sub: string, email: string): Promise<{ userId: stri
     const raced = await admin
       .from("kakao_identity_map").select("user_id").eq("kakao_sub", sub).maybeSingle();
     if (raced.data) return { userId: raced.data.user_id, createdNew: false };
-    // (b) 그 이메일을 구글 등 "다른 로그인 방식" 유저가 이미 쓰는 경우 → R2상 병합 금지, 차단.
-    throw new AppError("EMAIL_CONFLICT_DIFFERENT_PROVIDER", 409);
+    // (b) 그 이메일을 쓰는 계정이 이미 있다 → 유니크 키는 이메일이므로 그 기존 회원이 곧 이 사람이다.
+    //     (웹 내장 카카오 OAuth·구글·이메일 등 경로 무관) 그 계정으로 로그인시키고, 이후 빠른
+    //     조회를 위해 sub→user_id 매핑에 흡수한다(멱등). 카카오 idToken은 서명 검증되었고 email은
+    //     카카오가 확인한 값 + 기존 계정 이메일도 Supabase 확인값이라 병합이 안전(0026).
+    const found = await admin.rpc("find_user_id_by_email", { p_email: email });
+    const existingUserId = typeof found.data === "string" ? found.data : null;
+    if (existingUserId) {
+      await admin
+        .from("kakao_identity_map")
+        .upsert({ kakao_sub: sub, user_id: existingUserId }, { onConflict: "kakao_sub", ignoreDuplicates: true });
+      return { userId: existingUserId, createdNew: false };
+    }
+    // 이메일 중복인데 그 유저를 못 찾음 = 비정상(경합/일시 오류). 원문 노출 없이 실패로 처리.
+    throw new AppError("EMAIL_CONFLICT_UNRESOLVED", 409);
   }
 
   const newUserId = created.data.user.id;
