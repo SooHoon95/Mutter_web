@@ -55,15 +55,17 @@ beforeEach(() => {
 });
 
 describe('Home 진입 게이트', () => {
-  it('로그인 직후(SIGNED_IN 플래그)면 닉네임이 있어도 /set-nickname 을 띄운다', () => {
+  it('닉네임이 있으면 재진입(로그인 플래그 잔존)해도 대시보드로 간다 — 온보딩 반복 방지', () => {
+    // 회귀 가드: 과거 "로그인 직후 무조건 이름 화면" 방식은 SIGNED_IN 재발화로
+    // 재진입마다 온보딩을 반복시켰다. 이제 닉네임이 있으면 플래그가 남아 있어도 대시보드로 간다.
     mockUseAuth.mockReturnValue({ session: fakeSession, user: fakeUser, loading: false } as ReturnType<typeof useAuth>);
-    setProfile('수현'); // 이미 닉네임이 있어도
-    sessionStorage.setItem('letterapp:postLogin', '1'); // 방금 로그인했으면
+    setProfile('수현'); // 이미 닉네임이 있으면
+    sessionStorage.setItem('letterapp:postLogin', '1'); // 과거 플래그가 남아 있어도 무시
 
     renderHome();
 
-    expect(screen.getByText('이름 설정 페이지')).toBeInTheDocument();
-    expect(screen.queryByText('수현님의 편지함')).not.toBeInTheDocument();
+    expect(screen.getByText('수현님의 편지함')).toBeInTheDocument();
+    expect(screen.queryByText('이름 설정 페이지')).not.toBeInTheDocument();
   });
 
   it('세션 O + 닉네임 없음 → /set-nickname 으로 보낸다', () => {

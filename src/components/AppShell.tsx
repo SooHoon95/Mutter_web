@@ -33,12 +33,17 @@ export function AppShell({ children }: AppShellProps): ReactNode {
   return (
     <div className="app-shell">
       <header className="app-shell__header">
-        <NavLink className="app-shell__logo" to="/">
+        {/* 로고 → 랜딩(마케팅 커버). 로그인 상태여도 동일 — 메인 메뉴는 아래 "메인" 링크로. */}
+        <NavLink className="app-shell__logo" to="/landing">
           편지
         </NavLink>
         <nav className="app-shell__nav" aria-label="주요 메뉴">
           {!loading && session && (
             <>
+              {/* 메인 메뉴(대시보드) 복귀 진입점 — end로 '/'에서만 활성 표시. */}
+              <NavLink to="/" end className="app-shell__navlink">
+                메인
+              </NavLink>
               <NavLink to="/inbox" className="app-shell__navlink">
                 받은 편지함
               </NavLink>

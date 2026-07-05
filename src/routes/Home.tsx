@@ -18,20 +18,16 @@ export default function Home(): React.ReactElement | null {
   const { profile, isLoading: profileLoading } = useProfile();
   const navigate = useNavigate();
 
-  // 로그인이 막 일어났으면(SIGNED_IN 플래그) 닉네임 유무와 무관하게 "무조건" 이름 화면을 띄운다.
-  // (값이 있으면 /set-nickname이 그 값을 인풋에 채워서, 없으면 빈칸으로 띄운다.)
-  // 앱 재오픈(복원 세션, INITIAL_SESSION)에는 플래그가 없어 정상적으로 대시보드로 간다.
-  const justLoggedIn = !!session && !loading && readPostLoginFlag();
-  // 플래그가 없어도, 표시 이름이 아직 없으면 이름부터 받게 한다(폴백 가드).
+  // 온보딩 게이트: 표시 이름(profiles.nickname)이 아직 없을 때만 이름 설정으로 보낸다.
+  //   - 신규 가입자: 닉네임 없음 → /set-nickname(→ /welcome → 메인 메뉴). 온보딩 1회.
+  //   - 세션 복원(재진입)한 기존 사용자: 닉네임 있음 → 곧장 메인 메뉴(대시보드).
+  // 과거의 "로그인 직후 무조건 이름 화면"은 SIGNED_IN 재발화(토큰 갱신·탭 포커스)로
+  // 재진입마다 온보딩이 반복되는 버그가 있어 제거했다 — 닉네임 유무만으로 판단한다.
   const needsName = !!session && !profileLoading && !profile?.nickname?.trim();
-  const goSetName = justLoggedIn || needsName;
   useEffect(() => {
     if (!session) return;
-    if (goSetName) {
-      if (justLoggedIn) clearPostLoginFlag(); // 한 번만 — 무한 리다이렉트 방지
-      navigate('/set-nickname', { replace: true });
-    }
-  }, [session, goSetName, justLoggedIn, navigate]);
+    if (needsName) navigate('/set-nickname', { replace: true });
+  }, [session, needsName, navigate]);
 
   if (loading) {
     return <div className="route-fallback">불러오는 중…</div>;
@@ -43,32 +39,10 @@ export default function Home(): React.ReactElement | null {
     // 닉네임 보유 여부를 판단하기 전 — 대시보드/리다이렉트 깜빡임 방지.
     return <div className="route-fallback">불러오는 중…</div>;
   }
-  if (goSetName) {
+  if (needsName) {
     return null; // /set-nickname으로 이동 중 — 이름 먼저(대시보드 깜빡임 방지)
   }
   return <Dashboard user={session.user} />;
-}
-
-// ---------------------------------------------------------------------------
-// 로그인 직후 플래그 — AuthProvider가 SIGNED_IN 시 세팅, Home이 1회 소비.
-// sessionStorage 불가 환경에서도 앱이 죽지 않도록 try/catch로 감싼다.
-// ---------------------------------------------------------------------------
-const POST_LOGIN_FLAG = 'letterapp:postLogin';
-
-function readPostLoginFlag(): boolean {
-  try {
-    return sessionStorage.getItem(POST_LOGIN_FLAG) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function clearPostLoginFlag(): void {
-  try {
-    sessionStorage.removeItem(POST_LOGIN_FLAG);
-  } catch {
-    /* noop */
-  }
 }
 
 // ---------------------------------------------------------------------------

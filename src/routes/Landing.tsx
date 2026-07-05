@@ -1,12 +1,18 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/app/AuthProvider';
 import styles from './Landing.module.css';
 
 /**
- * Landing — 비로그인 마케팅. 라이트·클린 SaaS 스타일(Postone 참고).
+ * Landing — 마케팅 커버. 라이트·클린 SaaS 스타일(Postone 참고).
  * 새 모델(단일트랙): 테마를 고르고 편지를 쓰면, 음악 한 곡과 함께 전해진다.
  * 2단 히어로(텍스트 + 제품 목업) → 포인트 스트립 → 기능 3카드 → 최종 CTA.
+ *
+ * 로고 탭으로 로그인 상태에서도 열리므로 보조 CTA를 세션에 맞춘다:
+ * 비로그인 → "로그인"(/login), 로그인 → "메인 메뉴로"(/, 대시보드).
  */
 export default function Landing() {
+  const { session } = useAuth();
+
   return (
     <main className={styles.page}>
       {/* ── 히어로 ───────────────────────────────────────────── */}
@@ -31,9 +37,15 @@ export default function Landing() {
                 편지 쓰기
                 <ArrowIcon />
               </Link>
-              <Link className={styles.secondary} to="/login">
-                로그인
-              </Link>
+              {session ? (
+                <Link className={styles.secondary} to="/">
+                  메인 메뉴로
+                </Link>
+              ) : (
+                <Link className={styles.secondary} to="/login">
+                  로그인
+                </Link>
+              )}
             </div>
 
             <div className={styles.miniRow}>

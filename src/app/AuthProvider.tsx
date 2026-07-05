@@ -39,16 +39,9 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     let unsubscribe = (): void => {};
     try {
       unsubscribe = onAuthChange((event, s) => {
-        // 실제 "로그인이 일어난 순간"(SIGNED_IN)을 표시한다. 앱 재오픈 시 복원되는 세션은
-        // INITIAL_SESSION이라 표시하지 않는다. Home이 이 플래그를 보고 닉네임 유무와 무관하게
-        // 무조건 /set-nickname을 띄운다(값 있으면 prefill, 없으면 빈칸).
-        if (s && event === 'SIGNED_IN') {
-          try {
-            sessionStorage.setItem('letterapp:postLogin', '1');
-          } catch {
-            /* sessionStorage 불가 환경(시크릿 등) — 무시. Home의 닉네임 가드가 폴백. */
-          }
-        }
+        // 세션 변화(로그인·로그아웃·토큰 갱신·초기 복원)를 전역에 반영하기만 한다.
+        // 온보딩(이름 설정) 여부는 Home이 닉네임 유무로 판단한다 — "로그인 직후 플래그"는
+        // SIGNED_IN이 토큰 갱신·탭 포커스마다 재발화해 재진입 온보딩 반복 버그를 냈으므로 제거했다.
         setSession(s);
         setLoading(false);
         // 로컬 세션이 서버에서 여전히 유효한지 검증(삭제된 유저 차단).
