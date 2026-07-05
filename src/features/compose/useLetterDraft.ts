@@ -7,13 +7,12 @@
 // 저장 시점에만 DB 계약(paragraphs jsonb)으로 변환한다(스키마 변경 없음).
 //
 // /create/:id 진입 시 기존 편지를 react-query로 로드해 로컬 상태를 초기화한다.
-// "무음 편지 0": 저장 시 cue가 없으면 기본 CC0 큐를 자동 부착한다.
+// 무음 허용(앱과 동일): cue가 없으면 음악 없는 편지로 저장한다(CC0 자동부착 제거).
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createDraft, updateLetter, getLetter } from '@/data/letters';
-import { getCatalog } from '@/data/tracks';
-import type { Paragraph, MusicCue, Track } from '@/data/types';
+import type { Paragraph, MusicCue } from '@/data/types';
 
 // ---------------------------------------------------------------------------
 // 공개 타입
@@ -25,7 +24,7 @@ export interface DraftState {
   /** 본문 — 여러 줄 문자열. 저장 시 빈 줄 기준으로 paragraphs로 변환된다. */
   body: string;
   templateId: string;
-  /** 편지 음악 1곡 (없으면 저장 시 기본 CC0 큐 자동 부착). */
+  /** 편지 음악 1곡 (선택 — 없으면 음악 없는 편지). */
   cue: MusicCue | undefined;
 }
 
@@ -88,22 +87,6 @@ export function bodyToParagraphs(body: string, cue: MusicCue | undefined): Parag
  */
 export function paragraphsToBody(paragraphs: Paragraph[]): string {
   return paragraphs.map((p) => p.text).join('\n\n');
-}
-
-// ---------------------------------------------------------------------------
-// "무음 편지 0": 기본 CC0 큐 해석
-// ---------------------------------------------------------------------------
-
-/**
- * 폴백용 기본 CC0 트랙을 카탈로그에서 고른다.
- * CC0 우선(라이선스 가장 자유), 없으면 카탈로그 첫 트랙으로 폴백한다.
- * 카탈로그는 loadCatalog()에서 비어 있으면 throw하므로 여기서는 항상 1개 이상 존재한다.
- */
-function resolveDefaultCue(): MusicCue {
-  const catalog = getCatalog();
-  const fallback: Track = catalog.find((t) => t.license === 'CC0') ?? catalog[0];
-  // hosted 큐의 ref는 카탈로그 trackId (types.ts MusicCue 참조).
-  return { sourceType: 'hosted', ref: fallback.id, startMs: 0 };
 }
 
 // ---------------------------------------------------------------------------
@@ -216,12 +199,9 @@ export function useLetterDraft(
     if (savingRef.current) return { ok: false, reason: 'error' };
     savingRef.current = true;
 
-    // [P0] "무음 편지 0": cue가 없으면 기본 CC0 큐를 자동 부착.
-    // 사용자를 막지 않고 항상 음악이 깔리도록 자동 보강한다(수신자 무음 0 보장).
-    const safeCue = cue ?? resolveDefaultCue();
-
+    // 무음 허용(앱과 동일): cue가 없으면 음악 없는 편지로 저장한다(CC0 자동첨부 제거).
     // 본문 → paragraphs 변환 (빈 줄 분리·빈 단락 제거·최소 1개, cue는 첫 단락에만).
-    const paragraphs = bodyToParagraphs(body, safeCue);
+    const paragraphs = bodyToParagraphs(body, cue);
 
     try {
       const input = { title, paragraphs, templateId };

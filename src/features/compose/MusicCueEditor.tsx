@@ -1,15 +1,11 @@
-// 편지 음악 1곡 선택기.
-// (a) SC URL 붙여넣기 → oEmbed 검증 → 거부 시 사유 표시 + CC0 권유
-// (b) "CC0에서 고르기" → MoodPicker로 hosted 큐 설정
-// license-compliance 스킬: SC 트랙 광고 경고 배지 표시.
+// 편지 음악 1곡 선택기 — SoundCloud 전용(CC0 제거, 앱과 동일 · 무음 허용).
+// SC URL 붙여넣기 → oEmbed 검증 → 거부 시 사유 표시. 큐는 선택 사항.
 //
 // 편지당 음악은 1곡이므로 props는 단일 cue + onChange만 받는다(단락 개념 없음).
 
 import { useState, useCallback } from 'react';
-import type { MusicCue, Track } from '@/data/types';
+import type { MusicCue } from '@/data/types';
 import { validateScUrl, type ScValidation } from '@/lib/scOembed';
-import { MoodPicker } from '@/features/catalog';
-import { AdWarning } from './AdWarning';
 import styles from './MusicCueEditor.module.css';
 
 interface MusicCueEditorProps {
@@ -19,7 +15,7 @@ interface MusicCueEditorProps {
   onChange: (cue: MusicCue | undefined) => void;
 }
 
-type Mode = 'idle' | 'sc-input' | 'cc0-picker';
+type Mode = 'idle' | 'sc-input';
 
 /**
  * SC 큐 ref를 화면용 짧은 이름으로 변환한다.
@@ -63,9 +59,7 @@ export function MusicCueEditor({
 
     if (!result.ok) {
       const errorMsg = REJECT_MESSAGES[result.reason] ?? '알 수 없는 오류입니다.';
-      setValidationError(
-        `${errorMsg} CC0 트랙을 사용하면 광고 없이 재생이 보장됩니다.`,
-      );
+      setValidationError(`${errorMsg} 다른 트랙 URL을 확인해 주세요.`);
       setIsValidating(false);
       return;
     }
@@ -85,16 +79,6 @@ export function MusicCueEditor({
     setIsValidating(false);
   }, [scInput, onChange]);
 
-  // ── CC0 트랙 선택 ─────────────────────────────────────────────────────────
-
-  const handleCc0Select = useCallback(
-    (track: Track) => {
-      onChange({ sourceType: 'hosted', ref: track.id, startMs: 0 });
-      setMode('idle');
-    },
-    [onChange],
-  );
-
   // ── 큐 제거 ───────────────────────────────────────────────────────────────
 
   const handleRemoveCue = useCallback(() => {
@@ -104,21 +88,15 @@ export function MusicCueEditor({
     setValidationError(null);
   }, [onChange]);
 
-  const switchToCc0 = useCallback(() => {
-    setValidationError(null);
-    setScInput('');
-    setMode('cc0-picker');
-  }, []);
-
   // ── 렌더 ─────────────────────────────────────────────────────────────────
 
   return (
     <div className={styles.container}>
-      {/* 현재 설정된 편지 음악 표시 */}
+      {/* 현재 설정된 편지 음악 표시 (레거시 hosted 큐도 안전하게 표기) */}
       {cue && (
         <div className={styles.currentCue}>
           <span className={styles.cueLabel}>
-            {cue.sourceType === 'soundcloud' ? '♪ SC' : '♪ CC0'}
+            {cue.sourceType === 'soundcloud' ? '♪ SC' : '♪'}
           </span>
           <span className={styles.cueRef} title={cue.ref}>
             {cue.sourceType === 'soundcloud' ? safeScDisplayName(cue.ref) : cue.ref}
@@ -134,10 +112,7 @@ export function MusicCueEditor({
         </div>
       )}
 
-      {/* SC 트랙이면 광고 경고 배지 표시 */}
-      {cue?.sourceType === 'soundcloud' && <AdWarning onSwitchToCc0={switchToCc0} />}
-
-      {/* 음악 선택/변경 버튼 */}
+      {/* 음악 선택/변경 버튼 — SoundCloud 전용 */}
       {mode === 'idle' && (
         <div className={styles.actionRow}>
           <button
@@ -146,13 +121,6 @@ export function MusicCueEditor({
             onClick={() => setMode('sc-input')}
           >
             {cue ? 'SoundCloud URL로 변경' : 'SoundCloud URL 붙여넣기'}
-          </button>
-          <button
-            type="button"
-            className={styles.actionBtn}
-            onClick={() => setMode('cc0-picker')}
-          >
-            {cue ? 'CC0에서 다시 고르기' : 'CC0에서 고르기'}
           </button>
           {cue && (
             <button
@@ -203,9 +171,6 @@ export function MusicCueEditor({
           {validationError && (
             <div id="sc-url-error" className={styles.errorBox} role="alert">
               <p className={styles.errorMsg}>{validationError}</p>
-              <button type="button" className={styles.cc0SuggestBtn} onClick={switchToCc0}>
-                CC0 트랙 고르기 →
-              </button>
             </div>
           )}
 
@@ -217,21 +182,6 @@ export function MusicCueEditor({
               setScInput('');
               setValidationError(null);
             }}
-          >
-            취소
-          </button>
-        </div>
-      )}
-
-      {/* CC0 무드 픽커 패널 */}
-      {mode === 'cc0-picker' && (
-        <div className={styles.panel}>
-          <p className={styles.panelLabel}>CC0 트랙 선택 (광고 없음 보장)</p>
-          <MoodPicker onSelect={handleCc0Select} />
-          <button
-            type="button"
-            className={styles.cancelBtn}
-            onClick={() => setMode('idle')}
           >
             취소
           </button>

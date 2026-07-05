@@ -27,7 +27,6 @@ vi.mock('@/data/letters', () => ({
 }));
 
 import { createDraft, updateLetter, getLetter } from '@/data/letters';
-import { getCatalog } from '@/data/tracks';
 import { useLetterDraft, bodyToParagraphs, paragraphsToBody } from './useLetterDraft';
 
 const mockCreateDraft = vi.mocked(createDraft);
@@ -203,11 +202,11 @@ describe('useLetterDraft — 저장 시 본문→단락 변환', () => {
 });
 
 // ---------------------------------------------------------------------------
-// [P0] "무음 편지 0" — 저장 시 기본 CC0 큐 자동 부착
+// 무음 허용 — cue 없으면 음악 없는 편지(CC0 자동첨부 제거, 앱과 동일)
 // ---------------------------------------------------------------------------
 
-describe('useLetterDraft — 무음 편지 0(저장 시 큐 자동 부착)', () => {
-  it('cue가 없으면 저장 시 첫 단락에 기본 CC0 큐를 자동 부착한다', async () => {
+describe('useLetterDraft — 무음 허용(CC0 자동첨부 제거)', () => {
+  it('cue가 없으면 음악 없는 편지로 저장한다(CC0 자동첨부 안 함)', async () => {
     mockCreateDraft.mockImplementation(async (input) => ({
       id: 'new-letter',
       ownerId: 'user-1',
@@ -235,17 +234,10 @@ describe('useLetterDraft — 무음 편지 0(저장 시 큐 자동 부착)', () 
     expect(saveResult?.ok).toBe(true);
     expect(mockCreateDraft).toHaveBeenCalledTimes(1);
 
-    // createDraft에 넘긴 단락의 첫 단락에 hosted CC0 큐가 부착돼야 한다.
+    // cue를 안 골랐으면 첫 단락에 어떤 큐도 부착되지 않는다(앱과 동일 — 무음 허용).
     const sentInput = mockCreateDraft.mock.calls[0][0];
     const firstParagraph = sentInput.paragraphs?.[0];
-    expect(firstParagraph?.cue).toBeDefined();
-    expect(firstParagraph?.cue?.sourceType).toBe('hosted');
-
-    // 부착된 ref는 카탈로그의 CC0 트랙 id여야 한다(무음 편지 0 보장).
-    const cc0Ids = getCatalog()
-      .filter((t) => t.license === 'CC0')
-      .map((t) => t.id);
-    expect(cc0Ids).toContain(firstParagraph?.cue?.ref);
+    expect(firstParagraph?.cue).toBeUndefined();
   });
 
   it('cue가 있으면 자동 부착하지 않고 사용자 cue를 첫 단락에만 부착한다', async () => {
