@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { useLinks } from './useLinks';
+import { validateSchedule } from './validateSchedule';
 import styles from './LinkManager.module.css';
 
 interface LinkManagerProps {
@@ -13,6 +14,12 @@ interface LinkManagerProps {
 /** 수신 URL 전체 경로를 반환한다. */
 function buildLinkUrl(token: string): string {
   return `${window.location.origin}/l/${token}`;
+}
+
+/** Date → datetime-local 입력값(YYYY-MM-DDTHH:mm, 로컬 시각). picker의 min 힌트용. */
+function toLocalInputValue(d: Date): string {
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export function LinkManager({ letterId }: LinkManagerProps) {
@@ -27,6 +34,9 @@ export function LinkManager({ letterId }: LinkManagerProps) {
   // P2: 암호 보호 ON이지만 암호 미입력 시 노출할 검증 오류 메시지
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // 만료·예약 picker의 min — 과거 시각 선택을 native 단에서 막는다(born-dead 링크 예방).
+  const minDateTime = toLocalInputValue(new Date());
+
   async function handleIssue(e: React.FormEvent) {
     e.preventDefault();
     // P2: 암호 보호 체크 ON이면 반드시 암호를 입력해야 한다.
@@ -35,11 +45,19 @@ export function LinkManager({ letterId }: LinkManagerProps) {
       setValidationError('암호 보호를 켰다면 암호를 입력해 주세요.');
       return;
     }
+    const expiresIso = expiresAt ? new Date(expiresAt).toISOString() : undefined;
+    const revealIso = revealAt ? new Date(revealAt).toISOString() : undefined;
+    // born-dead 링크 방지: 과거 만료·모순 스케줄(공개≥만료)을 발급 전에 차단한다.
+    const scheduleError = validateSchedule({ expiresAt: expiresIso, revealAt: revealIso });
+    if (scheduleError) {
+      setValidationError(scheduleError);
+      return;
+    }
     setValidationError(null);
     await issue({
       password: passwordEnabled && password.trim() ? password.trim() : undefined,
-      expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
-      revealAt: revealAt ? new Date(revealAt).toISOString() : undefined,
+      expiresAt: expiresIso,
+      revealAt: revealIso,
     });
     setPassword('');
     setExpiresAt('');
@@ -90,16 +108,18 @@ export function LinkManager({ letterId }: LinkManagerProps) {
           </div>
         )}
 
-        {/* 만료 일시 (선택) */}
+        {/* 만료 일시 (선택) — min으로 과거 선택을 막고, 비우면 만료 없음. */}
         <div className={styles.fieldRow}>
           <label>만료</label>
           <input
             className={styles.input}
             type="datetime-local"
             value={expiresAt}
+            min={minDateTime}
             onChange={(e) => setExpiresAt(e.target.value)}
           />
         </div>
+        <p className={styles.fieldHint}>비워두면 만료 없이 계속 열 수 있어요.</p>
 
         {/* 예약 공개 (선택) — 이 시각 이후에만 열린다(0018). 생일·기념일 편지용. */}
         <div className={styles.fieldRow}>
@@ -108,6 +128,7 @@ export function LinkManager({ letterId }: LinkManagerProps) {
             className={styles.input}
             type="datetime-local"
             value={revealAt}
+            min={minDateTime}
             onChange={(e) => setRevealAt(e.target.value)}
             aria-describedby="reveal-hint"
           />
