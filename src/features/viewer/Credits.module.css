@@ -1,8 +1,12 @@
 /* Credits — CC-BY 크레딧 렌더 스타일. 템플릿 테마 위에 얹히는 중립 푸터 영역. */
 
 .credits {
-  margin-top: 2.5rem;
-  padding: 1rem 0 2rem;
+  /* 본문(.reader)과 같은 중앙 정렬 컬럼 — 좌측 끝에 붙지 않도록 max-width + margin auto.
+     좌우 패딩은 .reader와 동일하게 safe-area를 포함한다(노치/홈바 기기 가장자리 보호). */
+  max-width: 40rem;
+  margin: 2.5rem auto 0;
+  padding: 1rem max(1.25rem, env(safe-area-inset-right)) 2rem
+    max(1.25rem, env(safe-area-inset-left));
   border-top: 1px solid var(--tpl-border-color, rgba(0, 0, 0, 0.1));
   font-size: 0.8rem;
   color: var(--tpl-muted, #888);
