@@ -122,9 +122,11 @@ export function LetterView({ letter, token }: LetterViewProps): React.ReactEleme
       )}
 
       {/* 본문은 항상 렌더된다(스크린리더 텍스트 레이어 + 죽은 임베드여도 본문 표시). */}
+      {/* 음악 있는 편지를 연 뒤(unlocked)에만 단락을 한 줄씩 위에서 아래로 드러내는 연출. */}
       <Paginated
         paragraphs={paginatedParagraphs}
         title={title}
+        revealOnScroll={hasMusic && unlocked}
         className={styles.reader}
       />
 
