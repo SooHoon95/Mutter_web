@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["TEAMID.com.efreedom.mutter"],
+        "appIDs": ["4QCSG92KD9.com.efreedom.mutter"],
         "components": [
           { "/": "/l/*", "comment": "delivery link - open letter in Mutter app" },
           { "/": "/connect/*", "comment": "invite link - 1:1 connection in Mutter app" }
