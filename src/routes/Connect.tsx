@@ -16,6 +16,36 @@ import type { ConnectInvite } from '@/data/connections';
 import { useConnections } from '@/features/connections';
 import styles from './Connect.module.css';
 
+// iOS에서 앱 미설치 수신자를 위한 설치 CTA 대상. App Store(또는 TestFlight) URL을
+// 배포 환경변수로 주입한다(VITE_IOS_APP_STORE_URL). 미설정이면 배너를 숨긴다 — 앱
+// 미출시 동안 무해하고, 출시 후 env 하나만 채우면 활성화된다.
+// 참고(3케이스 딥링크): 앱이 설치돼 있으면 Universal Link가 웹이 아니라 앱으로 열려
+//   미가입=온보딩·로그인=연결을 네이티브(Deeplink)에서 처리한다. 이 웹 폴백 페이지는
+//   "앱 없는 사용자 → 설치 유도"(케이스 1)만 담당한다.
+const IOS_APP_STORE_URL = import.meta.env.VITE_IOS_APP_STORE_URL as string | undefined;
+
+/** iOS(아이폰·아이패드·아이팟)인지 — 설치 CTA 노출 판단용. */
+function isIOSDevice(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /iPhone|iPad|iPod/.test(navigator.userAgent);
+}
+
+/** iOS + 스토어 URL이 설정된 경우에만 노출되는 앱 설치 배너. 그 외엔 렌더하지 않는다. */
+function AppInstallBanner(): React.ReactElement | null {
+  if (!IOS_APP_STORE_URL || !isIOSDevice()) return null;
+  return (
+    <a
+      className={styles.installBanner}
+      href={IOS_APP_STORE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <span className={styles.installText}>Mutter 앱으로 열면 더 편하게 연결돼요</span>
+      <span className={styles.installBtn}>앱 설치</span>
+    </a>
+  );
+}
+
 export default function Connect(): React.ReactElement {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
@@ -51,6 +81,8 @@ export default function Connect(): React.ReactElement {
   return (
     <main className={styles.page}>
       <div className={styles.card}>
+        <AppInstallBanner />
+
         {isLoading && <p className={styles.status}>초대를 확인하는 중…</p>}
 
         {error !== null && !isLoading && (
