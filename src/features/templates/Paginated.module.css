@@ -64,24 +64,42 @@
   display: block;
 }
 
+/* reveal 대기 상태 — 나타나기 전까지 숨김. */
 .revealMode .line {
   opacity: 0;
-  transform: translateY(-10px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  will-change: opacity, transform;
 }
 
+/* 화면에 들어오면(.revealed) keyframe 애니메이션으로 "위에서 아래로" 페이드-하강한다.
+   transition과 달리 클래스가 붙는 순간 from→to를 재생하므로 페인트 타이밍에 의존하지 않아
+   사파리·첫 화면에서도 확실히 재생된다. animation-delay는 JS가 계단식으로 준다. */
 .revealMode .line.revealed {
-  opacity: 1;
-  transform: none;
+  animation: lineReveal 0.5s ease forwards;
 }
 
-/* 접근성: 모션 최소화 선호 시 연출을 끄고 즉시 표시한다. */
-@media (prefers-reduced-motion: reduce) {
-  .revealMode .line {
+@keyframes lineReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
     opacity: 1;
     transform: none;
-    transition: none;
+  }
+}
+
+@keyframes lineFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 접근성: 모션 최소화 선호 시 이동은 빼고 부드러운 페이드만 유지한다(연출은 살림). */
+@media (prefers-reduced-motion: reduce) {
+  .revealMode .line.revealed {
+    animation-name: lineFade;
   }
 }
 

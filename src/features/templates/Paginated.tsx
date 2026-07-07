@@ -65,7 +65,8 @@ export function Paginated({
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
         entering.forEach((entry, i) => {
           const el = entry.target as HTMLElement;
-          el.style.transitionDelay = `${Math.min(i, 12) * 70}ms`;
+          // 동시에 들어온 줄은 계단식 animation-delay로 위→아래 순차 재생.
+          el.style.animationDelay = `${Math.min(i, 12) * 70}ms`;
           el.classList.add(styles.revealed);
           io.unobserve(entry.target); // 한 번만 — 재생 반복 없음
         });
@@ -74,20 +75,13 @@ export function Paginated({
       { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
     );
 
+    // keyframe 애니메이션은 클래스가 붙는 순간 from→to를 재생하므로 페인트 타이밍에 의존하지
+    // 않는다(첫 화면 줄도 확실히 재생). 따라서 즉시 관측한다 — IO가 이미 보이는 줄에 대해
+    // 초기 콜백을 발화해 첫 줄부터 계단식으로 나타난다.
     const nodes = container.querySelectorAll<HTMLElement>('[data-reveal-line]');
-    // 핵심: 숨김 상태(opacity 0)가 최소 한 프레임 "그려진 뒤"에 관측을 시작한다.
-    // 즉시 관측하면 첫 화면(이미 보이는) 단락은 opacity 0이 페인트되기 전에 revealed가 붙어
-    // 전환 시작 프레임이 없어 그냥 튀어나온다 — 첫 줄부터 연출되도록 이중 rAF로 페인트를 보장한다.
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        nodes.forEach((el) => io.observe(el));
-      });
-    });
+    nodes.forEach((el) => io.observe(el));
 
     return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
       io.disconnect();
     };
   }, [revealOnScroll]);
