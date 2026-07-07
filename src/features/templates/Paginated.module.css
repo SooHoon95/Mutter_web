@@ -54,25 +54,31 @@
   /* 단락 스크롤 추적: IntersectionObserver 타겟이 될 수 있도록 display block 성격 유지 */
 }
 
-/* ── reveal 연출(음악 편지 열람 시) ─────────────────────────────────────────
-   revealMode에서 각 단락은 처음에 숨겨진(위로 살짝 올라간) 상태로 시작하고,
-   스크롤 진입 시 .revealed가 붙어 "위에서 아래로" 내려오며 페이드-인 한다.
+/* ── reveal 연출(편지 열람 시) — 줄(개행) 단위 ──────────────────────────────
+   reveal 모드에서 각 단락 텍스트는 줄(\n) 단위 블록(.line)으로 렌더된다.
+   각 줄은 숨겨진(위로 살짝 올라간) 상태로 시작하고, 실제로 화면에 들어올 때
+   .revealed가 붙어 "위에서 아래로" 내려오며 페이드-인 한다. 긴 단락의 아래쪽 줄은
+   스크롤로 화면에 들어오기 전까지 숨겨진다(단락 통째 노출 방지).
    .revealed는 JS(IntersectionObserver)가 한 번만 부여한다(스크롤 왕복 재생 없음). */
-.revealMode .paragraph {
+.line {
+  display: block;
+}
+
+.revealMode .line {
   opacity: 0;
-  transform: translateY(-12px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transform: translateY(-10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
   will-change: opacity, transform;
 }
 
-.revealMode .paragraph.revealed {
+.revealMode .line.revealed {
   opacity: 1;
   transform: none;
 }
 
 /* 접근성: 모션 최소화 선호 시 연출을 끄고 즉시 표시한다. */
 @media (prefers-reduced-motion: reduce) {
-  .revealMode .paragraph {
+  .revealMode .line {
     opacity: 1;
     transform: none;
     transition: none;

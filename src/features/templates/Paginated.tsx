@@ -6,6 +6,11 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import styles from './Paginated.module.css';
 
+/** 한 단락 텍스트를 개행(\n) 기준 줄로 나눈다. reveal 모드의 줄 단위 연출에 쓴다. */
+function splitLines(text: string): string[] {
+  return text.split('\n');
+}
+
 export interface PaginatedParagraph {
   /** 단락 고유 id — React key로 사용. 인덱스 key 금지(재정렬 보존). */
   id: string;
@@ -60,7 +65,7 @@ export function Paginated({
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
         entering.forEach((entry, i) => {
           const el = entry.target as HTMLElement;
-          el.style.transitionDelay = `${Math.min(i, 8) * 90}ms`;
+          el.style.transitionDelay = `${Math.min(i, 12) * 70}ms`;
           el.classList.add(styles.revealed);
           io.unobserve(entry.target); // 한 번만 — 재생 반복 없음
         });
@@ -69,7 +74,7 @@ export function Paginated({
       { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
     );
 
-    const nodes = container.querySelectorAll<HTMLElement>('[data-paragraph-id]');
+    const nodes = container.querySelectorAll<HTMLElement>('[data-reveal-line]');
     // 핵심: 숨김 상태(opacity 0)가 최소 한 프레임 "그려진 뒤"에 관측을 시작한다.
     // 즉시 관측하면 첫 화면(이미 보이는) 단락은 opacity 0이 페인트되기 전에 revealed가 붙어
     // 전환 시작 프레임이 없어 그냥 튀어나온다 — 첫 줄부터 연출되도록 이중 rAF로 페인트를 보장한다.
@@ -114,9 +119,18 @@ export function Paginated({
                 {para.decoration}
               </div>
             )}
-            {/* 본문 — 빈 단락도 최소 높이를 가져 읽기 리듬 유지 */}
+            {/* 본문 — reveal 모드에선 줄(\n) 단위 블록으로 쪼개 각 줄을 개별 연출한다.
+                (긴 단락도 아래쪽 줄이 화면에 들어올 때 나타나도록.) 그 외엔 통짜 텍스트. */}
             <p className={styles.text}>
-              {para.text || (
+              {revealOnScroll ? (
+                splitLines(para.text).map((line, i) => (
+                  <span key={i} className={styles.line} data-reveal-line>
+                    {line === '' ? ' ' : line}
+                  </span>
+                ))
+              ) : para.text ? (
+                para.text
+              ) : (
                 // 빈 텍스트는 nbsp로 최소 높이 보장
                 <span aria-hidden="true">&nbsp;</span>
               )}
