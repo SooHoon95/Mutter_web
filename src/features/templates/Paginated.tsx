@@ -3,7 +3,7 @@
 // 가로 스크롤 0, 텍스트 클리핑 0 — 긴 본문이 모바일에서 안전하게 읽힌다.
 // T8 Viewer가 재사용할 수 있도록 순수 props 기반 설계.
 
-import { useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import styles from './Paginated.module.css';
 
 export interface PaginatedParagraph {
@@ -42,14 +42,15 @@ export function Paginated({
     .filter(Boolean)
     .join(' ');
 
-  // reveal 연출용 IntersectionObserver. 단락이 뷰포트에 들어오면 revealed 클래스를 붙이고
-  // 즉시 unobserve해 "한 번만" 재생한다. revealOnScroll이 켜질 때(편지 열람) 생성된다.
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  // 마운트된 단락 노드 추적 — 관측자 생성 전 마운트된 노드도 뒤늦게 관측하기 위함.
-  const nodesRef = useRef<Map<string, HTMLElement>>(new Map());
+  // 본문 컨테이너 — reveal 관측 시 이 안의 단락([data-paragraph-id])을 질의한다.
+  const bodyRef = useRef<HTMLDivElement | null>(null);
 
+  // reveal 연출: 편지를 연 뒤(revealOnScroll=true) 각 단락이 뷰포트에 들어오면
+  // "위에서 아래로" 페이드-하강으로 한 번만 나타난다(스크롤 왕복 재생 없음).
   useEffect(() => {
-    if (!revealOnScroll || typeof IntersectionObserver === 'undefined') return;
+    const container = bodyRef.current;
+    if (!revealOnScroll || !container || typeof IntersectionObserver === 'undefined') return;
+
     const io = new IntersectionObserver(
       (entries) => {
         // 동시에 들어온 단락은 위→아래 순서로 계단식 지연을 줘 "한 줄씩" 등장을 또렷하게 한다.
@@ -67,31 +68,24 @@ export function Paginated({
       // 단락 상단이 살짝 들어오면 재생. 하단 여백으로 화면 진입 직후 자연스럽게 나타남.
       { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
     );
-    observerRef.current = io;
-    // 관측자 생성 전에 이미 마운트된 단락들을 관측 등록.
-    nodesRef.current.forEach((el) => io.observe(el));
+
+    const nodes = container.querySelectorAll<HTMLElement>('[data-paragraph-id]');
+    // 핵심: 숨김 상태(opacity 0)가 최소 한 프레임 "그려진 뒤"에 관측을 시작한다.
+    // 즉시 관측하면 첫 화면(이미 보이는) 단락은 opacity 0이 페인트되기 전에 revealed가 붙어
+    // 전환 시작 프레임이 없어 그냥 튀어나온다 — 첫 줄부터 연출되도록 이중 rAF로 페인트를 보장한다.
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        nodes.forEach((el) => io.observe(el));
+      });
+    });
+
     return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
       io.disconnect();
-      observerRef.current = null;
     };
   }, [revealOnScroll]);
-
-  // 단락 노드 등록 — onParagraphRef 위임 + reveal 관측 등록/해제.
-  const registerNode = useCallback(
-    (el: HTMLElement | null, id: string) => {
-      onParagraphRef?.(id, el);
-      const map = nodesRef.current;
-      if (el) {
-        map.set(id, el);
-        observerRef.current?.observe(el); // 관측자가 이미 있으면 즉시 관측
-      } else {
-        const prev = map.get(id);
-        if (prev) observerRef.current?.unobserve(prev);
-        map.delete(id);
-      }
-    },
-    [onParagraphRef],
-  );
 
   return (
     // overflow-x: hidden 으로 가로 클리핑 원천 차단.
@@ -104,13 +98,14 @@ export function Paginated({
         </header>
       )}
 
-      <div className={styles.body}>
+      <div className={styles.body} ref={bodyRef}>
         {paragraphs.map((para) => (
           <section
             key={para.id}
             className={styles.paragraph}
-            // ref 콜백: onParagraphRef 위임 + reveal 연출 관측 등록.
-            ref={(el) => registerNode(el, para.id)}
+            // ref 콜백: T8 IntersectionObserver 싱크(onParagraphRef)에 위임. reveal 관측은
+            // 상위 bodyRef 기준 querySelectorAll로 처리하므로 여기선 위임만 한다.
+            ref={(el) => onParagraphRef?.(para.id, el)}
             data-paragraph-id={para.id}
           >
             {/* 장식 노드 (음악 큐 아이콘 등) — 텍스트 위에 배치 */}
