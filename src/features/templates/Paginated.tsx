@@ -90,7 +90,16 @@ export function Paginated({
     // overflow-x: hidden 으로 가로 클리핑 원천 차단.
     // overflow-y: auto + word-break: keep-all 로 세로 스크롤 기반 읽기.
     <article className={combinedClass} aria-label="편지 본문">
-      {title && (
+      {/* reveal 모드: 처음엔 제목·본문 없이 "스크롤 해주세요"만 한 화면 가득. 이 인트로가
+          편지 내용을 첫 화면 아래로 밀어내, 스크롤해야 한 줄씩 뷰포트에 들어오며 나타난다. */}
+      {revealOnScroll && (
+        <div className={styles.scrollIntro}>
+          <span className={styles.scrollHint}>스크롤 해주세요</span>
+          <span className={styles.scrollChevron} aria-hidden="true" />
+        </div>
+      )}
+
+      {!revealOnScroll && title && (
         <header className={styles.letterHeader}>
           <h1 className={styles.letterTitle}>{title}</h1>
           <hr className={styles.divider} />
@@ -98,6 +107,12 @@ export function Paginated({
       )}
 
       <div className={styles.body} ref={bodyRef}>
+        {/* reveal 모드: 제목도 첫 줄로 나타난다(스크롤 전엔 숨김). */}
+        {revealOnScroll && title && (
+          <h1 className={`${styles.letterTitle} ${styles.line}`} data-reveal-line>
+            {title}
+          </h1>
+        )}
         {paragraphs.map((para) => (
           <section
             key={para.id}

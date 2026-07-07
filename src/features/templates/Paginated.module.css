@@ -60,6 +60,53 @@
    .revealed가 붙어 "위에서 아래로" 내려오며 페이드-인 한다. 긴 단락의 아래쪽 줄은
    스크롤로 화면에 들어오기 전까지 숨겨진다(단락 통째 노출 방지).
    .revealed는 JS(IntersectionObserver)가 한 번만 부여한다(스크롤 왕복 재생 없음). */
+/* 스크롤 안내 인트로 — reveal 모드 첫 화면을 가득 채워 편지 내용을 아래로 밀어낸다.
+   dvh로 모바일 주소창 상태와 무관하게 한 화면을 차지 → 스크롤해야 첫 줄이 들어온다. */
+.scrollIntro {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  color: var(--tpl-muted, #8a7a5e);
+  text-align: center;
+}
+
+.scrollHint {
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+
+/* 아래 방향 셰브론(↓) + 바운스로 스크롤 유도. */
+.scrollChevron {
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.7;
+  animation: chevronBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes chevronBounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(45deg);
+  }
+  50% {
+    transform: translateY(6px) rotate(45deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrollChevron {
+    animation: none;
+  }
+}
+
 .line {
   display: block;
 }
