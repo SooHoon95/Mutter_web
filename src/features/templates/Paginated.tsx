@@ -52,12 +52,17 @@ export function Paginated({
     if (!revealOnScroll || typeof IntersectionObserver === 'undefined') return;
     const io = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add(styles.revealed);
-            io.unobserve(entry.target); // 한 번만 — 재생 반복 없음
-          }
-        }
+        // 동시에 들어온 단락은 위→아래 순서로 계단식 지연을 줘 "한 줄씩" 등장을 또렷하게 한다.
+        // (스크롤로 하나씩 들어오는 경우엔 i=0이라 지연 없이 즉시 재생된다.)
+        const entering = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        entering.forEach((entry, i) => {
+          const el = entry.target as HTMLElement;
+          el.style.transitionDelay = `${Math.min(i, 8) * 90}ms`;
+          el.classList.add(styles.revealed);
+          io.unobserve(entry.target); // 한 번만 — 재생 반복 없음
+        });
       },
       // 단락 상단이 살짝 들어오면 재생. 하단 여백으로 화면 진입 직후 자연스럽게 나타남.
       { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
