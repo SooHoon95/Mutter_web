@@ -24,7 +24,7 @@ interface UseConnectionsReturn {
   isCreatingInvite: boolean;
   acceptInvite: (token: string) => Promise<void>;
   isAccepting: boolean;
-  disconnect: () => Promise<void>;
+  disconnect: (otherUser: string) => Promise<void>;
   isDisconnecting: boolean;
   sendToConnection: (letterId: string, recipientId: string) => Promise<void>;
   isSending: boolean;
@@ -55,9 +55,9 @@ export function useConnections(): UseConnectionsReturn {
     onSuccess: invalidate,
   });
 
-  const disconnectMutation = useMutation<void, Error, void>({
+  const disconnectMutation = useMutation<void, Error, string>({
     mutationFn: disconnect,
-    // 해제 성공 → 연결 목록을 비운다(invalidate로 재조회).
+    // 해제 성공 → 연결 목록이 바뀌므로 재조회(invalidate).
     onSuccess: invalidate,
   });
 

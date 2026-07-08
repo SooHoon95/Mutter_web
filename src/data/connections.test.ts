@@ -179,28 +179,14 @@ describe('acceptInvite', () => {
     expect(mock.rpc).toHaveBeenCalledWith('accept_connect_invite', { p_token: 'tok_abc' });
   });
 
-  it('ALREADY_CONNECTED_SELF 에러를 사용자 메시지로 정규화한다', async () => {
+  it('ALREADY_CONNECTED(같은 상대 중복) 에러를 사용자 메시지로 정규화한다', async () => {
     const mock = makeRpcMock({
       data: null,
-      error: new Error('ALREADY_CONNECTED_SELF'),
+      error: new Error('ALREADY_CONNECTED'),
     });
     mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
 
-    await expect(acceptInvite('tok_abc')).rejects.toThrow(
-      '이미 다른 사람과 연결돼 있어요. 연결을 해제한 뒤 다시 시도하세요.',
-    );
-  });
-
-  it('ALREADY_CONNECTED_OTHER 에러를 사용자 메시지로 정규화한다', async () => {
-    const mock = makeRpcMock({
-      data: null,
-      error: new Error('ALREADY_CONNECTED_OTHER'),
-    });
-    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
-
-    await expect(acceptInvite('tok_abc')).rejects.toThrow(
-      '상대가 이미 다른 사람과 연결돼 있어요.',
-    );
+    await expect(acceptInvite('tok_abc')).rejects.toThrow('이미 연결된 사이예요.');
   });
 
   it('CANNOT_CONNECT_SELF 에러를 사용자 메시지로 정규화한다', async () => {
@@ -268,9 +254,9 @@ describe('disconnect', () => {
     const mock = makeRpcMock({ data: null, error: null });
     mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
 
-    await disconnect();
+    await disconnect('other-1');
 
-    expect(mock.rpc).toHaveBeenCalledWith('disconnect_connection');
+    expect(mock.rpc).toHaveBeenCalledWith('disconnect_connection', { p_other_user: 'other-1' });
   });
 
   it('RPC 오류 시 throw한다', async () => {
@@ -278,7 +264,7 @@ describe('disconnect', () => {
     const mock = makeRpcMock({ data: null, error: dbError });
     mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
 
-    await expect(disconnect()).rejects.toThrow('연결 해제 실패');
+    await expect(disconnect('other-1')).rejects.toThrow('연결 해제 실패');
   });
 });
 

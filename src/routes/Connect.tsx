@@ -161,36 +161,9 @@ function renderInviteState(
     );
   }
 
-  // 3. 내가 이미 다른 사람과 연결됨 (독점 1:1)
-  if (invite.viewerHasConnection) {
-    return (
-      <>
-        <h1 className={styles.heading}>먼저 현재 연결을 해제해야 해요</h1>
-        <p className={styles.desc}>
-          연결은 독점 1:1이에요. {inviterName}님과 연결하려면 먼저 현재 연결을 해제한 뒤 이
-          링크를 다시 열어주세요.
-        </p>
-        <button type="button" className={styles.primaryBtn} onClick={onGoPeople}>
-          주고받은 사람으로 가기
-        </button>
-      </>
-    );
-  }
+  // (N:N: 독점 1:1 배타성 안내 블록 폐지 — 내가/상대가 다른 연결이 있어도 수락 가능)
 
-  // 4. 상대가 이미 다른 사람과 연결됨 (독점 1:1)
-  if (invite.inviterHasConnection) {
-    return (
-      <>
-        <h1 className={styles.heading}>상대가 이미 연결돼 있어요</h1>
-        <p className={styles.desc}>
-          {inviterName}님은 이미 다른 사람과 연결돼 있어서 지금은 수락할 수 없어요. 상대에게
-          먼저 연결을 해제해 달라고 요청해보세요.
-        </p>
-      </>
-    );
-  }
-
-  // 5. 정상 — 수락 가능
+  // 정상 — 수락 가능
   return (
     <>
       <h1 className={styles.heading}>{inviterName}님이 연결을 요청했어요</h1>

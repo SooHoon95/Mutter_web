@@ -97,8 +97,8 @@ function firstRow<T>(data: unknown): T | null {
 // Postgres RPC가 raise exception으로 던지는 에러 코드 (message 필드에 포함됨).
 // 각 코드를 사용자가 이해할 수 있는 한국어 메시지로 변환한다.
 const ACCEPT_ERROR_MESSAGES: Record<string, string> = {
-  ALREADY_CONNECTED_SELF: '이미 다른 사람과 연결돼 있어요. 연결을 해제한 뒤 다시 시도하세요.',
-  ALREADY_CONNECTED_OTHER: '상대가 이미 다른 사람과 연결돼 있어요.',
+  // N:N — 같은 상대와 중복 연결 시도(배타성 ALREADY_CONNECTED_SELF/OTHER는 폐지).
+  ALREADY_CONNECTED: '이미 연결된 사이예요.',
   CANNOT_CONNECT_SELF: '본인은 연결할 수 없어요.',
   INVITE_NOT_FOUND: '초대를 찾을 수 없어요.',
   INVITE_ALREADY_USED: '이미 사용된 초대 링크예요. 새 초대를 요청해 주세요.',
@@ -219,13 +219,13 @@ export async function getMyConnections(): Promise<Connection[]> {
 }
 
 /**
- * 현재 연결을 해제한다.
- * RPC disconnect_connection() — 서버가 양방향 연결을 삭제한다.
+ * 특정 상대와의 연결을 해제한다(N:N — 대상 지정 필수).
+ * RPC disconnect_connection(p_other_user) — 서버가 그 페어의 연결을 삭제한다.
  * 편지·받은 편지함 데이터는 보존된다(연결 해제는 연락처 삭제가 아님).
  */
-export async function disconnect(): Promise<void> {
+export async function disconnect(otherUser: string): Promise<void> {
   const sb = getSupabase();
-  const { error } = await sb.rpc('disconnect_connection');
+  const { error } = await sb.rpc('disconnect_connection', { p_other_user: otherUser });
   if (error) throw error;
 }
 

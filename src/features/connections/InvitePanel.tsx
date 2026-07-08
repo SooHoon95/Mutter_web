@@ -1,6 +1,6 @@
-// InvitePanel — 독점 1:1 연결 초대/해제 패널.
-// 이미 연결돼 있으면: "○○님과 연결됨" + "연결 해제" 버튼.
-// 연결 없을 때만: "연결 초대 링크 만들기" → createInvite → /connect/:token 링크 + 복사/공유.
+// InvitePanel — 연결 초대 링크 생성 패널(N:N).
+// "연결 초대 링크 만들기" → createInvite → /connect/:token 링크 + 복사/공유/취소.
+// 연결된 사람 목록·해제는 ConnectionList가 담당한다(N:N이라 초대는 항상 가능).
 
 import { useState } from 'react';
 import { revokeInvite } from '@/data/connections';
@@ -13,8 +13,7 @@ function buildInviteUrl(token: string): string {
 }
 
 export function InvitePanel(): React.ReactElement {
-  const { connections, isLoading, createInvite, isCreatingInvite, disconnect, isDisconnecting } =
-    useConnections();
+  const { createInvite, isCreatingInvite } = useConnections();
 
   // inviteToken: 생성된 토큰 원본 — 취소(revokeInvite) 시 필요.
   const [inviteToken, setInviteToken] = useState<string | null>(null);
@@ -23,25 +22,9 @@ export function InvitePanel(): React.ReactElement {
   // copied: 복사 완료 피드백 / copyError: 클립보드 접근 실패
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
-  const [disconnectError, setDisconnectError] = useState<string | null>(null);
   // revoking: 취소 진행 중 / revokeError: 취소 실패
   const [isRevoking, setIsRevoking] = useState(false);
   const [revokeError, setRevokeError] = useState<string | null>(null);
-
-  // 독점 1:1 — 연결은 최대 1명.
-  const currentConnection = connections[0] ?? null;
-  const isConnected = currentConnection !== null;
-
-  // 연결 상태 로딩 중에는 초대 생성 UI를 띄우지 않는다.
-  // (쿼리 해소 전엔 connections가 빈 배열이라, 이미 연결된 사용자에게도 초대 UI가
-  //  잠깐 노출되는 문제를 막는다 — 독점 1:1 배타성 보호.)
-  if (isLoading) {
-    return (
-      <div className={styles.panel}>
-        <p className={styles.desc}>연결 상태를 불러오는 중…</p>
-      </div>
-    );
-  }
 
   async function handleCreate(): Promise<void> {
     setCreateError(null);
@@ -106,50 +89,11 @@ export function InvitePanel(): React.ReactElement {
   // navigator.share 지원 여부 — https 컨텍스트 + 모바일에서만 true인 경우가 많다.
   const canShare = typeof navigator.share === 'function';
 
-  async function handleDisconnect(): Promise<void> {
-    if (
-      !confirm(
-        '연결을 해제할까요? 주고받은 편지는 그대로 남아 있어요.',
-      )
-    )
-      return;
-    setDisconnectError(null);
-    try {
-      await disconnect();
-    } catch (err) {
-      setDisconnectError(err instanceof Error ? err.message : '연결 해제에 실패했습니다.');
-    }
-  }
-
-  // ── 이미 연결된 상태 ──────────────────────────────────────────────────────
-  if (isConnected) {
-    const connectedName = currentConnection.nickname ?? '알 수 없음';
-    return (
-      <div className={styles.panel}>
-        <p className={styles.desc}>
-          <strong>{connectedName}</strong>님과 연결돼 있어요. 연결은 독점 1:1이라 다른 사람을
-          연결하려면 먼저 해제해야 해요.
-        </p>
-        <button
-          type="button"
-          className={styles.disconnectBtn}
-          onClick={() => void handleDisconnect()}
-          disabled={isDisconnecting}
-        >
-          {isDisconnecting ? '해제 중…' : '연결 해제'}
-        </button>
-        {disconnectError !== null && <p className={styles.error}>{disconnectError}</p>}
-        <p className={styles.hint}>연결을 해제해도 주고받은 편지는 그대로 남아 있어요.</p>
-      </div>
-    );
-  }
-
-  // ── 연결 없음: 초대 링크 생성 ────────────────────────────────────────────
   return (
     <div className={styles.panel}>
       <p className={styles.desc}>
         초대 링크를 만들어 상대에게 보내면, 상대가 링크를 열고 수락할 때 둘이 연결돼요.
-        연결은 독점 1:1이에요 — 연결되면 링크 없이 바로 편지를 주고받을 수 있어요.
+        연결되면 링크 없이 바로 편지를 주고받을 수 있어요.
       </p>
 
       <button
@@ -199,7 +143,7 @@ export function InvitePanel(): React.ReactElement {
           {revokeError !== null && <p className={styles.error}>{revokeError}</p>}
 
           <p className={styles.hint}>
-            이 링크를 받은 사람이 열고 수락하면 둘이 연결돼요. 1:1 전용.
+            이 링크를 받은 사람이 열고 수락하면 둘이 연결돼요.
           </p>
         </div>
       )}
