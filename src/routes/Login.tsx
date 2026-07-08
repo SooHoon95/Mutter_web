@@ -45,10 +45,10 @@ function authErrorMessage(err: unknown, mode: Mode): string {
 }
 
 /** 소셜 OAuth 에러를 사용자 친화 한국어로 정규화. */
-function socialErrorMessage(err: unknown, provider: 'google' | 'kakao'): string {
+function socialErrorMessage(err: unknown, provider: 'google' | 'kakao' | 'apple'): string {
   const raw = err instanceof Error ? err.message : String(err);
   const m = raw.toLowerCase();
-  const label = provider === 'google' ? 'Google' : 'Kakao';
+  const label = provider === 'google' ? 'Google' : provider === 'kakao' ? 'Kakao' : 'Apple';
   // 제공자 미설정(Supabase Providers에서 아직 enable 안 됨) — 설정 완료 전 흔한 케이스.
   if (
     m.includes('provider is not enabled') ||
@@ -75,12 +75,12 @@ export default function Login(): React.ReactNode {
   const [notice, setNotice] = useState<string | null>(null);
   const [awaitingCode, setAwaitingCode] = useState(false); // 가입 후 코드 입력 단계
   const [code, setCode] = useState('');
-  const [socialLoading, setSocialLoading] = useState<'google' | 'kakao' | null>(null);
+  const [socialLoading, setSocialLoading] = useState<'google' | 'kakao' | 'apple' | null>(null);
   // 자동 리다이렉트 가드(race-safe). 세션 생성이 navigate('/set-nickname')보다 먼저 전파돼도
   // ref는 동기적으로 즉시 반영되므로 effect가 '/'로 가로채 이동하는 것을 막는다.
   const justSignedUpRef = useRef(false);
 
-  async function handleSocialLogin(provider: 'google' | 'kakao'): Promise<void> {
+  async function handleSocialLogin(provider: 'google' | 'kakao' | 'apple'): Promise<void> {
     setError(null);
     setSocialLoading(provider);
     try {
@@ -261,6 +261,16 @@ export default function Login(): React.ReactNode {
 
         <div className={styles.socialButtons}>
           <button
+            className={styles.socialButtonApple}
+            type="button"
+            disabled={socialLoading !== null}
+            aria-label="Apple로 계속하기"
+            onClick={() => void handleSocialLogin('apple')}
+          >
+            <AppleIcon />
+            <span>{socialLoading === 'apple' ? '연결 중…' : 'Apple로 계속하기'}</span>
+          </button>
+          <button
             className={styles.socialButtonGoogle}
             type="button"
             disabled={socialLoading !== null}
@@ -410,6 +420,18 @@ function KakaoIcon(): React.ReactElement {
       <path
         fill="#000000"
         d="M9 1.6C4.58 1.6 1 4.36 1 7.77c0 2.2 1.46 4.13 3.68 5.23-.16.58-.59 2.12-.67 2.45-.1.41.15.4.32.29.13-.08 2.06-1.4 2.9-1.96.55.08 1.11.12 1.77.12 4.42 0 8-2.76 8-6.16C18 4.36 13.42 1.6 9 1.6z"
+      />
+    </svg>
+  );
+}
+
+/** Apple 공식 심볼 (검정 버튼 위 흰 로고 — 브랜드 가이드라인). */
+function AppleIcon(): React.ReactElement {
+  return (
+    <svg width="15" height="18" viewBox="0 0 384 512" aria-hidden="true" focusable="false">
+      <path
+        fill="#ffffff"
+        d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"
       />
     </svg>
   );

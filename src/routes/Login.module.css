@@ -194,14 +194,15 @@
 
 /* 소셜 버튼 공통 베이스 */
 .socialButtonGoogle,
-.socialButtonKakao {
+.socialButtonKakao,
+.socialButtonApple {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 1rem;
   font-weight: 600;
   border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: filter 0.15s, box-shadow 0.15s, transform 0.15s;
+  transition: filter 0.15s, box-shadow 0.15s, transform 0.15s, background 0.15s;
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -210,18 +211,21 @@
 }
 
 .socialButtonGoogle:hover:not(:disabled),
-.socialButtonKakao:hover:not(:disabled) {
+.socialButtonKakao:hover:not(:disabled),
+.socialButtonApple:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
 /* 브랜드 로고는 텍스트와 무관하게 고정 크기 유지 */
 .socialButtonGoogle svg,
-.socialButtonKakao svg {
+.socialButtonKakao svg,
+.socialButtonApple svg {
   flex-shrink: 0;
 }
 
 .socialButtonGoogle:disabled,
-.socialButtonKakao:disabled {
+.socialButtonKakao:disabled,
+.socialButtonApple:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;

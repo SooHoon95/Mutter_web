@@ -133,13 +133,15 @@ export function onAuthChange(
 }
 
 /**
- * 소셜 OAuth 로그인. Google 또는 Kakao 제공자로 리다이렉트한다.
+ * 소셜 OAuth 로그인. Google·Kakao·Apple 제공자로 리다이렉트한다.
  *
- * 주의: 실제 동작을 위해 Supabase 대시보드 Authentication → Providers에서
- * Google/Kakao client id·secret을 각각 등록해야 한다.
+ * 주의: 실제 동작을 위해 Supabase 대시보드 Authentication → Providers에서 각 제공자를 등록해야 한다.
+ * - Google/Kakao: client id·secret.
+ * - Apple(웹): Services ID + Secret Key(.p8 서명 JWT). 네이티브(iOS)는 번들ID만으로 되지만,
+ *   웹은 OAuth 리다이렉트 플로우라 별도 Services ID가 필요하다.
  * redirectTo: OAuth 완료 후 현재 앱 origin으로 복귀(로컬·배포 자동 적응).
  */
-export async function signInWithProvider(provider: 'google' | 'kakao'): Promise<void> {
+export async function signInWithProvider(provider: 'google' | 'kakao' | 'apple'): Promise<void> {
   const { error } = await getSupabase().auth.signInWithOAuth({
     provider,
     options: { redirectTo: window.location.origin },
