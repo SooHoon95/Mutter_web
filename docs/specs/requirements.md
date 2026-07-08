@@ -3,6 +3,11 @@
 > 출처: `docs/PRD.md`(v4) + `.omc/prd.json`. 본 문서는 PRD를 **검증 가능한 요구사항**으로 전개한다.
 > 상태: v1 빌드 대상 확정(2026-06-16). 손글씨 합성은 v2(비목표).
 > 용어: **MUST**(필수) / **SHOULD**(권장) / **MAY**(선택).
+>
+> ⚠️ **v6 supersede (2026-07-08):** 본 SRS는 v4 기준이라 일부가 낡았다. 충돌 시 **PRD v6이 우선**한다.
+> - **음악:** CC0/RF 무드 픽커·라이선스 게이트·"무음 0"은 **폐기** → **SoundCloud 단일 음원(선택), 무음 허용**(재생 불가 시 폴백 없이 "음악 없음"). ⇒ FR-3.3·FR-5·FR-8.2의 CC0 조항 무효.
+> - **연출 단위:** "단락별 음악 큐/스크롤 seekTo"는 v5에서 **편지당 1곡**으로 단순화(FR-3.1·FR-3.4·FR-4.2 참조 시 유의).
+> - **관계:** 계정·연결(**N:N**)·받은편지함·스레드·예약공개 등은 PRD §15/§16이 정본.
 
 ## 1. 제품 개요
 
@@ -38,7 +43,7 @@
 ### FR-3. 편지 작문 + 음악 큐 연출 (US-003)
 - FR-3.1 (MUST) 편지를 단락(paragraph) 단위로 작성·편집·재정렬.
 - FR-3.2 (MUST) SC paste-URL 입력 시 **oEmbed로 검증** → 비200/ERROR/embed-disabled/private/geo 트랙은 **작성 시점 거부** + CC0 폴백 안내.
-- FR-3.3 (MUST) CC0 무드 픽커에서 곡 선택.
+- FR-3.3 (~~MUST~~ → **v6 제거**) ~~CC0 무드 픽커에서 곡 선택~~ — SC 단일·무음 허용으로 대체(곡 미지정 시 무음).
 - FR-3.4 (MUST) 단락별 음악 큐(어느 단락에서 어떤 트랙이 차오를지) 지정·저장.
 - FR-3.5 (MUST) 광고 포함 가능 SC 트랙은 send-time 경고.
 - FR-3.6 (SHOULD) 라이브 프리뷰(작성자 화면에서 연출 미리보기).
@@ -50,11 +55,8 @@
 - FR-4.4 (MUST) 곡 전환·페이드는 `setVolume` 램프(Web Audio 크로스페이드는 v2).
 - FR-4.5 (MUST) 싱크 엔진은 소스 타입을 모른 채 인터페이스로만 동작.
 
-### FR-5. CC0/RF 카탈로그 + 라이선스 게이트 (US-005)
-- FR-5.1 (MUST) ingestion이 CC0/PD/CC-BY(+상업·재배포 허용 벤더)만 통과, NC/ND·비화이트리스트 자동 거부.
-- FR-5.2 (MUST) 통과 트랙마다 프로비넌스(출처 URL·라이선스명+버전·라이선스 텍스트 스냅샷·취득일·저작자) 저장.
-- FR-5.3 (MUST) 한국 인접권(실연·음반) 커버 확인, KOMCA 관리곡 배제.
-- FR-5.4 (MUST) 보장형 무드 카탈로그로 모든 편지가 음악을 가질 수 있어야 함(무음 0의 원천).
+### FR-5. ~~CC0/RF 카탈로그 + 라이선스 게이트~~ (US-005) — **v6 전체 제거**
+> v6에서 CC0 카탈로그를 제거하고 **SC 단일·무음 허용**으로 전환. 아래 FR-5.1~5.4는 **무효**이며, 라이선스 게이트·프로비넌스·한국 인접권 클리어는 **(v2) Creator Upload를 켤 때 재도입**한다.
 
 ### FR-6. 템플릿 / 타이포 (US-006)
 - FR-6.1 (MUST) 5~7개 큐레이션 템플릿 선택·지속(pick-not-freeform).
@@ -67,9 +69,9 @@
 - FR-7.4 (MUST) 수신 라우트 noindex(meta + X-Robots-Tag), 공개 인덱스 미노출.
 
 ### FR-8. 수신자 무설치 웹뷰 (US-008)
-- FR-8.1 (MUST) 무계정·무설치로 "열기 ▶" → 스크롤 동기 음악.
-- FR-8.2 (MUST) 수신 로드 시 SC liveness 실패 → 카탈로그 폴백. **무음 편지 0**(절대 무음 아님).
-- FR-8.3 (MUST) 모든 CC-BY 트랙의 제목·저작자·출처·라이선스 크레딧 렌더.
+- FR-8.1 (MUST) 무계정·무설치로 "열기 ▶" → 음악 있으면 자동재생(v5: 편지당 1곡).
+- FR-8.2 (MUST) 수신 로드 시 SC liveness 실패 → **폴백 없이 "음악 없음"으로 표시**(v6: 무음 허용. 구 "카탈로그 폴백·무음 0" 폐기). 본문은 항상 보임.
+- FR-8.3 (~~MUST~~ → v6 제거) ~~모든 CC-BY 트랙 크레딧 렌더~~ — CC0 카탈로그 없음.
 - FR-8.4 (MUST) 첫 의미 렌더 < 3초 / 4G.
 - FR-8.5 (MUST) 접근성 — 텍스트 레이어를 스크린리더가 읽을 수 있어야 함.
 
@@ -98,7 +100,7 @@
 - `Letter(id, owner_id, title, paragraphs[], template_id, created_at, updated_at)`
 - `Paragraph(id, order, text, cue?: MusicCue)` — letters.paragraphs jsonb 가능.
 - `MusicCue(source_type: 'soundcloud'|'hosted', ref, start_ms?)`
-- `Track(id, source, title, author, license, provenance{...})` — CC0 카탈로그.
+- ~~`Track(id, source, title, author, license, provenance{...})` — CC0 카탈로그~~ — **v6 제거**(SC 단일). `MusicCue`는 실질 `source_type: 'soundcloud'`만 사용.
 - `DeliveryLink(token, letter_id, password_hash?, claimed_device_id?, expires_at?, revoked_at?, telemetry)`
 - `Takedown(id, letter_id, claimant, reason, created_at, resolved_at?)`
 
@@ -107,7 +109,7 @@
 - SoundCloud Widget API(키 불필요, 블랙박스). Data API(검색) 폐쇄 → paste-URL only, oEmbed 검증.
 - Supabase(무료 티어): Auth·Postgres·RLS·Storage·Edge Functions.
 - Netlify(무료 티어): 정적 호스팅 + 헤더/리다이렉트.
-- CC0 음원 출처: Pixabay/검증 FMA/벤더(상업·재배포 허용).
+- ~~CC0 음원 출처: Pixabay/검증 FMA/벤더~~ — **v6 제거**(SC 단일·무음 허용).
 
 ## 7. 비목표 (v1 제외)
 
