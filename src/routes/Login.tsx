@@ -140,8 +140,9 @@ export default function Login(): React.ReactNode {
           setNotice('로그인은 됐지만 비밀번호 설정에 실패했어요. 마이페이지에서 다시 설정해 주세요.');
         }
       }
-      // 이름 설정 페이지로 진입(거기서 "시작하기" → 저장 → /welcome → 메인).
-      navigate('/set-nickname', { replace: true });
+      // 이름 설정 페이지로 진입. 로그인 전 가려던 경로(연결 초대·편지 링크 등)는 state.from에
+      // 실어 보내, 온보딩 후 SetNickname이 그 경로로 복귀시키게 한다(무계정 수신자 흐름 이음).
+      navigate('/set-nickname', { state: { from: state?.from ?? null }, replace: true });
     } catch {
       setError('코드가 올바르지 않거나 만료되었습니다. 다시 확인해 주세요.');
     } finally {

@@ -8,7 +8,7 @@
 // 이 이름이 연결·발송·스레드·받은이에서 상대에게 보이는 이름이다.
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
 import { useProfile } from '@/features/profile';
 import { socialDisplayName } from '@/lib/userName';
@@ -18,6 +18,9 @@ export default function SetNickname(): React.ReactElement | null {
   const { session, loading } = useAuth();
   const { profile, updateNickname, isUpdating } = useProfile();
   const navigate = useNavigate();
+  const location = useLocation();
+  // 로그인/가입 전 가려던 경로(연결 초대·편지 링크 등) — 온보딩 후 여기로 복귀한다.
+  const from = (location.state as { from?: { pathname: string } } | null)?.from;
 
   const [name, setName] = useState('');
   const [touched, setTouched] = useState(false);
@@ -49,8 +52,8 @@ export default function SetNickname(): React.ReactElement | null {
       setError('이름 저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
       return;
     }
-    // 저장 성공 → 가입 완료 축하 화면으로.
-    navigate('/welcome', { replace: true });
+    // 저장 성공 → 원래 가려던 경로(있으면)로 복귀, 없으면 가입 완료 축하 화면으로.
+    navigate(from?.pathname ?? '/welcome', { replace: true });
   }
 
   return (
