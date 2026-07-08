@@ -32,6 +32,11 @@ const KAKAO_AUD_ALLOWLIST = (Deno.env.get("KAKAO_AUD_ALLOWLIST") ?? "")
 
 const MAX_IDTOKEN_BYTES = 8 * 1024; // 비정상적으로 큰 토큰 거부.
 
+// 웹(인가코드 흐름)용 — REST 키(client_id) + Client Secret. code→token 교환에만 쓴다(서버 전용).
+// iOS는 네이티브 SDK idToken을 직접 보내므로 이 값이 없어도 동작한다.
+const KAKAO_REST_KEY = Deno.env.get("KAKAO_REST_KEY") ?? "";
+const KAKAO_CLIENT_SECRET = Deno.env.get("KAKAO_CLIENT_SECRET") ?? "";
+
 // 브라우저(웹)에서도 호출하므로 CORS 허용.
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -75,49 +80,68 @@ async function verifyKakaoIdToken(idToken: string): Promise<{ sub: string; email
   }
 }
 
-// ── 회원 find-or-create (카카오 sub 기준, 실패 시 이메일로 재조정) ─────────────
-// 유니크 키 = 이메일. 같은 sub는 항상 같은 user이고, 그 이메일을 이미 쓰는 계정이 있으면
-// (웹 내장 카카오 OAuth·구글·이메일 등 어떤 경로로 만들어졌든) 그 기존 계정으로 로그인시킨다.
-// (0026: 0023의 "다른 provider 병합 금지 R2"를 대체 — 검증된 이메일끼리라 안전.)
-/// createdNew: 이 요청에서 새로 만든 유저인지 — 이후 단계(세션 발급) 실패 시 되돌림(고아 유저 방지)에 쓴다.
-async function resolveUserId(sub: string, email: string): Promise<{ userId: string; createdNew: boolean }> {
-  // 1) 이미 매핑된 카카오 회원?
-  const existing = await admin
-    .from("kakao_identity_map").select("user_id").eq("kakao_sub", sub).maybeSingle();
-  if (existing.data) return { userId: existing.data.user_id, createdNew: false };
-
-  // 2) 없으면 새 Supabase 유저 생성(이메일 확인됨 처리 → handle_new_user 트리거가 프로필 자동 생성).
-  const created = await admin.auth.admin.createUser({
-    email,
-    email_confirm: true,
-    user_metadata: { provider: "kakao" },
+// ── 웹 인가코드 → idToken 교환 ────────────────────────────────────────────────
+// 웹은 카카오로 리다이렉트해 받은 code를 우리 콜백이 이 함수로 넘긴다. client_secret 교환은
+// 서버(Edge)에서만 하므로 비밀이 클라에 노출되지 않는다. openid 스코프라 응답에 id_token 포함.
+async function exchangeKakaoCode(code: string, redirectUri: string): Promise<string> {
+  if (!KAKAO_REST_KEY) throw new AppError("SERVER_MISCONFIGURED", 500);
+  const params = new URLSearchParams({
+    grant_type: "authorization_code",
+    client_id: KAKAO_REST_KEY,
+    redirect_uri: redirectUri,
+    code,
   });
+  if (KAKAO_CLIENT_SECRET) params.set("client_secret", KAKAO_CLIENT_SECRET);
+  const res = await fetch("https://kauth.kakao.com/oauth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=utf-8" },
+    body: params.toString(),
+  });
+  if (!res.ok) throw new AppError("INVALID_TOKEN", 401);
+  const t = await res.json();
+  if (typeof t.id_token !== "string") throw new AppError("INVALID_TOKEN", 401);
+  return t.id_token;
+}
 
+// ── 회원 조회/생성 (카카오 sub 기준, 실패 시 이메일로 재조정) ──────────────────
+// 유니크 키 = 이메일. 같은 sub는 항상 같은 user이고, 그 이메일을 이미 쓰는 계정이 있으면
+// (웹 내장 카카오 OAuth·구글·이메일 등 경로 무관) 그 기존 계정으로 로그인시킨다(0026).
+
+/// 기존 회원만 찾는다(생성 안 함). 없으면 null. — 웹 닉네임-우선: 신규는 닉네임 받기 전 생성 금지.
+async function findExistingUserId(sub: string, email: string): Promise<string | null> {
+  // 1) 이미 매핑된 카카오 회원?
+  const mapped = await admin
+    .from("kakao_identity_map").select("user_id").eq("kakao_sub", sub).maybeSingle();
+  if (mapped.data) return mapped.data.user_id;
+
+  // 2) 이 이메일을 쓰는 기존 계정?(경로 무관) → 있으면 sub 매핑에 흡수하고 그 계정 반환.
+  //    카카오 email은 카카오 확인값 + 기존 계정 이메일도 Supabase 확인값이라 병합이 안전.
+  const found = await admin.rpc("find_user_id_by_email", { p_email: email });
+  const existingUserId = typeof found.data === "string" ? found.data : null;
+  if (existingUserId) {
+    await admin
+      .from("kakao_identity_map")
+      .upsert({ kakao_sub: sub, user_id: existingUserId }, { onConflict: "kakao_sub", ignoreDuplicates: true });
+    return existingUserId;
+  }
+  return null;
+}
+
+/// 신규 카카오 회원 생성(+ 닉네임 있으면 프로필에 기록). createdNew: 세션 발급 실패 시 롤백용.
+async function createKakaoUser(
+  sub: string, email: string, nickname?: string,
+): Promise<{ userId: string; createdNew: boolean }> {
+  const created = await admin.auth.admin.createUser({
+    email, email_confirm: true, user_metadata: { provider: "kakao" },
+  });
   if (created.error) {
-    // 생성 실패의 대표 원인 = 이메일 중복(email UNIQUE).
-    // (a) 같은 sub 요청이 방금 먼저 만들었을 수도(동시 최초 로그인 레이스) → 매핑 재조회로 흡수.
-    const raced = await admin
-      .from("kakao_identity_map").select("user_id").eq("kakao_sub", sub).maybeSingle();
-    if (raced.data) return { userId: raced.data.user_id, createdNew: false };
-    // (b) 그 이메일을 쓰는 계정이 이미 있다 → 유니크 키는 이메일이므로 그 기존 회원이 곧 이 사람이다.
-    //     (웹 내장 카카오 OAuth·구글·이메일 등 경로 무관) 그 계정으로 로그인시키고, 이후 빠른
-    //     조회를 위해 sub→user_id 매핑에 흡수한다(멱등). 카카오 idToken은 서명 검증되었고 email은
-    //     카카오가 확인한 값 + 기존 계정 이메일도 Supabase 확인값이라 병합이 안전(0026).
-    const found = await admin.rpc("find_user_id_by_email", { p_email: email });
-    const existingUserId = typeof found.data === "string" ? found.data : null;
-    if (existingUserId) {
-      await admin
-        .from("kakao_identity_map")
-        .upsert({ kakao_sub: sub, user_id: existingUserId }, { onConflict: "kakao_sub", ignoreDuplicates: true });
-      return { userId: existingUserId, createdNew: false };
-    }
-    // 이메일 중복인데 그 유저를 못 찾음 = 비정상(경합/일시 오류). 원문 노출 없이 실패로 처리.
+    // 이메일 중복 = 이미 있는 계정(동시 최초 로그인 레이스 포함) → 기존 회원으로 흡수.
+    const existingUserId = await findExistingUserId(sub, email);
+    if (existingUserId) return { userId: existingUserId, createdNew: false };
     throw new AppError("EMAIL_CONFLICT_UNRESOLVED", 409);
   }
 
   const newUserId = created.data.user.id;
-
-  // 3) 매핑 기록(멱등). 레이스로 다른 요청이 먼저 넣었으면 그 값이 승자.
   await admin
     .from("kakao_identity_map")
     .upsert({ kakao_sub: sub, user_id: newUserId }, { onConflict: "kakao_sub", ignoreDuplicates: true });
@@ -129,7 +153,19 @@ async function resolveUserId(sub: string, email: string): Promise<{ userId: stri
     await admin.auth.admin.deleteUser(newUserId);
     return { userId: winner.data.user_id, createdNew: false };
   }
+
+  // 닉네임 동반(웹 닉네임-우선 가입) → 프로필에 기록(트리거가 만든 nickname NULL 행을 upsert로 갱신).
+  if (nickname && nickname.trim()) {
+    await admin.from("profiles").upsert({ id: newUserId, nickname: nickname.trim() }, { onConflict: "id" });
+  }
   return { userId: newUserId, createdNew: true };
+}
+
+/// iOS 레거시(idToken만): 기존이면 그대로, 없으면 생성. (닉네임-우선 아님 — 앱은 이후 별도 단계 처리)
+async function resolveUserId(sub: string, email: string): Promise<{ userId: string; createdNew: boolean }> {
+  const existingUserId = await findExistingUserId(sub, email);
+  if (existingUserId) return { userId: existingUserId, createdNew: false };
+  return await createKakaoUser(sub, email);
 }
 
 /// 세션 발급까지 실패한 신규 유저 되돌리기 — "로그인 실패했는데 DB에 유저가 남는" 상태 방지.
@@ -179,14 +215,42 @@ Deno.serve(async (req) => {
 
     const raw = await req.text();
     if (raw.length > MAX_IDTOKEN_BYTES) throw new AppError("PAYLOAD_TOO_LARGE", 413);
-    const idToken = (JSON.parse(raw || "{}") as { idToken?: string }).idToken;
-    if (!idToken) throw new AppError("MISSING_ID_TOKEN", 400);
+    const body = JSON.parse(raw || "{}") as {
+      idToken?: string; code?: string; redirectUri?: string; nickname?: string;
+    };
 
+    // 요청 3형태:
+    //  · { code, redirectUri }  — 웹 1단계(로그인/조회). 신규면 계정 생성 안 하고 { isNew, idToken } 반환.
+    //  · { idToken, nickname }  — 웹 2단계(닉네임-우선 가입). 이때만 신규 계정 생성.
+    //  · { idToken }            — iOS 레거시. 신규면 즉시 생성(기존 동작).
+
+    // 웹 1단계: 인가코드 → idToken 교환 후 "기존 회원만" 로그인. 신규면 idToken만 돌려줘 닉네임 뒤로 미룬다.
+    if (body.code) {
+      if (!body.redirectUri) throw new AppError("MISSING_REDIRECT_URI", 400);
+      const idToken = await exchangeKakaoCode(body.code, body.redirectUri);
+      const { sub, email } = await verifyKakaoIdToken(idToken);
+      if (!email) throw new AppError("EMAIL_UNAVAILABLE", 400);
+      const existingUserId = await findExistingUserId(sub, email);
+      if (!existingUserId) {
+        console.log(JSON.stringify({ evt: "kakao_login", ok: true, is_new: true }));
+        return json({ isNew: true, idToken });
+      }
+      const session = await issueSession(email);
+      console.log(JSON.stringify({ evt: "kakao_login", ok: true, user_id: existingUserId }));
+      return json({ ...session, user_id: existingUserId, isNew: false });
+    }
+
+    const idToken = body.idToken;
+    if (!idToken) throw new AppError("MISSING_ID_TOKEN", 400);
     const { sub, email } = await verifyKakaoIdToken(idToken);
     // 이메일은 검증된 클레임에서만. 없으면(동의 철회) 지금 정책은 차단.
     if (!email) throw new AppError("EMAIL_UNAVAILABLE", 400);
 
-    const { userId, createdNew } = await resolveUserId(sub, email);
+    // 웹 2단계(가입)=nickname 동반 → 이때만 생성. 그 외(iOS)는 resolve(기존이면 로그인/없으면 생성).
+    const { userId, createdNew } = body.nickname
+      ? await createKakaoUser(sub, email, body.nickname)
+      : await resolveUserId(sub, email);
+
     let session: Awaited<ReturnType<typeof issueSession>>;
     try {
       session = await issueSession(email);
@@ -198,7 +262,7 @@ Deno.serve(async (req) => {
 
     // 로깅: 토큰/이메일 원문 없이 결과만(관측성 AC4).
     console.log(JSON.stringify({ evt: "kakao_login", ok: true, user_id: userId }));
-    return json({ ...session, user_id: userId });
+    return json({ ...session, user_id: userId, isNew: false });
   } catch (e) {
     const err = e instanceof AppError ? e : new AppError("INTERNAL_ERROR", 500);
     console.log(JSON.stringify({ evt: "kakao_login", ok: false, code: err.code }));

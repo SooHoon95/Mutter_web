@@ -17,6 +17,7 @@ const People = lazy(() => import('@/routes/People')); // 주고받은 편지(상
 const Preview = lazy(() => import('@/routes/Preview')); // 보낸 편지 읽기 전용 미리보기(소유자)
 const Connect = lazy(() => import('@/routes/Connect')); // 연결 초대 수락
 const Viewer = lazy(() => import('@/routes/Viewer'));
+const KakaoCallback = lazy(() => import('@/routes/KakaoCallback')); // 카카오 인가코드 콜백(닉네임-우선)
 const Takedown = lazy(() => import('@/routes/Takedown'));
 const NotFound = lazy(() => import('@/routes/NotFound'));
 
@@ -58,6 +59,8 @@ export const router = createBrowserRouter([
   // 가입 직후 흐름: /set-nickname(이름) → /welcome(축하) → 메인('/').
   { path: '/set-nickname', element: withSuspense(<SetNickname />) },
   { path: '/welcome', element: withSuspense(<Welcome />) },
+  // 카카오 인가코드 콜백 — 셸/가드 없는 클린 페이지(신규는 닉네임-우선 가입까지 여기서 처리).
+  { path: '/auth/kakao/callback', element: withSuspense(<KakaoCallback />) },
   // 인증 필수: 제작·발송·계정 라우트
   { path: '/create', element: withProtectedCreatorShell(<Create />) },
   { path: '/create/:id', element: withProtectedCreatorShell(<Create />) },

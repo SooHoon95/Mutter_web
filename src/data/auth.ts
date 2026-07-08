@@ -148,3 +148,62 @@ export async function signInWithProvider(provider: 'google' | 'kakao' | 'apple')
   });
   if (error) throw error;
 }
+
+// ── 카카오(웹) — 닉네임-우선 인가코드 흐름 ────────────────────────────────────
+// 네이티브 GoTrue OAuth는 콜백 순간 계정을 만들어버려 "닉네임 전 가입"을 못 막는다.
+// 그래서 우리가 통제하는 흐름을 쓴다: 카카오 인가 → 우리 콜백이 code를 Edge로 → 신규면
+// 계정 생성 없이 idToken만 받아 닉네임을 받은 뒤에 { idToken, nickname }으로 생성한다.
+const KAKAO_REST_KEY = import.meta.env.VITE_KAKAO_REST_KEY as string | undefined;
+
+function kakaoRedirectUri(): string {
+  return `${window.location.origin}/auth/kakao/callback`;
+}
+
+/** 카카오 인가 페이지로 리다이렉트한다. (client_id=REST 키는 OAuth 공개 client_id라 노출 무방) */
+export function startKakaoLogin(): void {
+  if (!KAKAO_REST_KEY) throw new Error('카카오 로그인이 아직 설정되지 않았어요.');
+  const state = crypto.randomUUID();
+  sessionStorage.setItem('kakao_oauth_state', state);
+  const url = new URL('https://kauth.kakao.com/oauth/authorize');
+  url.searchParams.set('client_id', KAKAO_REST_KEY);
+  url.searchParams.set('redirect_uri', kakaoRedirectUri());
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('scope', 'openid account_email');
+  url.searchParams.set('state', state);
+  window.location.href = url.toString();
+}
+
+export interface KakaoLoginResult {
+  isNew: boolean;
+  idToken?: string; // isNew일 때만 — 닉네임 단계에서 재전송해 계정을 생성한다.
+}
+
+/** 콜백 1단계 — code로 로그인/조회. 기존 회원이면 세션 세팅, 신규면 { isNew:true, idToken }. */
+export async function kakaoCodeLogin(code: string): Promise<KakaoLoginResult> {
+  const { data, error } = await getSupabase().functions.invoke('kakao-login', {
+    body: { code, redirectUri: kakaoRedirectUri() },
+  });
+  if (error) throw error;
+  const res = data as { isNew?: boolean; idToken?: string; access_token?: string; refresh_token?: string };
+  if (res.isNew) return { isNew: true, idToken: res.idToken };
+  await applyKakaoSession(res);
+  return { isNew: false };
+}
+
+/** 콜백 2단계 — 신규 가입: idToken+nickname으로 계정 생성 후 세션 세팅. */
+export async function kakaoSignup(idToken: string, nickname: string): Promise<void> {
+  const { data, error } = await getSupabase().functions.invoke('kakao-login', {
+    body: { idToken, nickname },
+  });
+  if (error) throw error;
+  await applyKakaoSession(data as { access_token?: string; refresh_token?: string });
+}
+
+async function applyKakaoSession(res: { access_token?: string; refresh_token?: string }): Promise<void> {
+  if (!res.access_token || !res.refresh_token) throw new Error('세션 발급에 실패했어요.');
+  const { error } = await getSupabase().auth.setSession({
+    access_token: res.access_token,
+    refresh_token: res.refresh_token,
+  });
+  if (error) throw error;
+}

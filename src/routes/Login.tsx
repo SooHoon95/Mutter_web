@@ -17,6 +17,7 @@ import {
   setUserPassword,
   sendMagicLink,
   signInWithProvider,
+  startKakaoLogin,
 } from '@/data/auth';
 import { useAuth } from '@/app/AuthProvider';
 import styles from './Login.module.css';
@@ -286,7 +287,7 @@ export default function Login(): React.ReactNode {
             type="button"
             disabled={socialLoading !== null}
             aria-label="Kakao로 계속하기"
-            onClick={() => void handleSocialLogin('kakao')}
+            onClick={() => startKakaoLogin()}
           >
             <KakaoIcon />
             <span>{socialLoading === 'kakao' ? '연결 중…' : 'Kakao로 계속하기'}</span>
