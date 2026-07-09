@@ -254,6 +254,17 @@
   filter: brightness(0.97);
 }
 
+/* Apple: 검정 배경 + 흰 아이콘 + 흰 텍스트 (브랜드 불변 표준) */
+.socialButtonApple {
+  background: #000000;
+  color: #ffffff;
+  border: none;
+}
+
+.socialButtonApple:hover:not(:disabled) {
+  filter: brightness(1.18);
+}
+
 /* 구분선 */
 .divider {
   position: relative;
