@@ -1,4 +1,4 @@
-/* Connect 라우트 — 연결 초대 수락 페이지 */
+/* ConnectHandoff 인터스티셜 — 앱 핸드오프 대기/폴백 화면. Connect 라우트 톤과 일관. */
 
 .page {
   max-width: 32rem;
@@ -31,6 +31,13 @@
   line-height: 1.6;
 }
 
+.spinner {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .primaryBtn {
   align-self: center;
   margin-top: 0.5rem;
@@ -45,23 +52,31 @@
   transition: opacity 0.15s;
 }
 
-.primaryBtn:hover:not(:disabled) {
+.primaryBtn:hover {
   opacity: 0.85;
 }
 
-.primaryBtn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+.secondaryBtn {
+  align-self: center;
+  padding: 0.6rem 1.4rem;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
 }
 
-.status {
-  margin: 0;
-  font-size: 0.95rem;
-  color: var(--text-tertiary);
+.secondaryBtn:hover {
+  opacity: 0.7;
 }
 
-.error {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-error);
+.installLink {
+  align-self: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: underline;
 }

@@ -109,6 +109,7 @@ describe('getInvite', () => {
       alreadyConnected: false,
       viewerHasConnection: false,
       inviterHasConnection: false,
+      alreadyAccepted: false,
     });
   });
 
@@ -166,6 +167,17 @@ describe('getInvite', () => {
     mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
 
     await expect(getInvite('tok_abc')).rejects.toThrow('초대 조회 실패');
+  });
+
+  it('INVITE_ALREADY_USED는 throw하지 않고 alreadyAccepted 성공-등가 상태로 정규화한다', async () => {
+    // 앱에서 수락 후 웹 폴백 복귀 케이스 — 조회 RPC도 잠긴다(0022). 에러 대신 sentinel 반환.
+    const mock = makeRpcMock({ data: null, error: { message: 'INVITE_ALREADY_USED', code: 'P0001' } });
+    mockGetSupabase.mockReturnValue(mock as unknown as ReturnType<typeof getSupabase>);
+
+    const result = await getInvite('tok_abc');
+    expect(result.alreadyAccepted).toBe(true);
+    expect(result.isSelf).toBe(false);
+    expect(result.alreadyConnected).toBe(false);
   });
 });
 

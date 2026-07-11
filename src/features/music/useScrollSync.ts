@@ -25,6 +25,8 @@ export interface UseScrollSyncResult {
   unlock: () => Promise<void>;
   /** 상단 플레이어: 재생/일시정지 토글. */
   togglePlay: () => void;
+  /** 재생 중이면 멈춘다(멱등). 앱 핸드오프 전 웹 오디오 정지 등에 쓴다. */
+  pause: () => void;
 }
 
 // 게이트가 영구 잠기지 않도록 하는 안전 상한. SoundCloudSource.load는 8s READY 타임아웃이
@@ -89,5 +91,12 @@ export function useScrollSync(
     }
   }, []);
 
-  return { isPlaying, audioReady, unlock, togglePlay };
+  const pause = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine || engine.paused) return;
+    engine.pause();
+    setIsPlaying(false);
+  }, []);
+
+  return { isPlaying, audioReady, unlock, togglePlay, pause };
 }

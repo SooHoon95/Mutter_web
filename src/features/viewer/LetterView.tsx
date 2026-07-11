@@ -26,6 +26,7 @@ import { recordLetterOpen } from '@/data/links';
 import { AudioUnlockGate } from './AudioUnlockGate';
 import { Credits } from './Credits';
 import { Footer } from '@/components/Footer';
+import { AppOpenBanner } from '@/components/AppOpenBanner';
 import styles from './LetterView.module.css';
 
 interface LetterViewProps {
@@ -36,6 +37,8 @@ interface LetterViewProps {
 
 export function LetterView({ letter, token }: LetterViewProps): React.ReactElement {
   const { title, templateId, paragraphs, cues, audioDisabled } = letter;
+  // SoundCloud 원곡 링크 — 플레이어에 브랜딩 + 링크백 표시(Widget Terms: 출처 노출·원곡 이동).
+  const scSourceUrl = cues.find((c) => c?.sourceType === 'soundcloud')?.sourceUrl;
 
   // 게이트 통과(언락) 여부. 통과 전엔 게이트가 본문을 덮는다(오디오 façade).
   const [unlocked, setUnlocked] = useState(false);
@@ -72,7 +75,7 @@ export function LetterView({ letter, token }: LetterViewProps): React.ReactEleme
 
   // 무음 허용(앱과 동일): SC 재생 실패 시 CC0 폴백 없이 무음으로 둔다
   // (SyncEngine이 소스 load 실패를 catch해 조용히 흘려보낸다).
-  const { isPlaying, audioReady, unlock, togglePlay } = useScrollSync(effectiveCues);
+  const { isPlaying, audioReady, unlock, togglePlay, pause } = useScrollSync(effectiveCues);
 
   // 음악 큐가 하나라도 있는지 — 상단 플레이어 노출 여부.
   const hasMusic = !audioDisabled && cues.some((c) => c != null);
@@ -91,6 +94,10 @@ export function LetterView({ letter, token }: LetterViewProps): React.ReactEleme
 
   return (
     <TemplateThemed templateId={templateId} className={styles.themed}>
+      {/* iOS 인앱브라우저 전용 상단 "앱에서 열기" 배너. 스킴 발화 전에 웹 오디오를 멈춰
+          앱-웹 이중 재생을 막는다. 그 외 환경에선 AppOpenBanner가 null을 반환한다(무해). */}
+      {token !== undefined && <AppOpenBanner token={token} onBeforeOpen={pause} />}
+
       {/*
         SC iframe 부착 호스트. 본문 트리 안에 두되 시각적으로 숨긴다(display:none 금지 —
         일부 브라우저에서 iframe 렌더/오디오가 멈춘다). document.body 직속이 아니라 여기에
@@ -115,9 +122,22 @@ export function LetterView({ letter, token }: LetterViewProps): React.ReactEleme
             <span />
             <span />
           </span>
-          <span className={styles.playerLabel}>
-            {isPlaying ? '음악 재생 중' : '일시정지됨'}
-          </span>
+          {scSourceUrl ? (
+            <a
+              className={styles.playerLabel}
+              href={scSourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#ff5500', textDecoration: 'none', fontWeight: 600 }}
+              aria-label="SoundCloud에서 원곡 열기"
+            >
+              SoundCloud <span aria-hidden="true">↗</span>
+            </a>
+          ) : (
+            <span className={styles.playerLabel}>
+              {isPlaying ? '음악 재생 중' : '일시정지됨'}
+            </span>
+          )}
         </div>
       )}
 

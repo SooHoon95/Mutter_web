@@ -7,9 +7,10 @@ import { revokeInvite } from '@/data/connections';
 import { useConnections } from './useConnections';
 import styles from './InvitePanel.module.css';
 
-/** 토큰으로 연결 수락 페이지 전체 URL을 만든다. */
+/** 토큰으로 연결 수락 페이지 전체 URL을 만든다. `from=web`로 출처를 명시 —
+ *  앱 미설치 폴백이 App Store가 아니라 웹으로 가도록(웹 발급 링크 규칙). */
 function buildInviteUrl(token: string): string {
-  return `${window.location.origin}/connect/${token}`;
+  return `${window.location.origin}/connect/${token}?from=web`;
 }
 
 export function InvitePanel(): React.ReactElement {

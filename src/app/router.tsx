@@ -15,7 +15,8 @@ const MyPage = lazy(() => import('@/routes/MyPage'));
 const Inbox = lazy(() => import('@/routes/Inbox'));
 const People = lazy(() => import('@/routes/People')); // 주고받은 편지(상대별 스레드)
 const Preview = lazy(() => import('@/routes/Preview')); // 보낸 편지 읽기 전용 미리보기(소유자)
-const Connect = lazy(() => import('@/routes/Connect')); // 연결 초대 수락
+// 연결 초대 수락 — 여는 맥락별로 앱/웹 분기(ConnectHandoff가 Connect를 내부에서 미러).
+const ConnectHandoff = lazy(() => import('@/routes/ConnectHandoff'));
 const Viewer = lazy(() => import('@/routes/Viewer'));
 const KakaoCallback = lazy(() => import('@/routes/KakaoCallback')); // 카카오 인가코드 콜백(닉네임-우선)
 const Takedown = lazy(() => import('@/routes/Takedown'));
@@ -68,7 +69,9 @@ export const router = createBrowserRouter([
   { path: '/inbox', element: withProtectedCreatorShell(<Inbox />) },
   { path: '/people', element: withProtectedCreatorShell(<People />) },
   { path: '/preview/:id', element: withProtectedCreatorShell(<Preview />) },
-  { path: '/connect/:token', element: withProtectedCreatorShell(<Connect />) },
+  // ConnectHandoff가 스스로 분기한다: 인앱브라우저+iOS+플래그ON이면 스킴 인터스티셜,
+  // 그 외에는 내부에서 AppShell+RequireAuth+Connect(오늘의 보호 플로우)를 그대로 렌더한다.
+  { path: '/connect/:token', element: withSuspense(<ConnectHandoff />) },
   { path: '/me', element: withProtectedCreatorShell(<MyPage />) },
   // ── 수신 경로 (셸 없음 — 무인증, 인코그니토 OK) ────────────────────────────
   // 토큰/암호/claim-bind로만 통제(T7/T8). RequireAuth 적용 절대 금지.

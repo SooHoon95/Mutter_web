@@ -50,6 +50,9 @@ export interface ConnectInvite {
   viewerHasConnection: boolean;
   // 독점 1:1: 초대자가 이미 다른 사람과 연결돼 있으면 true.
   inviterHasConnection: boolean;
+  // 초대가 이미 수락돼 토큰이 소비된 상태(앱/다른 곳에서 수락). 조회 RPC도 잠기므로
+  // getInvite가 이 플래그로 정규화한다 — 에러가 아닌 "이미 수락됨" 성공-등가 상태.
+  alreadyAccepted: boolean;
 }
 
 /** 나와 연결된 사람 (독점 1:1이므로 최대 1명) */
@@ -73,6 +76,24 @@ function rowToInvite(row: ConnectInviteRow): ConnectInvite {
     // === true로 명시 매핑한다(undefined → false). 6컬럼(0010/0013)에서는 그대로 반영.
     viewerHasConnection: row.viewer_has_connection === true,
     inviterHasConnection: row.inviter_has_connection === true,
+    // 정상 조회는 미수락 초대만 반환한다(수락됨이면 RPC가 던진다). 여기선 항상 false.
+    alreadyAccepted: false,
+  };
+}
+
+/**
+ * 이미 수락된 초대(토큰 소비됨)를 나타내는 성공-등가 sentinel.
+ * 조회 RPC가 INVITE_ALREADY_USED로 잠겨 초대자 정보를 알 수 없으므로 최소 정보만 담는다.
+ */
+function alreadyAcceptedInvite(): ConnectInvite {
+  return {
+    inviterId: '',
+    inviterNickname: null,
+    isSelf: false,
+    alreadyConnected: false,
+    viewerHasConnection: false,
+    inviterHasConnection: false,
+    alreadyAccepted: true,
   };
 }
 
@@ -178,7 +199,14 @@ export async function createInvite(): Promise<string> {
 export async function getInvite(token: string): Promise<ConnectInvite> {
   const sb = getSupabase();
   const { data, error } = await sb.rpc('get_connect_invite', { p_token: token });
-  if (error) throw error;
+  if (error) {
+    // 이미 수락된 초대는 조회 RPC도 INVITE_ALREADY_USED로 잠긴다(0022). 앱에서 수락 후 웹으로
+    // 복귀한 핸드오프 케이스 — 에러가 아닌 "이미 수락됨" 성공-등가 상태로 정규화한다(토큰 재소비 없음).
+    if (errorMessage(error).includes('INVITE_ALREADY_USED')) {
+      return alreadyAcceptedInvite();
+    }
+    throw error;
+  }
   const row = firstRow<ConnectInviteRow>(data);
   if (!row) throw new Error('초대를 찾을 수 없습니다.');
   return rowToInvite(row);
