@@ -13,6 +13,8 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { injectNoIndex, removeNoIndex } from '@/lib/noindex';
+import { openAppScheme, appLetterUrl, HANDOFF_ENABLED } from '@/lib/appLinks';
+import { isIOS, isInAppBrowser } from '@/lib/device';
 import { useLetterViewer, LetterView, PasswordGate } from '@/features/viewer';
 import styles from './Viewer.module.css';
 
@@ -26,6 +28,15 @@ export default function Viewer(): React.ReactElement {
     injectNoIndex();
     return removeNoIndex;
   }, []);
+
+  // 카카오톡 등 인앱브라우저(Universal Link 불가)에서 편지 링크를 열면, 설치된 앱으로 넘긴다.
+  // 미설치면 스킴이 무시되고 아래 웹 뷰어를 그대로 읽는다 — 인터스티셜 없이 수신 무마찰 유지.
+  // (Safari 등 일반 브라우저는 Universal Link가 앱 열기를 처리하므로 여기서 발화하지 않는다.)
+  useEffect(() => {
+    if (token && HANDOFF_ENABLED && isIOS() && isInAppBrowser()) {
+      openAppScheme(appLetterUrl(token));
+    }
+  }, [token]);
 
   const { status, letter, errorMessage, revealAt, submitting, submitPassword } =
     useLetterViewer(token);
