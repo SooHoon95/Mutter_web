@@ -178,12 +178,30 @@ export interface KakaoLoginResult {
   idToken?: string; // isNew일 때만 — 닉네임 단계에서 재전송해 계정을 생성한다.
 }
 
+/**
+ * Edge 함수는 실패 시 { error: CODE }를 non-2xx로 반환한다. supabase-js는 이때 error를
+ * FunctionsHttpError로 주는데 기본 메시지엔 그 CODE가 없다(그래서 화면이 "실패"만 떴다).
+ * error.context(Response) 본문을 파싱해 실제 CODE를 메시지로 실은 Error를 만든다.
+ */
+async function kakaoInvokeError(error: unknown): Promise<Error> {
+  const ctx = (error as { context?: Response }).context;
+  if (ctx && typeof ctx.json === 'function') {
+    try {
+      const body = (await ctx.json()) as { error?: string };
+      if (body?.error) return new Error(String(body.error));
+    } catch {
+      /* 본문 파싱 실패 시 원본 메시지로 폴백 */
+    }
+  }
+  return error instanceof Error ? error : new Error('KAKAO_INVOKE_FAILED');
+}
+
 /** 콜백 1단계 — code로 로그인/조회. 기존 회원이면 세션 세팅, 신규면 { isNew:true, idToken }. */
 export async function kakaoCodeLogin(code: string): Promise<KakaoLoginResult> {
   const { data, error } = await getSupabase().functions.invoke('kakao-login', {
     body: { code, redirectUri: kakaoRedirectUri() },
   });
-  if (error) throw error;
+  if (error) throw await kakaoInvokeError(error);
   const res = data as { isNew?: boolean; idToken?: string; access_token?: string; refresh_token?: string };
   if (res.isNew) return { isNew: true, idToken: res.idToken };
   await applyKakaoSession(res);
@@ -195,7 +213,7 @@ export async function kakaoSignup(idToken: string, nickname: string): Promise<vo
   const { data, error } = await getSupabase().functions.invoke('kakao-login', {
     body: { idToken, nickname },
   });
-  if (error) throw error;
+  if (error) throw await kakaoInvokeError(error);
   await applyKakaoSession(data as { access_token?: string; refresh_token?: string });
 }
 

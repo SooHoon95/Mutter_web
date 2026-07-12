@@ -50,9 +50,12 @@ export default function KakaoCallback(): React.ReactElement {
           // 기존 회원 — 세션 세팅됨. Home이 닉네임 유무를 게이트한다.
           navigate('/', { replace: true });
         }
-      } catch {
+      } catch (e) {
         setPhase('error');
-        setError('카카오 로그인에 실패했어요. 다시 시도해 주세요.');
+        // Edge가 반환한 실제 실패 코드를 노출해 원인 진단을 가능케 한다
+        // (INVALID_TOKEN=키/시크릿 불일치 · EMAIL_UNAVAILABLE=이메일 동의항목 · SERVER_MISCONFIGURED 등).
+        const code = e instanceof Error ? e.message : '';
+        setError(`카카오 로그인에 실패했어요. 다시 시도해 주세요. (${code || '알 수 없음'})`);
       }
     })();
   }, [params, navigate]);
