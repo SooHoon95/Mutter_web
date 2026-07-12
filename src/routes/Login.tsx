@@ -92,6 +92,20 @@ export default function Login(): React.ReactNode {
     }
   }
 
+  // 카카오는 닉네임-우선 커스텀 인가코드 흐름(startKakaoLogin)이라 signInWithProvider를 쓰지 않는다.
+  // 이 함수는 카카오 인가 페이지로 즉시 리다이렉트하지만, 키 미설정(VITE_KAKAO_REST_KEY) 등으로
+  // throw되면 리다이렉트 전이라 화면 변화가 전혀 없다 → 반드시 에러를 노출해 "무반응"을 없앤다.
+  function handleKakaoLogin(): void {
+    setError(null);
+    setSocialLoading('kakao');
+    try {
+      startKakaoLogin();
+    } catch (err) {
+      setError(socialErrorMessage(err, 'kakao'));
+      setSocialLoading(null);
+    }
+  }
+
   // 이미 로그인된 상태면 원래 경로 또는 '/'으로 이동.
   // 단, 방금 가입을 마친 경우(signedUp)에는 자동 이동을 막고 "가입 완료" 화면을 띄운다
   // (사용자가 "시작하기"를 누르면 그때 이동).
@@ -287,7 +301,7 @@ export default function Login(): React.ReactNode {
             type="button"
             disabled={socialLoading !== null}
             aria-label="Kakao로 계속하기"
-            onClick={() => startKakaoLogin()}
+            onClick={() => handleKakaoLogin()}
           >
             <KakaoIcon />
             <span>{socialLoading === 'kakao' ? '연결 중…' : 'Kakao로 계속하기'}</span>
