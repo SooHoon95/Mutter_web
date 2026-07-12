@@ -20,6 +20,8 @@ const ConnectHandoff = lazy(() => import('@/routes/ConnectHandoff'));
 const Viewer = lazy(() => import('@/routes/Viewer'));
 const KakaoCallback = lazy(() => import('@/routes/KakaoCallback')); // 카카오 인가코드 콜백(닉네임-우선)
 const Takedown = lazy(() => import('@/routes/Takedown'));
+const Privacy = lazy(() => import('@/routes/Privacy')); // 개인정보 처리방침(App Store 필수)
+const Support = lazy(() => import('@/routes/Support')); // 고객 지원(App Store 지원 URL)
 const NotFound = lazy(() => import('@/routes/NotFound'));
 
 function withSuspense(node: ReactNode): ReactNode {
@@ -78,5 +80,7 @@ export const router = createBrowserRouter([
   { path: '/l/:token', element: withSuspense(<Viewer />) },
   // ── 공개 법적 채널 (셸 없음) ─────────────────────────────────────────────
   { path: '/legal/takedown', element: withSuspense(<Takedown />) },
+  { path: '/legal/privacy', element: withSuspense(<Privacy />) },
+  { path: '/support', element: withSuspense(<Support />) },
   { path: '*', element: withSuspense(<NotFound />) },
 ]);

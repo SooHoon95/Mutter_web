@@ -1,0 +1,84 @@
+/* Privacy — 개인정보 처리방침. Takedown과 동일 토큰 체계, 정적 콘텐츠용. */
+
+.page {
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 2rem 1.25rem 4rem;
+}
+
+.container {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.01em;
+}
+
+.meta {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  margin: 0 0 1.5rem;
+}
+
+.intro {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin: 0 0 2rem;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.list {
+  margin: 0;
+  padding-left: 1.4rem;
+  line-height: 1.7;
+}
+
+.list li {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.paragraph {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.note {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  line-height: 1.6;
+  background: var(--bg-tertiary);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-xs);
+  margin: 1rem 0 0;
+}
+
+.link {
+  color: var(--text-brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:hover {
+  color: var(--brand-700);
+}

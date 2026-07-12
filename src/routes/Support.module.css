@@ -1,0 +1,95 @@
+/* Support — 고객 지원 페이지. Takedown/Privacy와 동일 토큰 체계. */
+
+.page {
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 2rem 1.25rem 4rem;
+}
+
+.container {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.intro {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin: 0 0 2rem;
+}
+
+.section {
+  margin-bottom: 2.25rem;
+}
+
+.sectionTitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.paragraph {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* FAQ */
+.faq {
+  margin: 0;
+}
+
+.faqItem {
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.faqItem:last-child {
+  border-bottom: none;
+}
+
+.faqQ {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem;
+}
+
+.faqA {
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* 링크 목록 */
+.linkList {
+  margin: 0;
+  padding-left: 1.4rem;
+  line-height: 1.9;
+}
+
+.linkList li {
+  font-size: 0.9rem;
+}
+
+.link {
+  color: var(--text-brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:hover {
+  color: var(--brand-700);
+}
