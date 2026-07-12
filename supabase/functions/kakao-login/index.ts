@@ -40,7 +40,10 @@ const KAKAO_CLIENT_SECRET = Deno.env.get("KAKAO_CLIENT_SECRET") ?? "";
 // 브라우저(웹)에서도 호출하므로 CORS 허용.
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type",
+  // supabase-js는 x-client-info(및 x-supabase-api-version)를 항상 보낸다. 이게 허용 목록에 없으면
+  // 브라우저 프리플라이트가 실패해 "Failed to send a request to the Edge Function"이 난다.
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-api-version",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -76,7 +79,8 @@ async function verifyKakaoIdToken(idToken: string): Promise<{ sub: string; email
     return { sub, email };
   } catch (e) {
     if (e instanceof AppError) throw e;
-    throw new AppError("INVALID_TOKEN", 401); // 서명·발급자·대상·만료 불일치 전부 여기로.
+    // 서명·발급자·대상(aud)·만료 불일치 전부 여기로. aud 불일치(=AUD_ALLOWLIST에 007a 없음)가 가장 흔함.
+    throw new AppError("IDTOKEN_VERIFY_FAILED", 401);
   }
 }
 
@@ -97,9 +101,18 @@ async function exchangeKakaoCode(code: string, redirectUri: string): Promise<str
     headers: { "Content-Type": "application/x-www-form-urlencoded;charset=utf-8" },
     body: params.toString(),
   });
-  if (!res.ok) throw new AppError("INVALID_TOKEN", 401);
+  if (!res.ok) {
+    // 진단용: 카카오가 준 실제 사유를 코드에 실어 노출한다.
+    //  invalid_client=Client Secret 불일치 · invalid_grant=redirect_uri/code 불일치 · 등.
+    let reason = String(res.status);
+    try {
+      const b = await res.json();
+      reason = (b as { error?: string }).error ?? reason;
+    } catch { /* 본문 파싱 실패 시 상태코드 */ }
+    throw new AppError(`EXCHANGE_FAILED_${reason}`, 401);
+  }
   const t = await res.json();
-  if (typeof t.id_token !== "string") throw new AppError("INVALID_TOKEN", 401);
+  if (typeof t.id_token !== "string") throw new AppError("NO_ID_TOKEN", 401);
   return t.id_token;
 }
 
