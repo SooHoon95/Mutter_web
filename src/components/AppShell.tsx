@@ -34,8 +34,8 @@ export function AppShell({ children }: AppShellProps): ReactNode {
     <div className="app-shell">
       <header className="app-shell__header">
         {/* 로고 → 랜딩(마케팅 커버). 로그인 상태여도 동일 — 메인 메뉴는 아래 "메인" 링크로. */}
-        <NavLink className="app-shell__logo" to="/landing">
-          편지
+        <NavLink className="app-shell__logo" to="/landing" aria-label="Mutter 홈">
+          <img src="/mutter-logo.svg" alt="Mutter" className="app-shell__logo-img" />
         </NavLink>
         <nav className="app-shell__nav" aria-label="주요 메뉴">
           {!loading && session && (

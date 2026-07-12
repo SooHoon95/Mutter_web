@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 48" role="img" aria-label="Mutter">
+  <defs>
+    <linearGradient id="ml-foil" x1="0.05" y1="0.05" x2="0.95" y2="0.95">
+      <stop offset="0" stop-color="#FFE0C7"/>
+      <stop offset="0.5" stop-color="#FBC4D9"/>
+      <stop offset="1" stop-color="#D9C6F5"/>
+    </linearGradient>
+    <linearGradient id="ml-word" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E3A9CF"/>
+      <stop offset="0.52" stop-color="#C77BAE"/>
+      <stop offset="1" stop-color="#8E4E7E"/>
+    </linearGradient>
+  </defs>
+  <!-- 봉투 + 음표 마크 (온보딩 로고와 동일 좌표를 축소·좌측 배치) -->
+  <g transform="translate(-8,1) scale(0.056)">
+    <rect x="250" y="430" width="524" height="350" rx="54" fill="url(#ml-foil)"/>
+    <path d="M268 470 L487 612 a46 40 0 0 0 50 0 L756 470" fill="none" stroke="#4A2038" stroke-opacity="0.55" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="none" stroke="#6E561A" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"><path d="M560 360 V250 l150 -34 v100"/></g>
+    <ellipse cx="540" cy="362" rx="34" ry="28" fill="#6E561A"/>
+    <ellipse cx="690" cy="328" rx="34" ry="28" fill="#6E561A"/>
+    <circle cx="772" cy="250" r="20" fill="#C77BAE"/>
+    <circle cx="470" cy="300" r="14" fill="#C77BAE"/>
+  </g>
+  <!-- Mutter 워드마크 (온보딩과 동일 그라디언트) -->
+  <text x="43" y="33" font-family="ui-rounded, 'SF Pro Rounded', -apple-system, 'Apple SD Gothic Neo', system-ui, sans-serif" font-size="27" font-weight="700" letter-spacing="-1" fill="url(#ml-word)">Mutter</text>
+</svg>
