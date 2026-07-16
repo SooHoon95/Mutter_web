@@ -106,7 +106,7 @@
   --text-disabled:    var(--gray-300);
   --text-placeholder: var(--gray-500);
   --text-on-brand:    var(--base-white);
-  --text-brand:       var(--brand-700);
+  --text-brand:       var(--gold-deep);
   --text-error:       var(--error-700);
   --text-success:     var(--success-700);
 
@@ -117,15 +117,16 @@
   --bg-active:       var(--gray-50);
   --bg-disabled:     var(--gray-100);
   --bg-overlay:      var(--gray-900);
-  --bg-brand:        var(--brand-600);
-  --bg-brand-solid:  var(--brand-600);
-  --bg-brand-subtle: var(--brand-50);
+  /* 브랜드 표면 — 로즈 accent로 통일(구 골드에서 리스킨). 인증 영역 전 컴포넌트에 반영. */
+  --bg-brand:        var(--gold);
+  --bg-brand-solid:  var(--gold);
+  --bg-brand-subtle: var(--gold-soft);
 
   --border-primary:   var(--gray-300);
   --border-secondary: var(--gray-200);
   --border-tertiary:  var(--gray-100);
   --border-disabled:  var(--gray-300);
-  --border-brand:     var(--brand-600);
+  --border-brand:     var(--gold);
   --border-error:     var(--error-600);
 
   /* ── RADIUS — Tailwind-style scale ──────────────────────────────── */

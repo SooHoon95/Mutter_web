@@ -1,0 +1,54 @@
+- generic [active] [ref=f20e1]:
+  - generic [ref=f20e4]:
+    - main [ref=f20e5]:
+      - heading "Kakao" [level=1] [ref=f20e7]:
+        - generic [ref=f20e9]: Kakao
+      - article [ref=f20e10]:
+        - generic [ref=f20e12]:
+          - generic [ref=f20e13]:
+            - generic [ref=f20e15]:
+              - generic: 계정 정보 입력
+              - textbox "계정 정보 입력" [ref=f20e16]:
+                - /placeholder: "카카오메일 아이디, 이메일, 전화번호 "
+            - generic [ref=f20e19]:
+              - generic: 비밀번호 입력
+              - textbox "비밀번호 입력" [ref=f20e20]:
+                - /placeholder: 비밀번호
+            - generic [ref=f20e23]:
+              - generic:
+                - checkbox "간편로그인 정보 저장" [ref=f20e24] [cursor=pointer]
+                - generic [ref=f20e25] [cursor=pointer]: 간편로그인 정보 저장
+              - button "도움말 보기" [ref=f20e27] [cursor=pointer]:
+                - generic [ref=f20e28]: 도움말 보기
+            - generic [ref=f20e29]:
+              - button "로그인" [ref=f20e30] [cursor=pointer]
+              - generic [ref=f20e32]: 또는
+              - button "QR코드 로그인" [ref=f20e33] [cursor=pointer]
+          - generic [ref=f20e34]:
+            - link "회원가입" [ref=f20e35] [cursor=pointer]:
+              - /url: /weblogin/create_account?continue=https%3A%2F%2Fkauth.kakao.com%2Foauth%2Fauthorize%3Fclient_id%3D007a0068e1f3945f1f8177a10e4053ee%26redirect_uri%3Dhttps%253A%252F%252Fletter-app-nine-kohl.vercel.app%252Fauth%252Fkakao%252Fcallback%26response_type%3Dcode%26scope%3Dopenid%2520account_email%26state%3D682cb9bc-3fcb-4b97-b629-886fa1f65030%26through_account%3Dtrue%26auth_tran_id%3DC0gcBEpnOIiROUy1pe2pO9rJeq8LTb9n2TSVXN4BChcWnwAAAZ9U7wBJ%26ka%3Dnull%2520ip%252F175.208.216.109&lang=ko&showHeader=false
+            - list [ref=f20e36]:
+              - listitem [ref=f20e37]:
+                - link "계정 찾기" [ref=f20e38] [cursor=pointer]:
+                  - /url: /weblogin/find_account?continue=https%3A%2F%2Fkauth.kakao.com%2Foauth%2Fauthorize%3Fclient_id%3D007a0068e1f3945f1f8177a10e4053ee%26redirect_uri%3Dhttps%253A%252F%252Fletter-app-nine-kohl.vercel.app%252Fauth%252Fkakao%252Fcallback%26response_type%3Dcode%26scope%3Dopenid%2520account_email%26state%3D682cb9bc-3fcb-4b97-b629-886fa1f65030%26through_account%3Dtrue%26auth_tran_id%3DC0gcBEpnOIiROUy1pe2pO9rJeq8LTb9n2TSVXN4BChcWnwAAAZ9U7wBJ%26ka%3Dnull%2520ip%252F175.208.216.109&lang=ko&showHeader=false
+              - listitem [ref=f20e39]:
+                - link "비밀번호 찾기" [ref=f20e40] [cursor=pointer]:
+                  - /url: /weblogin/find_password?continue=%2Flogin%3Fcontinue%3Dhttps%253A%252F%252Fkauth.kakao.com%252Foauth%252Fauthorize%253Fclient_id%253D007a0068e1f3945f1f8177a10e4053ee%2526redirect_uri%253Dhttps%25253A%25252F%25252Fletter-app-nine-kohl.vercel.app%25252Fauth%25252Fkakao%25252Fcallback%2526response_type%253Dcode%2526scope%253Dopenid%252520account_email%2526state%253D682cb9bc-3fcb-4b97-b629-886fa1f65030%2526through_account%253Dtrue%2526auth_tran_id%253DC0gcBEpnOIiROUy1pe2pO9rJeq8LTb9n2TSVXN4BChcWnwAAAZ9U7wBJ%2526ka%253Dnull%252520ip%25252F175.208.216.109&lang=ko&showHeader=false
+    - contentinfo [ref=f20e41]:
+      - strong: 서비스 이용 정보
+      - generic [ref=f20e43]:
+        - generic: 언어 선택상자
+        - combobox "언어 선택상자" [ref=f20e44] [cursor=pointer]: 한국어
+      - generic [ref=f20e46]:
+        - link "이용약관" [ref=f20e47] [cursor=pointer]:
+          - /url: https://www.kakao.com/policy/terms?lang=ko
+        - link "개인정보 처리방침" [ref=f20e48] [cursor=pointer]:
+          - /url: https://www.kakao.com/policy/privacy?lang=ko
+          - strong [ref=f20e49]: 개인정보 처리방침
+        - link "고객센터" [ref=f20e50] [cursor=pointer]:
+          - /url: https://cs.kakao.com/
+      - generic [ref=f20e51]:
+        - text: ©
+        - link "Kakao Corp." [ref=f20e52] [cursor=pointer]:
+          - /url: http://kakaocorp.com/
+  - alert [ref=f20e53]

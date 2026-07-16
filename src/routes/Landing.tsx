@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
 import styles from './Landing.module.css';
@@ -12,6 +13,7 @@ import styles from './Landing.module.css';
  */
 export default function Landing() {
   const { session } = useAuth();
+  useScrollReveal();
 
   return (
     <main className={styles.page}>
@@ -61,9 +63,9 @@ export default function Landing() {
           <div className={styles.mock} aria-hidden="true">
             <div className={styles.mockTop}>
               <span className={styles.mockPill}>테마 · 클래식 세리프</span>
-              <div className={`${styles.mockBar} ${styles.w95}`} />
-              <div className={`${styles.mockBar} ${styles.w85}`} />
-              <div className={`${styles.mockBar} ${styles.w70}`} />
+              <p className={styles.mockLine}>오늘, 문득 네 생각이 났어.</p>
+              <p className={styles.mockLine}>고맙다는 말을 제대로 못 한 것 같아서.</p>
+              <p className={styles.mockLine}>이 노래를 들으면, 그날이 떠올라.</p>
             </div>
 
             <div className={styles.mockDivider}>음악 한 곡과 함께</div>
@@ -80,7 +82,7 @@ export default function Landing() {
       </section>
 
       {/* ── 포인트 스트립 ────────────────────────────────────── */}
-      <div className={styles.strip}>
+      <div className={`${styles.strip} ${styles.revealOnScroll}`} data-reveal>
         <div className={styles.stripInner}>
           <span className={styles.stripLabel}>설치 없이, 링크 하나로 닿습니다</span>
           <span className={styles.stripChip}>
@@ -104,7 +106,7 @@ export default function Landing() {
         </p>
 
         <div className={styles.featureGrid}>
-          <div className={styles.featureCard}>
+          <div className={`${styles.featureCard} ${styles.revealOnScroll}`} data-reveal>
             <div className={styles.featureIcon}>🎨</div>
             <b className={styles.featureTitle}>테마로 분위기를 입혀요</b>
             <span className={styles.featureDesc}>
@@ -112,7 +114,7 @@ export default function Landing() {
               편지를 완성하세요.
             </span>
           </div>
-          <div className={styles.featureCard}>
+          <div className={`${styles.featureCard} ${styles.revealOnScroll}`} data-reveal>
             <div className={styles.featureIcon}>🎵</div>
             <b className={styles.featureTitle}>음악 한 곡을 더해요</b>
             <span className={styles.featureDesc}>
@@ -120,7 +122,7 @@ export default function Landing() {
               흐릅니다.
             </span>
           </div>
-          <div className={styles.featureCard}>
+          <div className={`${styles.featureCard} ${styles.revealOnScroll}`} data-reveal>
             <div className={styles.featureIcon}>🔗</div>
             <b className={styles.featureTitle}>설치 없이 링크 하나</b>
             <span className={styles.featureDesc}>
@@ -132,7 +134,7 @@ export default function Landing() {
       </section>
 
       {/* ── 최종 CTA ─────────────────────────────────────────── */}
-      <section className={styles.finalCta}>
+      <section className={`${styles.finalCta} ${styles.revealOnScroll}`} data-reveal>
         <h2 className={styles.finalTitle}>지금, 첫 편지를 써보세요</h2>
         <p className={styles.finalSub}>테마를 고르고 음악을 더하면, 몇 분이면 충분합니다.</p>
         <Link className={styles.primary} to="/create">
@@ -142,6 +144,26 @@ export default function Landing() {
       </section>
     </main>
   );
+}
+
+/** 스크롤 진입 시 요소를 부드럽게 리빌. reduced-motion이면 관찰하지 않고 CSS가 즉시 표시. */
+function useScrollReveal(): void {
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const io = new IntersectionObserver(
+      (entries, obs) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(styles.isVisible);
+            obs.unobserve(entry.target);
+          }
+        }
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' },
+    );
+    document.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
 }
 
 function ArrowIcon(): React.ReactElement {

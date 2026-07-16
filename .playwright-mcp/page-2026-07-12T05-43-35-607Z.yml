@@ -1,0 +1,54 @@
+- generic [active] [ref=f16e1]:
+  - generic [ref=f16e4]:
+    - main [ref=f16e5]:
+      - heading "Kakao" [level=1] [ref=f16e7]:
+        - generic [ref=f16e9]: Kakao
+      - article [ref=f16e10]:
+        - generic [ref=f16e12]:
+          - generic [ref=f16e13]:
+            - generic [ref=f16e15]:
+              - generic: 계정 정보 입력
+              - textbox "계정 정보 입력" [ref=f16e16]:
+                - /placeholder: "카카오메일 아이디, 이메일, 전화번호 "
+            - generic [ref=f16e19]:
+              - generic: 비밀번호 입력
+              - textbox "비밀번호 입력" [ref=f16e20]:
+                - /placeholder: 비밀번호
+            - generic [ref=f16e23]:
+              - generic:
+                - checkbox "간편로그인 정보 저장" [ref=f16e24] [cursor=pointer]
+                - generic [ref=f16e25] [cursor=pointer]: 간편로그인 정보 저장
+              - button "도움말 보기" [ref=f16e27] [cursor=pointer]:
+                - generic [ref=f16e28]: 도움말 보기
+            - generic [ref=f16e29]:
+              - button "로그인" [ref=f16e30] [cursor=pointer]
+              - generic [ref=f16e32]: 또는
+              - button "QR코드 로그인" [ref=f16e33] [cursor=pointer]
+          - generic [ref=f16e34]:
+            - link "회원가입" [ref=f16e35] [cursor=pointer]:
+              - /url: /weblogin/create_account?continue=https%3A%2F%2Fkauth.kakao.com%2Foauth%2Fauthorize%3Fclient_id%3D007a0068e1f3945f1f8177a10e4053ee%26redirect_uri%3Dhttp%253A%252F%252Flocalhost%253A5173%252Fauth%252Fkakao%252Fcallback%26response_type%3Dcode%26scope%3Dopenid%2520account_email%26state%3D7e1343b8-c693-4fa1-bd12-76128596cdb2%26through_account%3Dtrue%26auth_tran_id%3D_1Zem2a7s4DxERaoRAePFMSlLtDnrtoutQABssuiChcSVQAAAZ9U2jeV%26ka%3Dnull%2520ip%252F218.239.39.85&lang=ko&showHeader=false
+            - list [ref=f16e36]:
+              - listitem [ref=f16e37]:
+                - link "계정 찾기" [ref=f16e38] [cursor=pointer]:
+                  - /url: /weblogin/find_account?continue=https%3A%2F%2Fkauth.kakao.com%2Foauth%2Fauthorize%3Fclient_id%3D007a0068e1f3945f1f8177a10e4053ee%26redirect_uri%3Dhttp%253A%252F%252Flocalhost%253A5173%252Fauth%252Fkakao%252Fcallback%26response_type%3Dcode%26scope%3Dopenid%2520account_email%26state%3D7e1343b8-c693-4fa1-bd12-76128596cdb2%26through_account%3Dtrue%26auth_tran_id%3D_1Zem2a7s4DxERaoRAePFMSlLtDnrtoutQABssuiChcSVQAAAZ9U2jeV%26ka%3Dnull%2520ip%252F218.239.39.85&lang=ko&showHeader=false
+              - listitem [ref=f16e39]:
+                - link "비밀번호 찾기" [ref=f16e40] [cursor=pointer]:
+                  - /url: /weblogin/find_password?continue=%2Flogin%3Fcontinue%3Dhttps%253A%252F%252Fkauth.kakao.com%252Foauth%252Fauthorize%253Fclient_id%253D007a0068e1f3945f1f8177a10e4053ee%2526redirect_uri%253Dhttp%25253A%25252F%25252Flocalhost%25253A5173%25252Fauth%25252Fkakao%25252Fcallback%2526response_type%253Dcode%2526scope%253Dopenid%252520account_email%2526state%253D7e1343b8-c693-4fa1-bd12-76128596cdb2%2526through_account%253Dtrue%2526auth_tran_id%253D_1Zem2a7s4DxERaoRAePFMSlLtDnrtoutQABssuiChcSVQAAAZ9U2jeV%2526ka%253Dnull%252520ip%25252F218.239.39.85&lang=ko&showHeader=false
+    - contentinfo [ref=f16e41]:
+      - strong: 서비스 이용 정보
+      - generic [ref=f16e43]:
+        - generic: 언어 선택상자
+        - combobox "언어 선택상자" [ref=f16e44] [cursor=pointer]: 한국어
+      - generic [ref=f16e46]:
+        - link "이용약관" [ref=f16e47] [cursor=pointer]:
+          - /url: https://www.kakao.com/policy/terms?lang=ko
+        - link "개인정보 처리방침" [ref=f16e48] [cursor=pointer]:
+          - /url: https://www.kakao.com/policy/privacy?lang=ko
+          - strong [ref=f16e49]: 개인정보 처리방침
+        - link "고객센터" [ref=f16e50] [cursor=pointer]:
+          - /url: https://cs.kakao.com/
+      - generic [ref=f16e51]:
+        - text: ©
+        - link "Kakao Corp." [ref=f16e52] [cursor=pointer]:
+          - /url: http://kakaocorp.com/
+  - alert [ref=f16e53]

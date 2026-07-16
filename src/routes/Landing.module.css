@@ -27,7 +27,7 @@
   right: -5%;
   width: 60%;
   height: 70%;
-  background: radial-gradient(closest-side, rgba(214, 171, 68, 0.16), transparent);
+  background: radial-gradient(closest-side, rgba(199, 123, 174, 0.16), transparent);
   pointer-events: none;
   z-index: 0;
 }
@@ -62,7 +62,7 @@
   font-weight: 600;
   color: var(--gold-deep);
   background: var(--gold-soft);
-  border: 1px solid rgba(198, 161, 58, 0.25);
+  border: 1px solid rgba(199, 123, 174, 0.28);
   padding: 0.4rem 0.8rem;
   border-radius: var(--radius-full);
 }
@@ -79,12 +79,9 @@
   word-break: keep-all;
 }
 
+/* 강조 절 — 그라데이션 텍스트(템플릿 tell) 대신 솔리드 로즈로 타입 권위 강화 */
 .titleAccent {
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: #c79a30;
+  color: var(--gold-deep);
 }
 
 .lead {
@@ -116,7 +113,7 @@
   font-size: 1rem;
   font-weight: 700;
   text-decoration: none;
-  box-shadow: 0 8px 20px -8px rgba(176, 138, 42, 0.55);
+  box-shadow: 0 8px 20px -8px rgba(199, 123, 174, 0.5);
   transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
 }
 
@@ -126,7 +123,7 @@
 
 .primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 26px -8px rgba(176, 138, 42, 0.66);
+  box-shadow: 0 12px 26px -8px rgba(199, 123, 174, 0.6);
   filter: brightness(1.03);
 }
 
@@ -431,7 +428,59 @@
   margin: 0 auto;
 }
 
+/* ── 모션: 로드 진입 시퀀스 · 리빙 목업 · 스크롤 리빌 ───────────── */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 히어로 요소 순차 등장(orchestrated entrance) */
+.badge   { animation: riseIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 0.05s; }
+.title   { animation: riseIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 0.15s; }
+.lead    { animation: riseIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 0.30s; }
+.actions { animation: riseIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 0.45s; }
+.miniRow { animation: riseIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 0.55s; }
+.mock    { animation: riseIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 0.35s; }
+
+/* 시그니처 — 편지가 '한 줄씩 차오르는' 실제 연출을 히어로에서 시연 */
+.mockLine {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--ink-mid);
+  margin: 0.3rem 0 0;
+  opacity: 0;
+  animation: riseIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.mockLine:nth-of-type(1) { animation-delay: 0.85s; }
+.mockLine:nth-of-type(2) { animation-delay: 1.15s; }
+.mockLine:nth-of-type(3) { animation-delay: 1.45s; }
+
+/* 스크롤 진입 리빌 — strip·기능 카드·최종 CTA (IntersectionObserver가 .isVisible 토글) */
+.revealOnScroll {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.revealOnScroll.isVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.featureCard.revealOnScroll:nth-child(2) { transition-delay: 0.09s; }
+.featureCard.revealOnScroll:nth-child(3) { transition-delay: 0.18s; }
+
 @media (prefers-reduced-motion: reduce) {
   .mockEq span { animation: none; height: 12px; }
   .primary { transition: none; }
+  .badge, .title, .lead, .actions, .miniRow, .mock, .mockLine {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .revealOnScroll {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
 }
