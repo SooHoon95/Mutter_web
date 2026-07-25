@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.efreedom.mutter",
+      "sha256_cert_fingerprints": [
+        "7A:34:9A:13:DA:0D:43:7B:48:31:73:CE:3C:96:3B:8F:CE:61:A8:3F:7F:54:29:70:01:EB:64:DB:87:7A:43:39"
+      ]
+    }
+  }
+]

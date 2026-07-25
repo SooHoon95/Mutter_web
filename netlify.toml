@@ -24,6 +24,14 @@
   [headers.values]
     Content-Type = "application/json"
 
+# App Links(Android) — assetlinks.json에 package_name + 서명 SHA-256 지문을 담아 앱 링크를 검증한다.
+# 주의: 스토어(Play App Signing) 배포 시 Play Console의 앱 서명 키 SHA-256을 지문 배열에 추가해야
+# 프로덕션에서 검증된다. 현재 지문은 로컬/업로드 서명(테스트)용.
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
+
 [[headers]]
   for = "/*"
   [headers.values]
