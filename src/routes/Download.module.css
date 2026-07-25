@@ -1,0 +1,263 @@
+/* ──────────────────────────────────────────────────────────────────
+   Download.module.css — 앱 설치 랜딩(/download).
+   Landing과 같은 라이트·클린 톤, 골드 아이덴티티 유지. 스토어 버튼은
+   다크 배지 스타일(App/Play 관습) + 모노크롬 글리프.
+   ────────────────────────────────────────────────────────────────── */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── 히어로 ─────────────────────────────────────────────────────── */
+.hero {
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: clamp(2.25rem, 7vw, 3.75rem) clamp(1.25rem, 5vw, 2rem) clamp(1.5rem, 5vw, 2.25rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1.5rem;
+}
+
+.logo {
+  width: 2rem;
+  height: 2rem;
+}
+
+.brandName {
+  font-family: var(--font-sans);
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gold-deep);
+  background: var(--gold-soft);
+  border: 1px solid rgba(199, 123, 174, 0.28);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-full);
+}
+
+.title {
+  font-family: var(--font-sans);
+  font-size: clamp(2rem, 7vw, 2.75rem);
+  line-height: 1.14;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 1rem 0 0;
+  word-break: keep-all;
+}
+
+.titleAccent {
+  color: var(--gold-deep);
+}
+
+.lead {
+  font-size: clamp(0.95rem, 2.4vw, 1.06rem);
+  line-height: 1.7;
+  color: var(--ink-soft);
+  margin: 1rem 0 0;
+  max-width: 26rem;
+  word-break: keep-all;
+}
+
+/* ── 스토어 버튼 ────────────────────────────────────────────────── */
+.stores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 20rem;
+}
+
+.store {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: var(--radius-xl);
+  text-decoration: none;
+  font-family: var(--font-sans);
+  min-height: 44px; /* 터치 타깃 */
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, border-color 0.15s;
+}
+
+.store:focus-visible {
+  outline: 2px solid var(--gold-deep);
+  outline-offset: 2px;
+}
+
+/* 주 CTA — 다크 배지(스토어 관습) */
+.storePrimary {
+  background: var(--ink, #17130c);
+  color: #fff;
+  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+
+.storePrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px -10px rgba(0, 0, 0, 0.55);
+  filter: brightness(1.08);
+}
+
+/* 보조 — 라이트 아웃라인 */
+.storeSecondary {
+  background: var(--bg-primary);
+  color: var(--ink);
+  border: 1px solid var(--border-primary);
+}
+
+.storeSecondary:hover {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+}
+
+.storeIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+}
+
+.storeText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+}
+
+.storeText small {
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.storeText b {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ── QR(데스크톱 전용) ──────────────────────────────────────────── */
+.qr {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-2xl);
+}
+
+.qrCard {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  padding: 0.5rem;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  color: #17130c; /* QR 모듈 색(currentColor) — 항상 진한 색으로 대비 확보 */
+}
+
+.qrCaption {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-align: left;
+  margin: 0;
+  word-break: keep-all;
+}
+
+/* ── 왜 앱? ─────────────────────────────────────────────────────── */
+.why {
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 5vw, 2rem);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.7rem;
+}
+
+@media (min-width: 560px) {
+  .why {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.whyItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1.1rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+  align-items: center;
+}
+
+.whyIcon {
+  font-size: 1.4rem;
+  margin-bottom: 0.15rem;
+}
+
+.whyItem b {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.whyItem span:last-child {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  word-break: keep-all;
+}
+
+/* ── 보조 탈출구 ────────────────────────────────────────────────── */
+.escape {
+  display: inline-block;
+  margin: 1.75rem auto clamp(2rem, 8vw, 3.5rem);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.escape:hover {
+  color: var(--gold-deep);
+  border-bottom-color: var(--gold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .store {
+    transition: none;
+  }
+}

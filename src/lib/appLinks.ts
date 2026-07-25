@@ -51,6 +51,20 @@ export const HANDOFF_ENABLED: boolean =
   APP_STORE_URL !== null || import.meta.env.VITE_ENABLE_HANDOFF === 'true';
 
 /**
+ * 다운로드 페이지(/download) 전용 스토어 URL — env 우선, 없으면 카노니컬 폴백.
+ * 핸드오프 게이팅용 `APP_STORE_URL`(null 가능)과 의미를 섞지 않는다: 다운로드 페이지의
+ * 두 버튼은 env 미설정 빌드에서도 항상 유효한 링크로 노출되어야 하므로 폴백을 둔다.
+ * 폴백 출처: iOS=.env.example의 App Store id, Android=0032_app_config_android.sql의 Play URL.
+ */
+export const IOS_DOWNLOAD_URL: string =
+  (import.meta.env.VITE_IOS_APP_STORE_URL as string | undefined)?.trim() ||
+  'https://apps.apple.com/app/id6790086549';
+
+export const ANDROID_DOWNLOAD_URL: string =
+  (import.meta.env.VITE_ANDROID_PLAY_STORE_URL as string | undefined)?.trim() ||
+  'https://play.google.com/store/apps/details?id=com.efreedom.mutter';
+
+/**
  * 초대 링크 출처 판별 — `?from=app`(앱 발급) vs 그 외(웹 발급, 기본).
  * 앱 미설치 폴백을 App Store(app) vs 웹(web)으로 가르는 유일한 기준(초대링크 규칙).
  * app이 명시됐을 때만 true — 누락/오타/web은 전부 웹 폴백(안전 기본값).

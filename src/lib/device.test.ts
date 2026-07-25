@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { isIOS, isAndroid, isMobile, isInAppBrowser, isStandalonePWA } from './device';
+import { isIOS, isAndroid, isMobile, isInAppBrowser, isStandalonePWA, getMobileOS } from './device';
 
 // jsdom navigator.userAgent를 케이스별로 덮어쓴다(configurable). 각 테스트 후 원복.
 const ORIGINAL_UA = navigator.userAgent;
@@ -81,6 +81,35 @@ describe('isInAppBrowser', () => {
     expect(isInAppBrowser()).toBe(false);
     setUA(UA.desktopChrome);
     expect(isInAppBrowser()).toBe(false);
+  });
+});
+
+describe('getMobileOS', () => {
+  const iPadOS13 =
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
+
+  it('iPhone/Android/데스크톱 UA를 각각 판별한다(인자 주입)', () => {
+    expect(getMobileOS(UA.iphoneSafari)).toBe('ios');
+    expect(getMobileOS(UA.androidChrome)).toBe('android');
+    expect(getMobileOS(UA.desktopChrome)).toBe('other');
+  });
+
+  it('iOS 인앱브라우저(카톡)도 ios로 본다', () => {
+    expect(getMobileOS(UA.kakaoIOS)).toBe('ios');
+  });
+
+  it('iPadOS 13+(Macintosh 위장 + 터치)는 ios로 보정한다', () => {
+    Object.defineProperty(navigator, 'maxTouchPoints', { value: 5, configurable: true });
+    expect(getMobileOS(iPadOS13)).toBe('ios');
+    // 터치가 없으면 진짜 데스크톱 → other
+    Object.defineProperty(navigator, 'maxTouchPoints', { value: 0, configurable: true });
+    expect(getMobileOS(iPadOS13)).toBe('other');
+    Reflect.deleteProperty(navigator as object, 'maxTouchPoints');
+  });
+
+  it('인자 미지정 시 navigator.userAgent를 읽는다', () => {
+    setUA(UA.androidChrome);
+    expect(getMobileOS()).toBe('android');
   });
 });
 

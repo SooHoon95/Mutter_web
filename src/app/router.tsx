@@ -6,6 +6,7 @@ import { RequireAuth } from '@/features/auth/RequireAuth';
 // 라우트별 코드 스플릿 — 콜드 번들을 가볍게 유지(<3s/4G 예산, US-001).
 const Home = lazy(() => import('@/routes/Home')); // 인증 상태에 따라 랜딩/대시보드
 const Landing = lazy(() => import('@/routes/Landing')); // 로고 탭 시 항상 보이는 마케팅 커버
+const Download = lazy(() => import('@/routes/Download')); // 앱 설치 전용 랜딩(QR·SNS 유입)
 const Login = lazy(() => import('@/routes/Login'));
 const Welcome = lazy(() => import('@/routes/Welcome')); // 가입 완료 축하
 const SetNickname = lazy(() => import('@/routes/SetNickname')); // 표시 이름(닉네임) 설정
@@ -57,6 +58,8 @@ export const router = createBrowserRouter([
   // 로고 탭 시 항상 마케팅 커버(랜딩)를 보여준다 — 로그인 상태여도 동일.
   // 세션 사용자가 메인 메뉴로 돌아가려면 셸 nav의 "메인" 링크(→'/')를 쓴다.
   { path: '/landing', element: withCreatorShell(<Landing />) },
+  // 앱 설치 전용 랜딩 — QR·SNS·명함 유입을 스토어로 전환(감지 + 데스크톱 QR).
+  { path: '/download', element: withCreatorShell(<Download />) },
   { path: '/login', element: withCreatorShell(<Login />) },
   // 이름(닉네임) 설정 + 가입 완료 축하 — 셸 없는 클린 페이지(컴포넌트가 자체 세션 가드).
   // 가입 직후 흐름: /set-nickname(이름) → /welcome(축하) → 메인('/').
