@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
     const raw = await req.text();
     if (raw.length > MAX_IDTOKEN_BYTES) throw new AppError("PAYLOAD_TOO_LARGE", 413);
     const body = JSON.parse(raw || "{}") as {
-      idToken?: string; code?: string; redirectUri?: string; nickname?: string;
+      idToken?: string; code?: string; redirectUri?: string; nickname?: string; checkOnly?: boolean;
     };
 
     // 요청 3형태:
@@ -256,6 +256,20 @@ Deno.serve(async (req) => {
     const { sub, email } = await verifyKakaoIdToken(idToken);
     // 이메일은 검증된 클레임에서만. 없으면(동의 철회) 지금 정책은 차단.
     if (!email) throw new AppError("EMAIL_UNAVAILABLE", 400);
+
+    // 앱 1단계(닉네임-우선): idToken만 검증하고 "기존 회원인지"만 확인한다(신규면 생성 X).
+    //  · 기존 → 세션 발급해 바로 로그인. · 신규 → { isNew:true }만 반환(닉네임 뒤로 미룸).
+    // google-login의 checkOnly와 동형. 앱 네이티브 idToken 흐름에서 "닉네임 전 가입" 방지.
+    if (body.checkOnly) {
+      const existingUserId = await findExistingUserId(sub);
+      if (!existingUserId) {
+        console.log(JSON.stringify({ evt: "kakao_login", ok: true, is_new: true }));
+        return json({ isNew: true });
+      }
+      const session = await issueSession(kakaoAuthEmail(sub));
+      console.log(JSON.stringify({ evt: "kakao_login", ok: true, user_id: existingUserId }));
+      return json({ ...session, user_id: existingUserId, isNew: false });
+    }
 
     // 웹 2단계(가입)=nickname 동반 → 이때만 생성. 그 외(iOS)는 resolve(기존이면 로그인/없으면 생성).
     const { userId, createdNew } = body.nickname
