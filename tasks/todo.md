@@ -2,7 +2,19 @@
 
 > 운영 규칙은 `self-improvement` 스킬. 전체 로드맵은 `docs/specs/task-breakdown.md`, 상태는 `.omc/prd.json`.
 
-## 현재 작업
+## 현재 작업 — 1주차 루프(마케팅): OG 미리보기 · 뷰어 마지막 장 CTA · 랜딩 스토어 버튼 (2026-09-16)
+
+스펙(정본): Mutter 저장소 `marketing/plans/2026-09-16-week1-loop-spec.md` §0~§4. 채널 전략 §3 "수신자 웹 뷰어가 최대 노출면" 결론의 1회성 구축.
+
+- [x] L1 OG: `index.html` 기본 OG · `supabase/migrations/0033_letter_preview_rpc.sql`(`get_letter_preview` — 본문 없이 sealed·template_id) · `api/letter-preview.ts`(Vercel Edge) · `vercel.json` 크롤러 UA 조건 rewrite · `scripts/gen-og-envelopes.mjs` → `public/og/envelope-*.png` 9장
+- [x] L3 CTA: `src/features/viewer/LetterEndCta.tsx` 3단(답장 → 받은편지함 → 나도 보내기) + 워드마크, `LetterView`에서 `unlocked||audioDisabled` 뒤 렌더(SaveToInboxButton 대체)
+- [x] 랜딩: 히어로 한 줄 A + `StoreButtons`(utm→ct 매핑) · `/download`·`/connect` 폴백도 캠페인 토큰
+- [x] 측정 훅: `src/lib/analytics.ts` `track()` no-op 6이벤트 · `src/lib/campaign.ts` · `src/lib/storeLinks.ts`
+- [x] 검증: typecheck · lint 0 에러 · vitest 307/307 · build
+- [ ] critic 독립 리뷰 → 수정 → 커밋
+- [ ] 배포 후: `supabase db push`(0033) · Vercel env `VITE_ASC_PROVIDER_ID`(선택) · 카카오 디버거로 `/l/<token>` 카드 확인
+
+## 이전 작업
 
 **v1 전체 TASK 완료 (T0~T10).** 다음 단계는 "남은 작업"(사용자 인프라 셋업) 참조.
 

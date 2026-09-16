@@ -1,0 +1,134 @@
+/* 편지 마지막 장 — 본문(테마) 위가 아니라 그 아래 여백 뒤, 브랜드 토큰으로 그린다. */
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  /* 서명 아래 "한 뼘" 여백: 읽는 중엔 보이지 않고 끝까지 내려와야 나타난다. */
+  margin-top: 22vh;
+  padding: 2rem 1.25rem 2.5rem;
+  text-align: center;
+  color: var(--ink);
+}
+
+.primary,
+.primaryStatic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 1.6rem;
+  border-radius: var(--radius-xl);
+  background: var(--gold);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.02rem;
+  text-decoration: none;
+  box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.45);
+}
+
+.primary:focus-visible {
+  outline: 2px solid var(--gold-deep);
+  outline-offset: 2px;
+}
+
+.primaryStatic {
+  margin: 0;
+}
+
+.desktop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.qrCard {
+  padding: 0.75rem;
+  background: #fff;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-primary);
+}
+
+.qrCaption {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.secondary {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  min-height: 44px; /* 터치 타깃 하한 */
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+  color: var(--ink);
+  cursor: pointer;
+  max-width: 28rem;
+}
+
+.secondary:focus-visible {
+  outline: 2px solid var(--gold-deep);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.secondaryTitle {
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+
+.secondarySub,
+.tertiarySub {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.saved {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.tertiary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* 터치 타깃 하한 */
+  text-decoration: none;
+  color: var(--ink);
+  max-width: 28rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.tertiaryTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.brand {
+  margin-top: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--ink-faint);
+  font-size: 0.82rem;
+}
+
+.brandMark {
+  height: 18px;
+  width: auto;
+}
+
+.brandText {
+  letter-spacing: 0.01em;
+}

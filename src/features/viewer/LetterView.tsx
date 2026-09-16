@@ -20,11 +20,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { TemplateThemed, Paginated, type PaginatedParagraph } from '@/features/templates';
 import { useScrollSync } from '@/features/music';
 import { setSoundCloudContainer } from '@/features/music/SoundCloudSource';
-import { SaveToInboxButton } from '@/features/inbox';
 import type { ViewerLetter } from './useLetterViewer';
 import { recordLetterOpen } from '@/data/links';
 import { AudioUnlockGate } from './AudioUnlockGate';
 import { Credits } from './Credits';
+import { LetterEndCta } from './LetterEndCta';
+import { track } from '@/lib/analytics';
 import { Footer } from '@/components/Footer';
 import { AppOpenBanner } from '@/components/AppOpenBanner';
 import styles from './LetterView.module.css';
@@ -83,6 +84,7 @@ export function LetterView({ letter, token }: LetterViewProps): React.ReactEleme
   function handleUnlock(): Promise<void> {
     // audioDisabled 상태에서는 언락 게이트를 건너뛰므로 이 함수는 호출되지 않는다.
     setUnlocked(true);
+    track('viewer_gate_open', { theme: templateId });
     return unlock();
   }
 
@@ -153,8 +155,9 @@ export function LetterView({ letter, token }: LetterViewProps): React.ReactEleme
       {/* CC-BY 크레딧 — 미렌더 시 침해(license-compliance). 본문 하단에 항상 표기. */}
       <Credits cues={cues} />
 
-      {/* 로그인한 수신자에게만 보이는 받은 편지함 저장 버튼. 비로그인 시 null 반환(무마찰 유지). */}
-      {token !== undefined && <SaveToInboxButton token={token} />}
+      {/* 마지막 장 — 편지를 연 뒤(또는 게이트가 없는 audioDisabled 편지) 서명 아래 여백 뒤에 3단 CTA.
+          미리보기(token 없음)에는 두지 않는다. 받은편지함 저장 안내도 여기로 통합됐다. */}
+      {token !== undefined && (unlocked || audioDisabled) && <LetterEndCta />}
 
       {/* T9: 저작권 신고 링크 + 이용 약관 (수신 뷰 하단) */}
       <Footer />

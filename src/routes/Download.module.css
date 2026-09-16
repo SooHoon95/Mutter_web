@@ -80,82 +80,9 @@
 }
 
 /* ── 스토어 버튼 ────────────────────────────────────────────────── */
-.stores {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
+/* 스토어 버튼 규칙은 components/StoreButtons.module.css로 이동. 여기선 히어로 안 간격만. */
+.storesSlot {
   margin-top: 2rem;
-  width: 100%;
-  max-width: 20rem;
-}
-
-.store {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.8rem 1.2rem;
-  border-radius: var(--radius-xl);
-  text-decoration: none;
-  font-family: var(--font-sans);
-  min-height: 44px; /* 터치 타깃 */
-  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, border-color 0.15s;
-}
-
-.store:focus-visible {
-  outline: 2px solid var(--gold-deep);
-  outline-offset: 2px;
-}
-
-/* 주 CTA — 다크 배지(스토어 관습) */
-.storePrimary {
-  background: var(--ink, #17130c);
-  color: #fff;
-  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.5);
-}
-
-.storePrimary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 26px -10px rgba(0, 0, 0, 0.55);
-  filter: brightness(1.08);
-}
-
-/* 보조 — 라이트 아웃라인 */
-.storeSecondary {
-  background: var(--bg-primary);
-  color: var(--ink);
-  border: 1px solid var(--border-primary);
-}
-
-.storeSecondary:hover {
-  border-color: var(--gold);
-  background: var(--gold-soft);
-}
-
-.storeIcon {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-}
-
-.storeText {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  line-height: 1.15;
-}
-
-.storeText small {
-  font-size: 0.72rem;
-  font-weight: 500;
-  opacity: 0.85;
-}
-
-.storeText b {
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
 }
 
 /* ── QR(데스크톱 전용) ──────────────────────────────────────────── */

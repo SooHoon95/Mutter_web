@@ -94,6 +94,11 @@
 }
 
 /* 액션 */
+/* 히어로 스토어 버튼(StoreButtons) 간격 */
+.stores {
+  margin-top: 1.25rem;
+}
+
 .actions {
   display: flex;
   align-items: center;

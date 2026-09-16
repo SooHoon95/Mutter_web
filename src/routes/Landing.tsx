@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
+import { getMobileOS } from '@/lib/device';
+import { campaignFromUtm } from '@/lib/campaign';
+import { StoreButtons } from '@/components/StoreButtons';
 import styles from './Landing.module.css';
 
 /**
@@ -13,6 +16,9 @@ import styles from './Landing.module.css';
  */
 export default function Landing() {
   const { session } = useAuth();
+  const location = useLocation();
+  // 소셜(utm_source)에서 온 방문은 스토어 링크에 캠페인 토큰으로 실어 채널별 설치를 비교한다.
+  const campaign = campaignFromUtm(location.search);
   useScrollReveal();
 
   return (
@@ -23,10 +29,11 @@ export default function Landing() {
           <div className={styles.heroText}>
             <span className={styles.badge}>✦ 테마와 음악으로 전하는 편지</span>
 
+            {/* 한 줄 소개 A(marketing/copy 2026-09-16) — 제품 정의 + 차별점(여는 순간 음악). */}
             <h1 className={styles.title}>
-              테마를 고르고 편지를 쓰면,
+              노래 한 곡을 담은 편지.
               <br />
-              <span className={styles.titleAccent}>음악 한 곡과 함께 전해집니다.</span>
+              <span className={styles.titleAccent}>받는 사람이 여는 순간, 그 음악이 함께 흐릅니다.</span>
             </h1>
 
             <p className={styles.lead}>
@@ -49,6 +56,9 @@ export default function Landing() {
                 </Link>
               )}
             </div>
+
+            {/* 앱 스토어 버튼 — 감지된 OS 우선. 데스크톱은 둘 다. */}
+            <StoreButtons campaign={campaign} os={getMobileOS()} className={styles.stores} />
 
             <div className={styles.miniRow}>
               <span>🎨 테마 편지지</span>

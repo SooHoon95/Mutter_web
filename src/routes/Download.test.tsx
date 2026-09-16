@@ -12,7 +12,11 @@ vi.mock('@/lib/device', () => ({
 
 import Download from './Download';
 import { getMobileOS } from '@/lib/device';
-import { IOS_DOWNLOAD_URL, ANDROID_DOWNLOAD_URL } from '@/lib/appLinks';
+import { appStoreUrl, playStoreUrl } from '@/lib/storeLinks';
+
+// 유입 utm 없음 → 캠페인 'landing'. 스토어 링크는 ct/referrer가 붙은 캠페인 URL이어야 한다.
+const IOS_DOWNLOAD_URL = appStoreUrl('landing');
+const ANDROID_DOWNLOAD_URL = playStoreUrl('landing');
 
 const mockGetOS = vi.mocked(getMobileOS);
 
@@ -39,7 +43,7 @@ beforeEach(() => {
 });
 
 describe('Download 스토어 버튼', () => {
-  it('두 스토어 버튼이 항상 노출되고 href가 카노니컬 URL과 일치한다', () => {
+  it('두 스토어 버튼이 항상 노출되고 href가 캠페인(landing) 스토어 URL과 일치한다', () => {
     mockGetOS.mockReturnValue('other');
     renderPage();
     expect(screen.getByText('App Store에서').closest('a')).toHaveAttribute('href', IOS_DOWNLOAD_URL);

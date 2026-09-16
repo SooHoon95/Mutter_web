@@ -1,0 +1,75 @@
+/* StoreButtons — Download.module.css의 .store* 규칙을 공용으로 옮긴 것. */
+.stores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  width: 100%;
+  max-width: 20rem;
+}
+
+.store {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px; /* 터치 타깃 하한(Lighthouse a11y) */
+  gap: 0.7rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: var(--radius-xl);
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease, border-color 0.15s ease;
+}
+
+.store:focus-visible {
+  outline: 2px solid var(--gold-deep);
+  outline-offset: 2px;
+}
+
+/* 주 CTA — 다크 배지(스토어 관습) */
+.storePrimary {
+  background: var(--ink, #17130c);
+  color: #fff;
+  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+
+.storePrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px -10px rgba(0, 0, 0, 0.55);
+  filter: brightness(1.08);
+}
+
+/* 보조 — 라이트 아웃라인 */
+.storeSecondary {
+  background: var(--bg-primary);
+  color: var(--ink);
+  border: 1px solid var(--border-primary);
+}
+
+.storeSecondary:hover {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+}
+
+.storeIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+}
+
+.storeText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+}
+
+.storeText small {
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.storeText b {
+  font-size: 1.05rem;
+  font-weight: 700;
+}

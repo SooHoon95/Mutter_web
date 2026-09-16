@@ -4,7 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#ffffff" />
-    <meta name="description" content="읽는 순간을 연출하는 편지. 설치 없이 링크 하나로 전합니다." />
+    <meta name="description" content="노래 한 곡을 담은 편지. 받는 사람이 여는 순간, 그 음악이 함께 흐릅니다." />
+    <!-- 사이트 기본 OG — 랜딩·기타 경로와, 서버 크롤러가 없는 iMessage 등 클라이언트 미리보기가 읽는다.
+         /l/:token은 크롤러 UA에 한해 api/letter-preview가 편지지 테마별 카드로 덮어쓴다(vercel.json rewrite). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="뮤터" />
+    <meta property="og:title" content="뮤터 - 음악 편지, 노래 선물" />
+    <meta property="og:description" content="받는 사람이 여는 순간, 그 음악이 함께 흐릅니다. 설치 없이 열려요." />
+    <!-- og:image·og:url은 절대 URL이어야 크롤러가 읽는다(상대 경로는 카카오·페북에서 깨짐). TODO: 커스텀 도메인 확정 시 교체. -->
+    <meta property="og:url" content="https://letter-app-nine-kohl.vercel.app/" />
+    <meta property="og:image" content="https://letter-app-nine-kohl.vercel.app/og/envelope-default.png?v=1" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
     <!-- 디자인 시스템 타이포: Inter(UI) + JetBrains Mono. 렌더 차단 회피 위해 preconnect. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,7 +29,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="편지" />
-    <title>편지</title>
+    <title>뮤터 - 음악 편지</title>
   </head>
   <body>
     <div id="root"></div>

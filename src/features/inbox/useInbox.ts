@@ -21,7 +21,7 @@ export function useInbox(): {
     queryKey: INBOX_QUERY_KEY,
     queryFn: getMyInbox,
     // 로그인 상태에서만 호출하므로 별도 enabled 가드 없음.
-    // SaveToInboxButton이 useAuth() 로그인 확인 후 렌더하므로 이 hook은 인증 후에만 마운트된다.
+    // 받은 편지함 화면은 인증 뒤에만 열리므로 이 hook은 로그인 상태에서만 마운트된다.
   });
 
   const mutation = useMutation<void, Error, string>({

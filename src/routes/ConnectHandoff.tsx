@@ -19,6 +19,7 @@ import { AppShell } from '@/components/AppShell';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 import { isIOS, isInAppBrowser } from '@/lib/device';
 import { appConnectUrl, openAppScheme, APP_STORE_URL, HANDOFF_ENABLED } from '@/lib/appLinks';
+import { appStoreUrl } from '@/lib/storeLinks';
 import Connect from './Connect';
 import styles from './ConnectHandoff.module.css';
 
@@ -108,7 +109,7 @@ function ConnectInterstitial({ token }: { token: string }): React.ReactElement {
         {APP_STORE_URL !== null && (
           <a
             className={styles.installLink}
-            href={APP_STORE_URL}
+            href={appStoreUrl('connect_invite')}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -147,7 +148,7 @@ function ConnectStorePrompt(): React.ReactElement {
         {APP_STORE_URL !== null ? (
           <a
             className={styles.installLink}
-            href={APP_STORE_URL}
+            href={appStoreUrl('connect_invite')}
             target="_blank"
             rel="noopener noreferrer"
           >

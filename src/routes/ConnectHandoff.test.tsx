@@ -11,7 +11,8 @@ import { render, screen, act, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
-const STORE_URL = 'https://apps.apple.com/app/id6790086549';
+// 초대 폴백의 설치 링크는 캠페인 토큰(connect_invite)이 붙은 App Store 캠페인 URL이다(storeLinks).
+const STORE_URL = 'https://apps.apple.com/app/id6790086549?ct=connect_invite&mt=8';
 const state = vi.hoisted(() => ({
   handoffEnabled: true,
   appStoreUrl: 'https://apps.apple.com/app/id6790086549' as string | null,
@@ -25,6 +26,9 @@ vi.mock('@/lib/device', () => ({
 vi.mock('@/lib/appLinks', () => ({
   appConnectUrl: (t: string) => `mutter://connect/${t}`,
   openAppScheme: vi.fn(),
+  // storeLinks(캠페인 URL 빌더)가 읽는 카노니컬 스토어 URL — 부분 mock이라 명시해야 한다.
+  IOS_DOWNLOAD_URL: 'https://apps.apple.com/app/id6790086549',
+  ANDROID_DOWNLOAD_URL: 'https://play.google.com/store/apps/details?id=com.efreedom.mutter',
   get APP_STORE_URL() {
     return state.appStoreUrl;
   },
