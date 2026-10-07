@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+# 편지 링크(capability URL)와 개인 화면은 색인하지 않는다.
+Disallow: /l/
+Disallow: /connect/
+Disallow: /create
+Disallow: /sent
+Disallow: /inbox
+Disallow: /people
+Disallow: /preview/
+Disallow: /me
+
+Sitemap: https://letter-app-nine-kohl.vercel.app/sitemap.xml

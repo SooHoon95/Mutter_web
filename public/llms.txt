@@ -1,0 +1,16 @@
+# 뮤터 (Mutter) — 음악 편지, 노래 선물
+
+> 편지에 노래 한 곡을 담아 보내는 앱. 받는 사람이 편지를 여는 순간 그 음악이 함께 흐른다. 받는 사람은 앱을 설치하지 않아도 링크만 열면 된다.
+
+## 무엇을 하나
+- 편지지 테마 7종 중 하나를 골라 편지를 쓰고, SoundCloud 노래 한 곡을 더해 링크로 보낸다.
+- 받는 사람이 링크를 열면 편지가 펼쳐지고 음악이 자동 재생된다. 앱 설치·가입이 필요 없다.
+- 암호 보호, 예약 공개(정해진 시각에 열림), 링크 끄기, 읽음 확인을 지원한다.
+- 쓰임: 기념일, 생일, 고백, 축하, 안부, 사과.
+- 무료, 광고 없음, 추적 없음.
+
+## 링크
+- iOS App Store: https://apps.apple.com/kr/app/id6790086549
+- Google Play: https://play.google.com/store/apps/details?id=com.efreedom.mutter
+- 웹: https://letter-app-nine-kohl.vercel.app/
+- 앱 받기: https://letter-app-nine-kohl.vercel.app/download

@@ -17,6 +17,26 @@
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href="https://letter-app-nine-kohl.vercel.app/" />
+    <!-- 검색엔진·AI 답변 엔진용 앱 정보(구조화 데이터). 본문이 JS로만 그려지므로 크롤러가 읽을 수 있는 사실을 여기 둔다. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "MobileApplication",
+        "name": "뮤터 - 음악 편지, 노래 선물",
+        "alternateName": "Mutter",
+        "description": "편지에 노래 한 곡을 담아 보내는 앱. 받는 사람이 편지를 여는 순간 그 음악이 함께 흐르고, 앱 설치 없이 링크만 열면 됩니다.",
+        "applicationCategory": "SocialNetworkingApplication",
+        "operatingSystem": "iOS, Android",
+        "inLanguage": "ko",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
+        "url": "https://letter-app-nine-kohl.vercel.app/",
+        "downloadUrl": [
+          "https://apps.apple.com/kr/app/id6790086549",
+          "https://play.google.com/store/apps/details?id=com.efreedom.mutter"
+        ]
+      }
+    </script>
     <!-- 디자인 시스템 타이포: Inter(UI) + JetBrains Mono. 렌더 차단 회피 위해 preconnect. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -33,6 +53,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- JS를 실행하지 않는 크롤러용 본문. 앱이 뜨면 화면에는 보이지 않는다. -->
+    <noscript>
+      <h1>뮤터 - 음악 편지, 노래 선물</h1>
+      <p>노래 한 곡을 담은 편지. 받는 사람이 여는 순간, 그 음악이 함께 흐릅니다.</p>
+      <p>편지지 테마를 고르고 편지를 쓴 뒤 노래 한 곡을 더해 링크로 보내세요. 받는 사람은 앱을 설치하지 않아도 링크만 열면 됩니다. 암호 보호, 예약 공개, 읽음 확인을 지원합니다.</p>
+      <p><a href="https://apps.apple.com/kr/app/id6790086549">App Store에서 받기</a> · <a href="https://play.google.com/store/apps/details?id=com.efreedom.mutter">Google Play에서 받기</a></p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
