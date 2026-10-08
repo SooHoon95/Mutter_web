@@ -405,3 +405,8 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # declarative_schema_path = "./declarative"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# 편지 사진 서명 URL(0034). 무계정 수신자도 호출하므로 게이트웨이 JWT 검증을 끄고
+# 함수 안에서 직접 인증한다(수신자=토큰·암호 RPC, 소유자=Authorization + RLS).
+[functions.letter-photo-urls]
+verify_jwt = false

@@ -38,8 +38,16 @@ export default function Viewer(): React.ReactElement {
     }
   }, [token]);
 
-  const { status, letter, errorMessage, revealAt, submitting, submitPassword } =
-    useLetterViewer(token);
+  const {
+    status,
+    letter,
+    errorMessage,
+    revealAt,
+    submitting,
+    submitPassword,
+    photoUrls,
+    photoUrlsFailed,
+  } = useLetterViewer(token);
 
   if (status === 'notYet') {
     // 0018 예약 공개: reveal_at 이전 — 본문/암호 없이 "이 시각에 열려요"만 안내.
@@ -101,5 +109,12 @@ export default function Viewer(): React.ReactElement {
     );
   }
 
-  return <LetterView letter={letter} token={token} />;
+  return (
+    <LetterView
+      letter={letter}
+      token={token}
+      photoUrls={photoUrls}
+      photoUrlsFailed={photoUrlsFailed}
+    />
+  );
 }

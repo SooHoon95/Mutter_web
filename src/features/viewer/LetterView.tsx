@@ -17,7 +17,7 @@
 // 죽은 임베드여도 본문은 항상 표시된다(폴백이 무음0을 보장하고, 본문 렌더는 음악과 독립).
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { TemplateThemed, Paginated, type PaginatedParagraph } from '@/features/templates';
+import { TemplateThemed, Paginated, toPaginatedParagraphs } from '@/features/templates';
 import { useScrollSync } from '@/features/music';
 import { setSoundCloudContainer } from '@/features/music/SoundCloudSource';
 import type { ViewerLetter } from './useLetterViewer';
@@ -34,9 +34,18 @@ interface LetterViewProps {
   letter: ViewerLetter;
   /** 수신 토큰 — 로그인 수신자가 받은 편지함에 저장할 때 사용. */
   token?: string;
+  /** 사진 단락 서명 URL(path → URL). null이면 받는 중(또는 사진 없음). */
+  photoUrls?: Record<string, string> | null;
+  /** 서명 URL 요청 실패 — 사진 자리에 실패 플레이스홀더, 본문은 그대로. */
+  photoUrlsFailed?: boolean;
 }
 
-export function LetterView({ letter, token }: LetterViewProps): React.ReactElement {
+export function LetterView({
+  letter,
+  token,
+  photoUrls = null,
+  photoUrlsFailed = false,
+}: LetterViewProps): React.ReactElement {
   const { title, templateId, paragraphs, cues, audioDisabled } = letter;
   // SoundCloud 원곡 링크 — 플레이어에 브랜딩 + 링크백 표시(Widget Terms: 출처 노출·원곡 이동).
   const scSourceUrl = cues.find((c) => c?.sourceType === 'soundcloud')?.sourceUrl;
@@ -89,10 +98,8 @@ export function LetterView({ letter, token }: LetterViewProps): React.ReactEleme
   }
 
   // Paginated에 넘길 단락 표현. 단일트랙 모델에선 단락별 음악 데코레이션이 없다.
-  const paginatedParagraphs: PaginatedParagraph[] = paragraphs.map((p) => ({
-    id: p.id,
-    text: p.text,
-  }));
+  // 사진 단락은 서명 URL을 붙여 사진 블록으로 넘긴다(음악 cue/싱크와 무관 — cue는 첫 텍스트 단락).
+  const paginatedParagraphs = toPaginatedParagraphs(paragraphs, photoUrls, photoUrlsFailed);
 
   return (
     <TemplateThemed templateId={templateId} className={styles.themed}>

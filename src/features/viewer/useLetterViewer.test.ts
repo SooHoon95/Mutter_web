@@ -24,10 +24,17 @@ vi.mock('@/data/links', () => ({
   },
 }));
 
+// 사진 서명 URL(0034) — 실제 Edge Function 대신 모킹.
+vi.mock('@/data/letterPhotos', () => ({
+  fetchLetterPhotoUrls: vi.fn(),
+}));
+
 import { openByToken, LinkNotYetError } from '@/data/links';
+import { fetchLetterPhotoUrls } from '@/data/letterPhotos';
 import { useLetterViewer } from './useLetterViewer';
 
 const mockOpenByToken = vi.mocked(openByToken);
+const mockFetchPhotoUrls = vi.mocked(fetchLetterPhotoUrls);
 
 const samplePayload: LetterPayload = {
   id: 'letter-abc',
@@ -210,5 +217,71 @@ describe('useLetterViewer', () => {
       ref: 'pixabay-calm-001',
       startMs: 0,
     });
+  });
+});
+
+describe('useLetterViewer — 편지 사진(0034)', () => {
+  const PATH = 'owner/letter-abc/a.jpg';
+  const photoPayload: LetterPayload = {
+    ...samplePayload,
+    paragraphs: [
+      { id: 'p1', order: 0, text: '첫 단락', cue: { sourceType: 'soundcloud', ref: 'sc', startMs: 0 } },
+      // 잘못 섞인 text·cue가 있어도 사진 단락은 text "" · cue 없음으로 정규화된다.
+      { id: 'ph', order: 1, text: '섞임', cue: { sourceType: 'soundcloud', ref: 'x' }, photo: { path: PATH, width: 3, height: 4 } },
+      { id: 'bad', order: 2, text: '', photo: { path: PATH, width: 0, height: 4 } },
+    ],
+  };
+
+  it('사진 단락을 정규화하고, 같은 토큰·암호로 서명 URL을 받아 photoUrls에 담는다', async () => {
+    mockOpenByToken.mockResolvedValue(photoPayload);
+    mockFetchPhotoUrls.mockResolvedValue({ [PATH]: 'https://signed/a' });
+
+    const { result } = renderHook(() => useLetterViewer('tok'));
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+
+    const paras = result.current.letter?.paragraphs ?? [];
+    expect(paras[1]).toEqual({ id: 'ph', order: 1, text: '', cue: undefined, photo: { path: PATH, width: 3, height: 4 } });
+    // width 0 같은 잘못된 photo는 사진으로 보지 않는다.
+    expect(paras[2].photo).toBeUndefined();
+    // 큐는 첫 텍스트 단락에만(사진 단락 칸은 undefined).
+    expect(result.current.letter?.cues.map((c) => c?.ref)).toEqual(['sc', undefined, undefined]);
+
+    await waitFor(() => expect(result.current.photoUrls).toEqual({ [PATH]: 'https://signed/a' }));
+    expect(mockFetchPhotoUrls).toHaveBeenCalledTimes(1);
+    expect(mockFetchPhotoUrls).toHaveBeenCalledWith({ token: 'tok', password: null });
+    expect(result.current.photoUrlsFailed).toBe(false);
+  });
+
+  it('암호로 연 편지는 같은 암호로 서명 URL을 요청한다', async () => {
+    mockOpenByToken
+      .mockRejectedValueOnce(new Error('암호가 올바르지 않습니다.'))
+      .mockResolvedValueOnce(photoPayload);
+    mockFetchPhotoUrls.mockResolvedValue({});
+
+    const { result } = renderHook(() => useLetterViewer('tok'));
+    await waitFor(() => expect(result.current.status).toBe('needPassword'));
+    act(() => result.current.submitPassword('secret'));
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    await waitFor(() => expect(mockFetchPhotoUrls).toHaveBeenCalledWith({ token: 'tok', password: 'secret' }));
+  });
+
+  it('서명 URL 요청이 실패해도 본문은 ready로 유지되고 photoUrlsFailed만 켜진다', async () => {
+    mockOpenByToken.mockResolvedValue(photoPayload);
+    mockFetchPhotoUrls.mockRejectedValue(new Error('network'));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const { result } = renderHook(() => useLetterViewer('tok'));
+    await waitFor(() => expect(result.current.photoUrlsFailed).toBe(true));
+    expect(result.current.status).toBe('ready');
+    expect(result.current.letter?.paragraphs[0].text).toBe('첫 단락');
+    warn.mockRestore();
+  });
+
+  it('사진이 없는 편지는 서명 URL을 요청하지 않는다', async () => {
+    mockOpenByToken.mockResolvedValue(samplePayload);
+    const { result } = renderHook(() => useLetterViewer('tok'));
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(mockFetchPhotoUrls).not.toHaveBeenCalled();
+    expect(result.current.photoUrls).toBeNull();
   });
 });

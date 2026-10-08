@@ -12,7 +12,7 @@ vi.mock('./supabase', () => ({
 }));
 
 import { getSupabase } from './supabase';
-import { createDraft, updateLetter, getLetter, listMyLetters } from './letters';
+import { createDraft, updateLetter, getLetter, listMyLetters, deleteLetter } from './letters';
 
 const mockGetSupabase = vi.mocked(getSupabase);
 
@@ -203,5 +203,54 @@ describe('listMyLetters', () => {
 
     const result = await listMyLetters();
     expect(result).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// deleteLetter — 편지 삭제 뒤 사진 폴더 best effort 정리(설계 §5)
+// ---------------------------------------------------------------------------
+
+describe('deleteLetter', () => {
+  function makeDeleteMock(opts: { deleteError?: unknown; listError?: unknown }) {
+    const eq = vi.fn(() => Promise.resolve({ error: opts.deleteError ?? null }));
+    const bucket = {
+      list: vi.fn(() =>
+        Promise.resolve(
+          opts.listError
+            ? { data: null, error: opts.listError }
+            : { data: [{ name: 'a.jpg' }], error: null },
+        ),
+      ),
+      remove: vi.fn(() => Promise.resolve({ data: [], error: null })),
+    };
+    mockGetSupabase.mockReturnValue({
+      from: vi.fn(() => ({ delete: vi.fn(() => ({ eq })) })),
+      auth: {
+        getSession: vi.fn(() =>
+          Promise.resolve({ data: { session: { user: { id: 'user-abc' } } }, error: null }),
+        ),
+      },
+      storage: { from: vi.fn(() => bucket) },
+    } as unknown as ReturnType<typeof getSupabase>);
+    return { eq, bucket };
+  }
+
+  it('편지를 지운 뒤 <ownerId>/<letterId>/ 사진을 지운다', async () => {
+    const { eq, bucket } = makeDeleteMock({});
+    await deleteLetter('letter-001');
+    expect(eq).toHaveBeenCalledWith('id', 'letter-001');
+    expect(bucket.list).toHaveBeenCalledWith('user-abc/letter-001', { limit: 100 });
+    expect(bucket.remove).toHaveBeenCalledWith(['user-abc/letter-001/a.jpg']);
+  });
+
+  it('사진 정리가 실패해도 삭제는 성공한다', async () => {
+    makeDeleteMock({ listError: new Error('denied') });
+    await expect(deleteLetter('letter-001')).resolves.toBeUndefined();
+  });
+
+  it('편지 삭제 자체가 실패하면 throw하고 사진은 건드리지 않는다', async () => {
+    const { bucket } = makeDeleteMock({ deleteError: new Error('rls') });
+    await expect(deleteLetter('letter-001')).rejects.toThrow('rls');
+    expect(bucket.list).not.toHaveBeenCalled();
   });
 });

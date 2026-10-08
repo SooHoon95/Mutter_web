@@ -3,12 +3,25 @@
 // 가로 스크롤 0, 텍스트 클리핑 0 — 긴 본문이 모바일에서 안전하게 읽힌다.
 // T8 Viewer가 재사용할 수 있도록 순수 props 기반 설계.
 
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import styles from './Paginated.module.css';
 
 /** 한 단락 텍스트를 개행(\n) 기준 줄로 나눈다. reveal 모드의 줄 단위 연출에 쓴다. */
 function splitLines(text: string): string[] {
   return text.split('\n');
+}
+
+/**
+ * 사진 블록 표현(편지 사진 0034). width/height로 비율 자리를 먼저 잡아 이미지가 늦게 와도
+ * 아래 본문이 밀리지 않는다(레이아웃 흔들림 0).
+ */
+export interface PaginatedPhoto {
+  width: number;
+  height: number;
+  /** 서명 URL. 아직 없으면 로딩 플레이스홀더. */
+  src?: string;
+  /** URL을 받지 못했거나(함수 실패·서명 누락) 확정적으로 못 보여줄 때 true → 실패 플레이스홀더. */
+  failed?: boolean;
 }
 
 export interface PaginatedParagraph {
@@ -18,6 +31,48 @@ export interface PaginatedParagraph {
   text: string;
   /** 단락에 부착된 임의 장식 노드 (음악 큐 아이콘 등). 선택적. */
   decoration?: ReactNode;
+  /** 있으면 이 단락은 텍스트 대신 사진 한 장을 그린다. */
+  photo?: PaginatedPhoto;
+}
+
+/**
+ * 사진 한 장. aspect-ratio 프레임 안에 이미지를 채운다 — 프레임이 곧 플레이스홀더라
+ * 로딩·실패·성공 어느 상태든 같은 높이를 차지한다. lazy 로딩으로 화면 밖 사진은 늦게 받는다.
+ * 이미지 자체가 깨지면(만료된 URL 등) 실패 플레이스홀더로 바꾸고 본문 흐름은 그대로 둔다.
+ */
+function PhotoFrame({ photo }: { photo: PaginatedPhoto }): React.ReactElement {
+  const [broken, setBroken] = useState(false);
+  // URL이 새로 오면(재발급) 다시 시도한다.
+  useEffect(() => setBroken(false), [photo.src]);
+
+  const failed = photo.failed || broken;
+  const showImage = !!photo.src && !broken;
+  return (
+    <div
+      className={`${styles.photoFrame} ${failed ? styles.photoFailed : ''}`}
+      style={{ aspectRatio: `${photo.width} / ${photo.height}` }}
+      data-photo-state={showImage ? 'image' : failed ? 'failed' : 'loading'}
+    >
+      {showImage ? (
+        <img
+          className={styles.photoImg}
+          src={photo.src}
+          width={photo.width}
+          height={photo.height}
+          loading="lazy"
+          decoding="async"
+          alt="편지에 담긴 사진"
+          onError={() => setBroken(true)}
+        />
+      ) : failed ? (
+        <span className={styles.photoNote} role="img" aria-label="사진을 불러오지 못했어요">
+          사진을 불러오지 못했어요
+        </span>
+      ) : (
+        <span className={styles.photoNote} role="img" aria-label="사진을 불러오는 중" />
+      )}
+    </div>
+  );
 }
 
 interface PaginatedProps {
@@ -122,28 +177,40 @@ export function Paginated({
             ref={(el) => onParagraphRef?.(para.id, el)}
             data-paragraph-id={para.id}
           >
-            {/* 장식 노드 (음악 큐 아이콘 등) — 텍스트 위에 배치 */}
-            {para.decoration && (
-              <div className={styles.decoration} aria-hidden="true">
-                {para.decoration}
-              </div>
+            {/* 사진 단락 — 텍스트 대신 사진 한 장. reveal 모드에선 한 "줄"처럼 같이 드러난다. */}
+            {para.photo ? (
+              <figure
+                className={`${styles.photo} ${revealOnScroll ? styles.line : ''}`}
+                {...(revealOnScroll ? { 'data-reveal-line': '' } : {})}
+              >
+                <PhotoFrame photo={para.photo} />
+              </figure>
+            ) : (
+              <>
+                {/* 장식 노드 (음악 큐 아이콘 등) — 텍스트 위에 배치 */}
+                {para.decoration && (
+                  <div className={styles.decoration} aria-hidden="true">
+                    {para.decoration}
+                  </div>
+                )}
+                {/* 본문 — reveal 모드에선 줄(\n) 단위 블록으로 쪼개 각 줄을 개별 연출한다.
+                    (긴 단락도 아래쪽 줄이 화면에 들어올 때 나타나도록.) 그 외엔 통짜 텍스트. */}
+                <p className={styles.text}>
+                  {revealOnScroll ? (
+                    splitLines(para.text).map((line, i) => (
+                      <span key={i} className={styles.line} data-reveal-line>
+                        {line === '' ? ' ' : line}
+                      </span>
+                    ))
+                  ) : para.text ? (
+                    para.text
+                  ) : (
+                    // 빈 텍스트는 nbsp로 최소 높이 보장
+                    <span aria-hidden="true">&nbsp;</span>
+                  )}
+                </p>
+              </>
             )}
-            {/* 본문 — reveal 모드에선 줄(\n) 단위 블록으로 쪼개 각 줄을 개별 연출한다.
-                (긴 단락도 아래쪽 줄이 화면에 들어올 때 나타나도록.) 그 외엔 통짜 텍스트. */}
-            <p className={styles.text}>
-              {revealOnScroll ? (
-                splitLines(para.text).map((line, i) => (
-                  <span key={i} className={styles.line} data-reveal-line>
-                    {line === '' ? ' ' : line}
-                  </span>
-                ))
-              ) : para.text ? (
-                para.text
-              ) : (
-                // 빈 텍스트는 nbsp로 최소 높이 보장
-                <span aria-hidden="true">&nbsp;</span>
-              )}
-            </p>
           </section>
         ))}
       </div>

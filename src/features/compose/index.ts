@@ -3,5 +3,8 @@
 
 export { MusicCueEditor } from './MusicCueEditor';
 export { AdWarning } from './AdWarning';
-export { useLetterDraft, bodyToParagraphs, paragraphsToBody } from './useLetterDraft';
+export { LetterBlockEditor } from './LetterBlockEditor';
+export { useLetterDraft } from './useLetterDraft';
 export type { DraftState, UseLetterDraftReturn } from './useLetterDraft';
+export { MAX_PHOTOS, blocksToParagraphs, paragraphsToBlocks } from './letterBlocks';
+export type { ComposeBlock } from './letterBlocks';

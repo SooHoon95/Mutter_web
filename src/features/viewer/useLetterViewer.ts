@@ -15,7 +15,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { openByToken, LinkNotYetError } from '@/data/links';
-import type { MusicCue, Paragraph } from '@/data/types';
+import { fetchLetterPhotoUrls, type PhotoUrlMap } from '@/data/letterPhotos';
+import type { LetterPhoto, MusicCue, Paragraph } from '@/data/types';
 
 // ---------------------------------------------------------------------------
 // 공개 타입
@@ -52,6 +53,13 @@ export interface UseLetterViewerResult {
   submitting: boolean;
   /** 암호 입력 후 재시도. needPassword 상태에서 PasswordGate가 호출한다. */
   submitPassword: (password: string) => void;
+  /**
+   * 사진 단락의 서명 URL(path → URL). 아직 받는 중이거나 사진이 없으면 null.
+   * 본문 표시는 이 값을 기다리지 않는다(사진 자리는 비율 맞춘 플레이스홀더).
+   */
+  photoUrls: PhotoUrlMap | null;
+  /** 서명 URL 요청이 실패했는지 — true면 사진 자리에 차분한 실패 플레이스홀더. 본문은 그대로. */
+  photoUrlsFailed: boolean;
 }
 
 // 첫 시도가 암호 없이 실패했을 때 "암호 필요"로 해석할 정규화 메시지.
@@ -67,13 +75,27 @@ function normalizeParagraphs(raw: unknown): Paragraph[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((item, index): Paragraph => {
     const p = (item ?? {}) as Partial<Paragraph>;
-    return {
+    const photo = normalizePhoto(p.photo);
+    const paragraph: Paragraph = {
       id: typeof p.id === 'string' ? p.id : `p-${index}`,
       order: typeof p.order === 'number' ? p.order : index,
-      text: typeof p.text === 'string' ? p.text : '',
-      cue: normalizeCue(p.cue),
+      // 사진 단락은 계약상 text "" · cue 없음. 잘못 저장된 값이 섞여도 사진 블록으로만 그린다.
+      text: photo ? '' : typeof p.text === 'string' ? p.text : '',
+      cue: photo ? undefined : normalizeCue(p.cue),
     };
+    if (photo) paragraph.photo = photo;
+    return paragraph;
   });
+}
+
+/** 단락의 photo 필드를 좁힌다. path 문자열 + 양수 width/height가 아니면 사진으로 보지 않는다. */
+function normalizePhoto(raw: unknown): LetterPhoto | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const ph = raw as Partial<LetterPhoto>;
+  if (typeof ph.path !== 'string' || ph.path.length === 0) return undefined;
+  const ok = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0;
+  if (!ok(ph.width) || !ok(ph.height)) return undefined;
+  return { path: ph.path, width: ph.width, height: ph.height };
 }
 
 /** 단일 cue를 좁힌다. 형태가 안 맞으면 undefined(음악 변화 없음). */
@@ -140,6 +162,8 @@ export function useLetterViewer(token: string | undefined): UseLetterViewerResul
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [revealAt, setRevealAt] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState<PhotoUrlMap | null>(null);
+  const [photoUrlsFailed, setPhotoUrlsFailed] = useState(false);
 
   // 마지막 시도가 암호 없이였는지 추적 — WRONG_PASSWORD가 오면 needPassword로 전이.
   const triedWithoutPassword = useRef(false);
@@ -158,9 +182,22 @@ export function useLetterViewer(token: string | undefined): UseLetterViewerResul
       try {
         const payload = await openByToken(token, password);
         if (!aliveRef.current) return;
-        setLetter(normalizeLetter(payload));
+        const normalized = normalizeLetter(payload);
+        setLetter(normalized);
         setStatus('ready');
         setErrorMessage(null);
+        // 사진이 있으면 같은 토큰·암호로 서명 URL을 한 번 받는다(설계 §5).
+        // 기다리지 않는다 — 본문은 바로 보이고, 실패해도 사진 자리만 플레이스홀더로 남는다.
+        if (normalized.paragraphs.some((p) => p.photo)) {
+          void fetchLetterPhotoUrls({ token, password: password ?? null })
+            .then((urls) => {
+              if (aliveRef.current) setPhotoUrls(urls);
+            })
+            .catch((photoErr: unknown) => {
+              console.warn('[useLetterViewer] photo urls failed:', photoErr);
+              if (aliveRef.current) setPhotoUrlsFailed(true);
+            });
+        }
       } catch (err) {
         if (!aliveRef.current) return;
         // 0018 예약 공개: 아직 열 수 없는 편지 → 봉인 화면(공개 시각 표시).
@@ -204,5 +241,14 @@ export function useLetterViewer(token: string | undefined): UseLetterViewerResul
     [attempt],
   );
 
-  return { status, letter, errorMessage, revealAt, submitting, submitPassword };
+  return {
+    status,
+    letter,
+    errorMessage,
+    revealAt,
+    submitting,
+    submitPassword,
+    photoUrls,
+    photoUrlsFailed,
+  };
 }

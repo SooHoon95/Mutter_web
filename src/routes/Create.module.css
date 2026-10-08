@@ -95,14 +95,6 @@
   margin: 16px 0;
 }
 
-/* 본문 textarea — themes.css가 투명 배경·테마 색/폰트를 상속시킨다.
-   여기서는 작성 편의를 위한 높이·리사이즈만 정한다. */
-.paperBody {
-  width: 100%;
-  min-height: 12rem;
-  resize: vertical;
-}
-
 /* 음악 섹션 — 편지당 1곡 */
 .musicSection {
   display: flex;

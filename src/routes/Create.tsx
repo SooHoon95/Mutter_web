@@ -4,13 +4,14 @@
 //
 // 컴포즈 모델은 "테마 즉시적용 WYSIWYG": 템플릿을 고르면 그 자리에서 편지지에 반영되고,
 // 사용자는 테마(폰트·색·종이결)가 입혀진 편지지 위에서 제목·본문을 바로 타이핑한다.
-// 음악은 편지당 1곡. 단락 추가/이동/삭제 UI는 없다(저장 시 빈 줄 기준으로 자동 분리).
+// 음악은 편지당 1곡. 본문은 텍스트 칸과 사진 카드(최대 5장)를 잇는 블록 편집기다(iOS·Android와 같음).
+// 텍스트 칸 안의 빈 줄은 저장 시 단락 경계가 된다.
 //
 // 흐름: 작성 → "저장" → (저장되면) "보내기" 섹션에서 전달 링크 발급 → URL 복사 → 전달.
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useLetterDraft, MusicCueEditor } from '@/features/compose';
+import { useLetterDraft, MusicCueEditor, LetterBlockEditor } from '@/features/compose';
 import { TemplatePicker, TemplateThemed, DEFAULT_TEMPLATE_ID } from '@/features/templates';
 import { LinkManager } from '@/features/delivery';
 import { SendToConnection, useConnections } from '@/features/connections';
@@ -44,8 +45,15 @@ export default function Create(): React.ReactElement {
     isLoading,
     isSaving,
     saveError,
+    photoUrls,
+    isAddingPhotos,
+    photoError,
+    remainingPhotos,
     setTitle,
-    setBody,
+    setBlockText,
+    focusTextBlock,
+    addPhotos,
+    removePhoto,
     setTemplateId,
     setCue,
     save,
@@ -115,13 +123,16 @@ export default function Create(): React.ReactElement {
           onChange={(e) => setTitle(e.target.value)}
         />
         <hr className={styles.paperDivider} />
-        <textarea
-          className={styles.paperBody}
-          placeholder="여기에 편지를 써 내려가세요. 빈 줄로 문단을 나누면 받는 사람에게도 그대로 보여요."
-          aria-label="편지 본문"
-          value={draft.body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={10}
+        <LetterBlockEditor
+          blocks={draft.blocks}
+          photoUrls={photoUrls}
+          remainingPhotos={remainingPhotos}
+          isAddingPhotos={isAddingPhotos}
+          photoError={photoError}
+          onChangeText={setBlockText}
+          onFocusText={focusTextBlock}
+          onAddPhotos={(files) => void addPhotos(files)}
+          onRemovePhoto={removePhoto}
         />
       </TemplateThemed>
 
@@ -144,7 +155,7 @@ export default function Create(): React.ReactElement {
           type="button"
           className={styles.saveBtnLarge}
           onClick={handleSave}
-          disabled={isSaving}
+          disabled={isSaving || isAddingPhotos}
         >
           {isSaving ? '저장 중…' : draft.letterId ? '저장하기' : '저장하고 보내기 준비'}
         </button>

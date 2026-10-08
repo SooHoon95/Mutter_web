@@ -4,6 +4,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabase } from './supabase';
+import { removeLetterPhotoFolder } from './letterPhotos';
 import type { Letter, Paragraph } from './types';
 
 // ---------------------------------------------------------------------------
@@ -159,10 +160,19 @@ export async function listMyLetters(): Promise<Letter[]> {
  * 편지를 삭제한다.
  * RLS가 owner_id = auth.uid()를 강제하므로 타계정 편지는 삭제되지 않는다.
  * delivery_links 등 연관 행은 FK on delete cascade로 함께 정리된다.
+ * Storage 사진(`<ownerId>/<letterId>/`)은 cascade 대상이 아니라 삭제 뒤 best effort로 지운다(설계 §5).
  */
 export async function deleteLetter(id: string): Promise<void> {
   const sb = getSupabase();
 
   const { error } = await sb.from('letters').delete().eq('id', id);
   if (error) throw error;
+
+  // 사진 정리 실패가 편지 삭제 실패로 보이면 안 된다 — 남은 객체는 비공개라 노출 위험이 없다.
+  try {
+    const ownerId = await getCurrentUserId(sb);
+    await removeLetterPhotoFolder(ownerId, id);
+  } catch {
+    // best effort
+  }
 }

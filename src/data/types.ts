@@ -34,11 +34,25 @@ export interface MusicCue {
   sourceUrl?: string;
 }
 
+/**
+ * 편지 사진(0034, 비공개 버킷 letter-photos). path = `<ownerId>/<letterId>/<uuid>.jpg`.
+ * width/height는 원본 픽셀 크기 — 이미지가 오기 전에 자리(비율)를 잡아 레이아웃 흔들림을 막는다.
+ */
+export interface LetterPhoto {
+  path: string;
+  width: number;
+  height: number;
+}
+
 export interface Paragraph {
   id: string;
   order: number;
+  /** 사진 단락이면 "". */
   text: string;
+  /** 첫 텍스트 단락에만 붙는다(사진 단락엔 없음). */
   cue?: MusicCue;
+  /** 있으면 이 단락은 사진 블록이다(iOS·Android·웹 공통 계약 — 설계 §2). */
+  photo?: LetterPhoto;
 }
 
 export interface Letter {
