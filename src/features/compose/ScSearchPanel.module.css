@@ -1,0 +1,64 @@
+/* ScSearchPanel — SC 검색 열기·복사한 곡 넣기. 입력칸·라벨은 MusicCueEditor 모듈을 공유한다. */
+
+/* SoundCloud 검색 열기 (보조 버튼) */
+.secondaryBtn {
+  padding: 7px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.secondaryBtn:hover {
+  background: var(--bg-tertiary);
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+/* 복사한 곡 넣기 — 평소엔 보조 버튼, 검색에서 돌아오면 브랜드 색으로 강조 */
+.pasteBtn {
+  align-self: flex-start;
+  padding: 5px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.pasteBtn:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+}
+
+.pasteBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pasteBtnEmphasis,
+.pasteBtnEmphasis:hover:not(:disabled) {
+  border-color: var(--border-brand);
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
+  animation: pastePulse 1.2s ease-out 2;
+}
+
+@keyframes pastePulse {
+  0% { box-shadow: 0 0 0 0 var(--border-brand); }
+  100% { box-shadow: 0 0 0 6px transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pasteBtnEmphasis {
+    animation: none;
+  }
+}

@@ -2,10 +2,12 @@
 // SC URL 붙여넣기 → oEmbed 검증 → 거부 시 사유 표시. 큐는 선택 사항.
 //
 // 편지당 음악은 1곡이므로 props는 단일 cue + onChange만 받는다(단락 개념 없음).
+// 검색·클립보드 가져오기는 ScSearchPanel이 맡고, 검증은 여기 submitScUrl 한 곳에서만 한다.
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { MusicCue } from '@/data/types';
 import { validateScUrl, type ScValidation } from '@/lib/scOembed';
+import { ScSearchPanel } from './ScSearchPanel';
 import styles from './MusicCueEditor.module.css';
 
 interface MusicCueEditorProps {
@@ -47,15 +49,24 @@ export function MusicCueEditor({
   const [scInput, setScInput] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const urlInputRef = useRef<HTMLInputElement>(null);
+
+  const resetPanel = useCallback(() => {
+    setMode('idle');
+    setScInput('');
+    setValidationError(null);
+  }, []);
 
   // ── SC URL 검증 및 큐 설정 ────────────────────────────────────────────────
 
-  const handleScSubmit = useCallback(async () => {
-    if (!scInput.trim()) return;
+  // 붙여넣기·클립보드 두 입구가 같은 검증 경로를 타도록 URL을 인자로 받는다.
+  const submitScUrl = useCallback(async (rawUrl: string) => {
+    const url = rawUrl.trim();
+    if (!url) return;
     setIsValidating(true);
     setValidationError(null);
 
-    const result: ScValidation = await validateScUrl(scInput.trim());
+    const result: ScValidation = await validateScUrl(url);
 
     if (!result.ok) {
       const errorMsg = REJECT_MESSAGES[result.reason] ?? '알 수 없는 오류입니다.';
@@ -72,21 +83,26 @@ export function MusicCueEditor({
       startMs: 0,
       title: result.title || undefined,
       author: result.author || undefined,
-      sourceUrl: scInput.trim(),
+      sourceUrl: url,
     });
-    setMode('idle');
-    setScInput('');
+    resetPanel();
     setIsValidating(false);
-  }, [scInput, onChange]);
+  }, [onChange, resetPanel]);
+
+  const handleScSubmit = useCallback(() => submitScUrl(scInput), [submitScUrl, scInput]);
+
+  const clearValidationError = useCallback(() => setValidationError(null), []);
+  const submitClipboardUrl = useCallback(async (url: string) => {
+    setScInput(url);
+    await submitScUrl(url);
+  }, [submitScUrl]);
 
   // ── 큐 제거 ───────────────────────────────────────────────────────────────
 
   const handleRemoveCue = useCallback(() => {
     onChange(undefined);
-    setMode('idle');
-    setScInput('');
-    setValidationError(null);
-  }, [onChange]);
+    resetPanel();
+  }, [onChange, resetPanel]);
 
   // ── 렌더 ─────────────────────────────────────────────────────────────────
 
@@ -137,35 +153,43 @@ export function MusicCueEditor({
       {/* SC URL 입력 패널 */}
       {mode === 'sc-input' && (
         <div className={styles.panel}>
-          <label htmlFor="sc-url-input" className={styles.panelLabel}>
-            SoundCloud 트랙 URL
-          </label>
-          <div className={styles.inputRow}>
-            <input
-              id="sc-url-input"
-              type="url"
-              className={styles.urlInput}
-              placeholder="https://soundcloud.com/artist/track"
-              value={scInput}
-              onChange={(e) => {
-                setScInput(e.target.value);
-                setValidationError(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleScSubmit();
-              }}
-              disabled={isValidating}
-              aria-describedby={validationError ? 'sc-url-error' : undefined}
-            />
-            <button
-              type="button"
-              className={styles.submitBtn}
-              onClick={() => void handleScSubmit()}
-              disabled={isValidating || !scInput.trim()}
-            >
-              {isValidating ? '확인 중…' : '확인'}
-            </button>
-          </div>
+          <ScSearchPanel
+            isValidating={isValidating}
+            urlInputRef={urlInputRef}
+            onClipboardStart={clearValidationError}
+            onClipboardUrl={submitClipboardUrl}
+          >
+            <label htmlFor="sc-url-input" className={styles.panelLabel}>
+              SoundCloud 트랙 URL
+            </label>
+            <div className={styles.inputRow}>
+              <input
+                id="sc-url-input"
+                type="url"
+                className={styles.urlInput}
+                placeholder="https://soundcloud.com/artist/track"
+                value={scInput}
+                onChange={(e) => {
+                  setScInput(e.target.value);
+                  setValidationError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void handleScSubmit();
+                }}
+                disabled={isValidating}
+                ref={urlInputRef}
+                aria-describedby={validationError ? 'sc-url-error' : undefined}
+              />
+              <button
+                type="button"
+                className={styles.submitBtn}
+                onClick={() => void handleScSubmit()}
+                disabled={isValidating || !scInput.trim()}
+              >
+                {isValidating ? '확인 중…' : '확인'}
+              </button>
+            </div>
+          </ScSearchPanel>
 
           {/* 검증 거부 메시지 */}
           {validationError && (
@@ -177,11 +201,7 @@ export function MusicCueEditor({
           <button
             type="button"
             className={styles.cancelBtn}
-            onClick={() => {
-              setMode('idle');
-              setScInput('');
-              setValidationError(null);
-            }}
+            onClick={resetPanel}
           >
             취소
           </button>
