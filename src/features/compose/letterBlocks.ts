@@ -74,15 +74,21 @@ export function paragraphsToBlocks(paragraphs: Paragraph[]): ComposeBlock[] {
       blocks.push({ kind: 'photo', id: p.id, path, width, height });
       continue;
     }
-    if (!p.text.trim()) continue;
+    const text = p.text.trimEnd();
     const last = blocks[blocks.length - 1];
     if (last?.kind === 'text') {
-      blocks[blocks.length - 1] = { ...last, text: `${last.text}\n\n${p.text}` };
+      blocks[blocks.length - 1] = { ...last, text: `${last.text}\n\n${text}` };
     } else {
-      blocks.push({ kind: 'text', id: p.id, text: p.text });
+      blocks.push({ kind: 'text', id: p.id, text });
     }
   }
-  return blocks;
+  // 중간의 빈 단락은 작성자가 넣은 여분의 빈 줄이라 그대로 잇고, 칸 앞뒤 공백만 걷어낸다
+  // (사진만 있는 편지의 큐 자리채움 단락은 이렇게 사라진다). iOS·Android 코덱과 동일.
+  return blocks.flatMap((b): ComposeBlock[] => {
+    if (b.kind !== 'text') return [b];
+    const text = b.text.trim();
+    return text ? [{ ...b, text }] : [];
+  });
 }
 
 /** 편집 화면용 보정 — 사진으로 끝나거나 비어 있으면 이어 쓸 빈 텍스트 칸을 붙인다(iOS editableBlocks). */
@@ -92,11 +98,14 @@ export function editableBlocks(blocks: ComposeBlock[]): ComposeBlock[] {
   return blocks;
 }
 
+/**
+ * 빈 줄(\n\n) 기준으로 단락을 나눈다. 빈 조각은 버리지 않는다 — 빈 줄을 여러 번 넣은 자리는
+ * 빈 단락("")이나 "\n"으로 시작하는 단락으로 남아 편지지에서 그만큼 빈 줄로 보인다.
+ * 조각 끝 공백만 걷는다(공백뿐인 줄은 ""가 된다). 앞 들여쓰기·개행은 둔다. iOS·Android 코덱과 동일.
+ */
 function splitText(text: string): string[] {
-  return text
-    .split(/\n\s*\n/) // 빈 줄(사이 공백 허용) 기준 — 기존 웹 본문 분리 규칙 그대로
-    .map((t) => t.trim())
-    .filter((t) => t.length > 0);
+  const trimmed = text.trim();
+  return trimmed ? trimmed.split('\n\n').map((t) => t.trimEnd()) : [];
 }
 
 /** 블록 + 큐 → 저장용 단락. 업로드 전(path 없는) 사진은 건너뛴다. */

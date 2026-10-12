@@ -47,13 +47,15 @@ describe('paragraphsToBlocks — 로드', () => {
     expect(cueFromParagraphs(paragraphs)).toEqual(CUE);
   });
 
-  it('빈·공백 텍스트 단락은 건너뛴다(사진 사이를 가르지 않는다)', () => {
+  it('중간의 빈·공백 단락은 여분의 빈 줄로 잇고, 칸 앞뒤 빈 단락은 걷는다', () => {
     const blocks = paragraphsToBlocks([
-      { id: 'a', order: 0, text: 'A' },
-      { id: 'e', order: 1, text: '   ' },
-      { id: 'b', order: 2, text: 'B' },
+      { id: 'lead', order: 0, text: '' },
+      { id: 'a', order: 1, text: 'A' },
+      { id: 'e', order: 2, text: '   ' },
+      { id: 'b', order: 3, text: 'B' },
+      { id: 'tail', order: 4, text: '' },
     ]);
-    expect(shape(blocks)).toEqual(['A\n\nB']);
+    expect(shape(blocks)).toEqual(['A\n\n\n\nB']);
   });
 
   it('editableBlocks는 사진으로 끝나거나 비면 이어 쓸 빈 텍스트 칸을 붙인다', () => {
@@ -68,11 +70,14 @@ describe('paragraphsToBlocks — 로드', () => {
 });
 
 describe('blocksToParagraphs — 저장', () => {
-  it('텍스트 칸을 빈 줄로 나눠 trim·빈 것 제거하고 order를 0..n-1로 매긴다', () => {
-    const paragraphs = blocksToParagraphs([textBlock('  첫 단락 \n\n\n\n   \n\n둘째 단락\n')], undefined);
+  it('텍스트 칸을 빈 줄로 나누고 여분의 빈 줄은 빈 단락으로 남기며 order를 0..n-1로 매긴다', () => {
+    const paragraphs = blocksToParagraphs([textBlock('  첫 단락 \n\n\n\n   \n\n둘째 단락\n\n\n셋째\n')], undefined);
     expect(paragraphs.map((p) => [p.order, p.text])).toEqual([
       [0, '첫 단락'],
-      [1, '둘째 단락'],
+      [1, ''],
+      [2, ''],
+      [3, '둘째 단락'],
+      [4, '\n셋째'],
     ]);
   });
 
