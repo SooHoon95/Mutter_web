@@ -157,18 +157,62 @@ export async function listMyLetters(): Promise<Letter[]> {
 }
 
 /**
- * 편지를 삭제한다.
- * RLS가 owner_id = auth.uid()를 강제하므로 타계정 편지는 삭제되지 않는다.
- * delivery_links 등 연관 행은 FK on delete cascade로 함께 정리된다.
- * Storage 사진(`<ownerId>/<letterId>/`)은 cascade 대상이 아니라 삭제 뒤 best effort로 지운다(설계 §5).
+ * 편지를 삭제함으로 옮긴다(0035). 서버의 letters 뷰가 delete를 보관(deleted_at)으로 바꾼다.
+ * RLS가 owner_id = auth.uid()를 강제하므로 타계정 편지는 옮겨지지 않는다.
+ * 링크·받은 사람 보관함은 그대로 남아(편지가 안 보일 뿐) 복구하면 함께 돌아온다.
+ * 사진은 지우지 않는다 — 영구 삭제(purgeLetter)나 30일 정리 때 지워진다.
  */
 export async function deleteLetter(id: string): Promise<void> {
-  const sb = getSupabase();
+  const { error } = await getSupabase().from('letters').delete().eq('id', id);
+  if (error) throw error;
+}
 
-  const { error } = await sb.from('letters').delete().eq('id', id);
+/** 삭제함 항목(get_my_deleted_letters). purgeAt 이후 서버 정리 작업이 영구 삭제한다. */
+export interface DeletedLetter {
+  id: string;
+  title: string;
+  templateId: string;
+  deletedAt: string;
+  purgeAt: string;
+}
+
+interface DeletedLetterRow {
+  id: string;
+  title: string | null;
+  template_id: string | null;
+  deleted_at: string;
+  purge_at: string;
+}
+
+/** 내 삭제함 — 최근에 지운 순. */
+export async function listDeletedLetters(): Promise<DeletedLetter[]> {
+  const { data, error } = await getSupabase().rpc('get_my_deleted_letters');
+  if (error) throw error;
+  return ((data ?? []) as DeletedLetterRow[]).map((row) => ({
+    id: row.id,
+    title: row.title ?? '',
+    templateId: row.template_id ?? '',
+    deletedAt: row.deleted_at,
+    purgeAt: row.purge_at,
+  }));
+}
+
+/** 삭제함의 편지를 되살린다(되돌리기 토스트·삭제함 공용). */
+export async function restoreLetter(id: string): Promise<void> {
+  const { error } = await getSupabase().rpc('restore_letter', { p_letter_id: id });
+  if (error) throw error;
+}
+
+/**
+ * 삭제함의 편지를 완전히 지운다. 행이 사라진 뒤에야 Storage 삭제 정책이 풀리므로
+ * 사진 폴더(`<ownerId>/<letterId>/`)는 그다음 best effort로 지운다.
+ */
+export async function purgeLetter(id: string): Promise<void> {
+  const sb = getSupabase();
+  const { error } = await sb.rpc('purge_letter', { p_letter_id: id });
   if (error) throw error;
 
-  // 사진 정리 실패가 편지 삭제 실패로 보이면 안 된다 — 남은 객체는 비공개라 노출 위험이 없다.
+  // 사진 정리 실패가 영구 삭제 실패로 보이면 안 된다 — 남은 객체는 비공개라 노출 위험이 없다.
   try {
     const ownerId = await getCurrentUserId(sb);
     await removeLetterPhotoFolder(ownerId, id);

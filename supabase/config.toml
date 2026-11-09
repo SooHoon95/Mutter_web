@@ -410,3 +410,7 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # 함수 안에서 직접 인증한다(수신자=토큰·암호 RPC, 소유자=Authorization + RLS).
 [functions.letter-photo-urls]
 verify_jwt = false
+
+# 삭제함 30일 정리(0035). pg_cron → pg_net이 매일 호출한다. 기한 지난 것만 지워 인증 불필요.
+[functions.purge-deleted-letters]
+verify_jwt = false

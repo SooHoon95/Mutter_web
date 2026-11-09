@@ -1,16 +1,17 @@
 // 보낸 편지 목록 + 전달 링크 관리 (T7 US-007).
 // 각 편지마다 LinkManager를 표시해 링크 발급·revoke·복사를 지원한다.
-// 편지별 삭제 버튼 — 삭제 시 발급한 링크도 함께 제거된다(deleteLetter).
+// 편지별 삭제 버튼 — 삭제함으로 옮기고(0035, 30일 보관) 하단 토스트로 바로 되돌릴 수 있다.
 
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { listMyLetters, deleteLetter } from '../data/letters';
+import { listMyLetters, deleteLetter, restoreLetter } from '../data/letters';
 import { getMySentWithRecipients } from '../data/threads';
 import type { SentWithRecipient } from '../data/threads';
 import { getMyLetterOpens } from '../data/opens';
 import type { LetterOpenSummary } from '../data/opens';
 import type { Letter } from '../data/types';
 import { LinkManager } from '../features/delivery';
+import { UndoToast } from '../components/UndoToast';
 import styles from './Sent.module.css';
 
 /**
@@ -42,6 +43,9 @@ export default function Sent(): React.ReactElement {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  // 방금 삭제함으로 옮긴 편지 — 토스트의 "되돌리기" 대상. 새로 지우면 key(id)가 바뀌어 타이머가 새로 돈다.
+  const [undoTarget, setUndoTarget] = useState<string | null>(null);
+  const closeToast = useCallback(() => setUndoTarget(null), []);
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -84,6 +88,7 @@ export default function Sent(): React.ReactElement {
     setIsDeleting(true);
     try {
       await deleteLetter(deleteTargetId);
+      setUndoTarget(deleteTargetId);
       // 모달 닫고 확장 패널이 열려 있던 편지라면 초기화
       setDeleteTargetId(null);
       setExpanded((prev) => (prev === deleteTargetId ? null : prev));
@@ -93,6 +98,15 @@ export default function Sent(): React.ReactElement {
       setDeleteError(err instanceof Error ? err.message : '편지 삭제 실패');
     } finally {
       setIsDeleting(false);
+    }
+  }
+
+  async function handleUndo(id: string): Promise<void> {
+    try {
+      await restoreLetter(id);
+      loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '편지를 되살리지 못했어요');
     }
   }
 
@@ -116,7 +130,12 @@ export default function Sent(): React.ReactElement {
 
   return (
     <main className={styles.page}>
-      <h1 className={styles.heading}>보낸 편지</h1>
+      <div className={styles.headingRow}>
+        <h1 className={styles.heading}>보낸 편지</h1>
+        <Link to="/trash" className={styles.trashLink}>
+          삭제함
+        </Link>
+      </div>
 
       {letters.length === 0 ? (
         <p className={styles.empty}>작성한 편지가 없습니다.</p>
@@ -198,10 +217,11 @@ export default function Sent(): React.ReactElement {
         >
           <div className={styles.modalCard}>
             <h2 id="delete-letter-modal-title" className={styles.modalTitle}>
-              편지를 삭제할까요?
+              편지를 삭제함으로 옮길까요?
             </h2>
             <p className={styles.modalBody}>
-              이 편지를 삭제할까요? 발급한 링크도 함께 삭제됩니다.
+              받은 사람에게도 보이지 않게 돼요. 삭제함에서 30일 안에 되살릴 수 있고, 그 뒤엔 완전히
+              지워져요.
             </p>
             {deleteError && <p className={styles.errorMsg}>{deleteError}</p>}
             <div className={styles.modalActions}>
@@ -219,11 +239,21 @@ export default function Sent(): React.ReactElement {
                 onClick={() => void handleConfirmDelete()}
                 disabled={isDeleting}
               >
-                {isDeleting ? '삭제 중…' : '삭제 확인'}
+                {isDeleting ? '옮기는 중…' : '삭제'}
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {undoTarget !== null && (
+        <UndoToast
+          key={undoTarget}
+          message="편지를 삭제함으로 옮겼어요"
+          actionLabel="되돌리기"
+          onAction={() => void handleUndo(undoTarget)}
+          onClose={closeToast}
+        />
       )}
     </main>
   );

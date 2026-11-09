@@ -13,6 +13,26 @@
   margin: 0 0 1.5rem;
 }
 
+/* 제목 + 오른쪽 "삭제함" 링크 */
+.headingRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.trashLink {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.trashLink:hover {
+  color: var(--text-primary);
+}
+
 .empty {
   font-size: 0.9375rem;
   color: var(--text-tertiary);

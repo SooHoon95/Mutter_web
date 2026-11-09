@@ -1,0 +1,19 @@
+/* Trash 라우트 — 카드·모달은 Sent.module.css를 함께 쓰고 여기엔 삭제함 전용만 둔다. */
+
+.notice {
+  margin: -0.75rem 0 1.5rem;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+}
+
+.back {
+  margin-top: 2rem;
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+}
+
+.back a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

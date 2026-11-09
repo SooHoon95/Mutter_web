@@ -1,0 +1,54 @@
+/* 하단 중앙 토스트. 모바일 좌우 여백 16px, 홈 인디케이터 위로 띄운다. */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 12px 16px 12px 20px;
+  border-radius: var(--radius-full);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  box-shadow: var(--shadow-soft);
+  font-size: 0.9375rem;
+  animation: toastIn 180ms ease-out;
+}
+
+.message {
+  overflow-wrap: anywhere;
+}
+
+.action {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

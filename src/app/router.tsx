@@ -12,6 +12,7 @@ const Welcome = lazy(() => import('@/routes/Welcome')); // 가입 완료 축하
 const SetNickname = lazy(() => import('@/routes/SetNickname')); // 표시 이름(닉네임) 설정
 const Create = lazy(() => import('@/routes/Create'));
 const Sent = lazy(() => import('@/routes/Sent'));
+const Trash = lazy(() => import('@/routes/Trash')); // 삭제함(30일 보관)
 const MyPage = lazy(() => import('@/routes/MyPage'));
 const Inbox = lazy(() => import('@/routes/Inbox'));
 const People = lazy(() => import('@/routes/People')); // 주고받은 편지(상대별 스레드)
@@ -71,6 +72,7 @@ export const router = createBrowserRouter([
   { path: '/create', element: withProtectedCreatorShell(<Create />) },
   { path: '/create/:id', element: withProtectedCreatorShell(<Create />) },
   { path: '/sent', element: withProtectedCreatorShell(<Sent />) },
+  { path: '/trash', element: withProtectedCreatorShell(<Trash />) },
   { path: '/inbox', element: withProtectedCreatorShell(<Inbox />) },
   { path: '/people', element: withProtectedCreatorShell(<People />) },
   { path: '/preview/:id', element: withProtectedCreatorShell(<Preview />) },

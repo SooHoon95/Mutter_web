@@ -60,6 +60,11 @@ export default function Privacy(): React.ReactElement {
               서비스 내 <strong>계정 삭제</strong> 실행 시 계정 정보와 이용자가 작성한 편지·연결
               정보가 삭제됩니다(상대방이 보관 중인 편지 포함).
             </li>
+            <li>
+              이용자가 삭제한 편지는 실수로 지운 경우 되살릴 수 있도록 <strong>삭제함에 30일간
+              보관</strong>한 뒤 사진을 포함해 완전히 삭제합니다. 삭제함에서 즉시 완전히 삭제할 수도
+              있습니다.
+            </li>
             <li>관련 법령에서 보관을 요구하는 경우 해당 기간 동안 보관합니다.</li>
           </ul>
         </section>
