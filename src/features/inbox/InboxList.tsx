@@ -91,9 +91,12 @@ export function InboxList({ title }: InboxListProps): React.ReactElement {
     <div className={styles.header}>
       <h1 className={styles.heading}>{title}</h1>
       <div className={styles.headerActions}>
-        <Link to="/inbox/trash" className={styles.headerLink}>
-          삭제함
-        </Link>
+        {/* 선택 중엔 화면을 떠나지 않게 숨긴다(앱은 비활성 — 같은 의도). */}
+        {!editing && (
+          <Link to="/inbox/trash" className={styles.headerLink}>
+            삭제함
+          </Link>
+        )}
         {(visible.length > 0 || editing) && (
           <button type="button" className={styles.editButton} onClick={toggleEditing}>
             {editing ? '완료' : '편집'}
