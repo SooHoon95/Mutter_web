@@ -100,3 +100,131 @@
   color: var(--text-error);
   font-size: 0.95rem;
 }
+
+/* ── 헤더: 제목 + 삭제함·편집(0035) ───────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 1.5rem;
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.headerActions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.headerLink {
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.headerLink:hover {
+  color: var(--text-primary);
+}
+
+.editButton {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-brand);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── 편집 모드 ─────────────────────────────────────────────────────────────── */
+.itemSelected {
+  border-color: var(--border-brand);
+}
+
+/* 카드 전체가 선택 토글 버튼 — 카드 안쪽 여백은 .item이 이미 준다. */
+.selectRow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.check {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border: 1.5px solid var(--hairline-strong);
+  border-radius: var(--radius-full);
+  color: var(--text-on-brand);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.checkOn {
+  border-color: var(--bg-brand);
+  background: var(--bg-brand);
+}
+
+/* 하단 고정 바 — 전체 선택 / 삭제 (N) */
+.editBar {
+  position: sticky;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-xl);
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-soft);
+}
+
+.editBarSecondary {
+  padding: 0.4rem 0.25rem;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.editBarDelete {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--error-600);
+  color: var(--bg-primary);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editBarDelete:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

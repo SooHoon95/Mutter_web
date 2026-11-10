@@ -12,7 +12,8 @@ const Welcome = lazy(() => import('@/routes/Welcome')); // 가입 완료 축하
 const SetNickname = lazy(() => import('@/routes/SetNickname')); // 표시 이름(닉네임) 설정
 const Create = lazy(() => import('@/routes/Create'));
 const Sent = lazy(() => import('@/routes/Sent'));
-const Trash = lazy(() => import('@/routes/Trash')); // 삭제함(30일 보관)
+const Trash = lazy(() => import('@/routes/Trash')); // 보낸 편지 삭제함(30일 보관)
+const InboxTrash = lazy(() => import('@/routes/InboxTrash')); // 받은 편지 삭제함(30일 보관)
 const MyPage = lazy(() => import('@/routes/MyPage'));
 const Inbox = lazy(() => import('@/routes/Inbox'));
 const People = lazy(() => import('@/routes/People')); // 주고받은 편지(상대별 스레드)
@@ -74,6 +75,7 @@ export const router = createBrowserRouter([
   { path: '/sent', element: withProtectedCreatorShell(<Sent />) },
   { path: '/trash', element: withProtectedCreatorShell(<Trash />) },
   { path: '/inbox', element: withProtectedCreatorShell(<Inbox />) },
+  { path: '/inbox/trash', element: withProtectedCreatorShell(<InboxTrash />) },
   { path: '/people', element: withProtectedCreatorShell(<People />) },
   { path: '/preview/:id', element: withProtectedCreatorShell(<Preview />) },
   // ConnectHandoff가 스스로 분기한다: 인앱브라우저+iOS+플래그ON이면 스킴 인터스티셜,

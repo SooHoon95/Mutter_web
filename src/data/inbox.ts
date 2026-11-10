@@ -73,3 +73,64 @@ export async function getMyInbox(): Promise<InboxItem[]> {
   if (error) throw error;
   return ((data as InboxRow[]) ?? []).map(rowToInboxItem);
 }
+
+// ---------------------------------------------------------------------------
+// 삭제 · 받은 편지 삭제함 (0035) — 지우면 30일 보관, 되돌리기·복구·완전 삭제
+// ---------------------------------------------------------------------------
+
+/** 받은 편지함에서 지운다(서버 inbox 뷰가 보관으로 바꾼다). 보낸 사람의 편지는 그대로. */
+export async function deleteInboxItems(letterIds: string[]): Promise<void> {
+  if (letterIds.length === 0) return;
+  const { error } = await getSupabase().from('inbox').delete().in('letter_id', letterIds);
+  if (error) throw error;
+}
+
+/** 받은 편지 삭제함에서 되살린다(되돌리기 토스트·삭제함 공용). 되살린 수를 돌려준다. */
+export async function restoreInboxItems(letterIds: string[]): Promise<number> {
+  const { data, error } = await getSupabase().rpc('restore_inbox_items', { p_letter_ids: letterIds });
+  if (error) throw error;
+  return (data as number | null) ?? 0;
+}
+
+/** 받은 편지 삭제함에서 완전히 지운다. 링크를 다시 열면 받은 편지함에 다시 담긴다. */
+export async function purgeInboxItems(letterIds: string[]): Promise<number> {
+  const { data, error } = await getSupabase().rpc('purge_inbox_items', { p_letter_ids: letterIds });
+  if (error) throw error;
+  return (data as number | null) ?? 0;
+}
+
+/** 받은 편지 삭제함 항목. purgeAt 이후 서버 정리 작업이 지운다. */
+export interface DeletedInboxItem {
+  letterId: string;
+  token: string;
+  title: string;
+  senderId: string | null;
+  senderNickname: string | null;
+  deletedAt: string;
+  purgeAt: string;
+}
+
+interface DeletedInboxRow {
+  letter_id: string;
+  token: string;
+  title: string | null;
+  sender_id: string | null;
+  sender_nickname: string | null;
+  deleted_at: string;
+  purge_at: string;
+}
+
+/** 내 받은 편지 삭제함 — 최근에 지운 순. */
+export async function listDeletedInbox(): Promise<DeletedInboxItem[]> {
+  const { data, error } = await getSupabase().rpc('get_my_deleted_inbox');
+  if (error) throw error;
+  return ((data ?? []) as DeletedInboxRow[]).map((row) => ({
+    letterId: row.letter_id,
+    token: row.token,
+    title: row.title ?? '',
+    senderId: row.sender_id,
+    senderNickname: row.sender_nickname,
+    deletedAt: row.deleted_at,
+    purgeAt: row.purge_at,
+  }));
+}

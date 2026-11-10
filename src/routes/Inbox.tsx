@@ -7,8 +7,7 @@ import styles from './Inbox.module.css';
 export default function Inbox(): React.ReactElement {
   return (
     <main className={styles.page}>
-      <h1 className={styles.heading}>받은 편지함</h1>
-      <InboxList />
+      <InboxList title="받은 편지함" />
     </main>
   );
 }

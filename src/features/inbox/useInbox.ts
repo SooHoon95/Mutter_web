@@ -14,6 +14,8 @@ export function useInbox(): {
   error: Error | null;
   save: (token: string) => Promise<void>;
   isSaving: boolean;
+  /** 목록을 다시 받는다(삭제·되돌리기 뒤). */
+  reload: () => Promise<void>;
 } {
   const queryClient = useQueryClient();
 
@@ -38,5 +40,6 @@ export function useInbox(): {
     error: error ?? null,
     save: mutation.mutateAsync,
     isSaving: mutation.isPending,
+    reload: () => queryClient.invalidateQueries({ queryKey: INBOX_QUERY_KEY }),
   };
 }

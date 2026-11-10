@@ -13,6 +13,9 @@
 --   - 뷰의 INSTEAD OF DELETE가 지우기를 보관(deleted_at = now())으로 바꾼다. 이미 설치된 앱
 --     (iOS 1.0.5·Android 1.3.0)의 delete도 그대로 보관된다 → 앱 업데이트 전부터 보호.
 --   - 서버 내부 삭제(계정 탈퇴 FK cascade·영구 삭제·30일 정리)는 letters_all을 직접 지워 보관을 거치지 않는다.
+--
+-- 받은 편지함(inbox)도 같은 방식이다(5절): inbox_all + 뷰 inbox. 받은 사람이 지운 편지는
+-- 받은 편지 삭제함에 30일 보관된다.
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 1. 테이블 → letters_all, 뷰 letters
@@ -116,11 +119,126 @@ create policy "letter_photos_delete_own" on storage.objects
   );
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 4. 30일 정리 — 매일 03:00 KST(18:00 UTC) pg_cron → pg_net → Edge Function purge-deleted-letters.
---    Storage 객체는 SQL로 지울 수 없어(storage.protect_delete) 함수가 맡는다.
---    함수는 기한이 지난 것만 지우므로 누가 불러도 무해하다 → 비밀값 없이 호출한다.
+-- 4. 받은 편지 삭제함 — inbox → inbox_all, 뷰 inbox(편지와 같은 방식)
+--    get_my_inbox·스레드·상대 목록·"받은이"·홈 발송 상태가 모두 이름으로 inbox를 읽으므로
+--    받은 사람이 지운 편지는 그 경로들에서 함께 빠지고, 복구하면 돌아온다.
+--    클라이언트(구버전 앱 포함)의 from('inbox').delete()는 뷰 트리거가 보관으로 바꾼다.
+-- ─────────────────────────────────────────────────────────────────────────────
+alter table public.inbox rename to inbox_all;
+alter table public.inbox_all add column deleted_at timestamptz;
+create index inbox_all_deleted_at_idx on public.inbox_all (deleted_at) where deleted_at is not null;
+
+create view public.inbox with (security_invoker = true) as
+  select id, user_id, letter_id, token, saved_at
+    from public.inbox_all
+   where deleted_at is null;
+
+grant select, insert, update, delete on public.inbox to anon, authenticated, service_role;
+
+create or replace function public.inbox_soft_delete()
+returns trigger language plpgsql security invoker set search_path = public as $$
+begin
+  update inbox_all set deleted_at = now() where id = old.id and deleted_at is null;
+  if not found then
+    return null;
+  end if;
+  return old;
+end $$;
+
+create trigger inbox_soft_delete
+  instead of delete on public.inbox
+  for each row execute function public.inbox_soft_delete();
+
+-- 삭제함에 있는 편지를 다시 받으면(링크를 다시 열어 자동 저장·save_to_inbox·연결로 재발송)
+-- 새 행 대신 그 행을 되살린다. 기존 insert … on conflict 경로를 고치지 않고, 되살릴 땐 insert가
+-- 아니라서 "편지가 도착했어요" 푸시(on_inbox_insert)도 다시 울리지 않는다.
+create or replace function public.inbox_revive_trashed()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  update inbox_all
+     set deleted_at = null, token = new.token, saved_at = now()
+   where user_id = new.user_id and letter_id = new.letter_id and deleted_at is not null;
+  if found then
+    return null;  -- 되살렸으니 insert는 건너뛴다
+  end if;
+  return new;
+end $$;
+revoke all on function public.inbox_revive_trashed() from public, anon, authenticated;
+
+create trigger inbox_revive_trashed
+  before insert on public.inbox_all
+  for each row execute function public.inbox_revive_trashed();
+
+-- 받은 편지 삭제함. 보낸 사람이 편지를 지웠으면(letters 뷰에 없음) 되살려도 열 수 없으므로 뺀다.
+-- 보낸 사람 편지·닉네임을 읽어야 해서 definer(본인 행만 user_id로 거른다).
+create or replace function public.get_my_deleted_inbox()
+returns table (
+  letter_id       uuid,
+  token           text,
+  title           text,
+  sender_id       uuid,
+  sender_nickname text,
+  deleted_at      timestamptz,
+  purge_at        timestamptz
+)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
+  return query
+    select i.letter_id, i.token, l.title, l.owner_id, p.nickname,
+           i.deleted_at, i.deleted_at + interval '30 days'
+      from inbox_all i
+      join letters l on l.id = i.letter_id
+      left join profiles p on p.id = l.owner_id
+     where i.user_id = auth.uid() and i.deleted_at is not null
+     order by i.deleted_at desc;
+end $$;
+
+-- 복구(되돌리기 토스트·삭제함·편집 모드 여러 통 공용). 되살린 개수를 돌려준다.
+create or replace function public.restore_inbox_items(p_letter_ids uuid[])
+returns int language plpgsql security invoker set search_path = public as $$
+declare v_count int;
+begin
+  if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
+  update inbox_all set deleted_at = null
+   where user_id = auth.uid() and letter_id = any(p_letter_ids) and deleted_at is not null;
+  get diagnostics v_count = row_count;
+  return v_count;
+end $$;
+
+-- 영구 삭제(받은 편지함에서만 빠진다 — 보낸 사람의 편지는 그대로). 지운 개수를 돌려준다.
+create or replace function public.purge_inbox_items(p_letter_ids uuid[])
+returns int language plpgsql security invoker set search_path = public as $$
+declare v_count int;
+begin
+  if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
+  delete from inbox_all
+   where user_id = auth.uid() and letter_id = any(p_letter_ids) and deleted_at is not null;
+  get diagnostics v_count = row_count;
+  return v_count;
+end $$;
+
+revoke all on function public.get_my_deleted_inbox() from public, anon;
+revoke all on function public.restore_inbox_items(uuid[]) from public, anon;
+revoke all on function public.purge_inbox_items(uuid[]) from public, anon;
+grant execute on function public.get_my_deleted_inbox() to authenticated;
+grant execute on function public.restore_inbox_items(uuid[]) to authenticated;
+grant execute on function public.purge_inbox_items(uuid[]) to authenticated;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 5. 30일 정리 — 매일 03:00 KST(18:00 UTC).
+--    편지: pg_cron → pg_net → Edge Function purge-deleted-letters. Storage 객체는 SQL로 지울 수
+--    없어(storage.protect_delete) 함수가 맡는다. 기한이 지난 것만 지우므로 누가 불러도 무해하다 →
+--    비밀값 없이 호출한다.
+--    받은 편지: 사진이 없으니 SQL로 바로 지운다.
 -- ─────────────────────────────────────────────────────────────────────────────
 create extension if not exists pg_cron;
+
+select cron.schedule(
+  'purge-deleted-inbox',
+  '0 18 * * *',
+  $$ delete from public.inbox_all where deleted_at < now() - interval '30 days' $$
+);
 
 select cron.schedule(
   'purge-deleted-letters',

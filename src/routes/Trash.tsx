@@ -11,16 +11,9 @@ import {
   type DeletedLetter,
 } from '../data/letters';
 import { UndoToast } from '../components/UndoToast';
+import { purgeLabel } from '../lib/trashLabel';
 import sent from './Sent.module.css';
 import styles from './Trash.module.css';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** 완전 삭제까지 남은 기간 문구. 남은 시간을 일 단위로 올림(최소 1일), 이미 지났으면 "오늘". */
-function purgeLabel(purgeAt: string, now: number = Date.now()): string {
-  const days = Math.ceil((new Date(purgeAt).getTime() - now) / DAY_MS);
-  return days <= 0 ? '오늘 완전히 삭제' : `${days}일 후 완전히 삭제`;
-}
 
 export default function Trash(): React.ReactElement {
   const [items, setItems] = useState<DeletedLetter[]>([]);
@@ -72,7 +65,7 @@ export default function Trash(): React.ReactElement {
 
   return (
     <main className={sent.page}>
-      <h1 className={sent.heading}>삭제함</h1>
+      <h1 className={sent.heading}>보낸 편지 삭제함</h1>
       <p className={styles.notice}>삭제한 편지는 30일 동안 보관된 뒤 완전히 지워져요.</p>
 
       {error && <p className={sent.errorMsg}>{error}</p>}
