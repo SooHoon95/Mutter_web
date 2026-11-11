@@ -7,6 +7,7 @@ import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { deleteInboxItems, restoreInboxItems } from '@/data/inbox';
 import { UndoToast } from '@/components/UndoToast';
+import { useLetterAccessStates } from '@/features/tickets';
 import { useInbox } from './useInbox';
 import styles from './InboxList.module.css';
 
@@ -26,6 +27,8 @@ interface InboxListProps {
 
 export function InboxList({ title }: InboxListProps): React.ReactElement {
   const { items, isLoading, error, reload } = useInbox();
+  // 0037 상태(영구 / n일 남음 / 닫힘). 닫힌 편지도 목록에 남고, 열면 뷰어가 잠김 화면을 보인다.
+  const { labelFor } = useLetterAccessStates(items.map((item) => item.letterId));
   const [editing, setEditing] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // 서버 응답 전에 바로 목록에서 빼 둘 항목(실패하면 되살린다).
@@ -150,11 +153,15 @@ export function InboxList({ title }: InboxListProps): React.ReactElement {
         <ul className={styles.list}>
           {visible.map((item) => {
             const isSelected = selected.has(item.letterId);
+            const access = labelFor(item.letterId);
             const meta = (
               <div className={styles.meta}>
                 <p className={styles.title}>{item.title}</p>
                 <p className={styles.sender}>보낸이: {item.senderNickname ?? '알 수 없음'}</p>
-                <p className={styles.savedAt}>{formatDate(item.savedAt)} 저장</p>
+                <p className={styles.savedAt}>
+                  {formatDate(item.savedAt)} 저장
+                  {access && <span className={styles.access}> · {access}</span>}
+                </p>
               </div>
             );
             return (

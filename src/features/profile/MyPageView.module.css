@@ -29,6 +29,14 @@
   word-break: break-all;
 }
 
+/* 편지권 설명·앱 안내 — 조용한 보조 문구. */
+.hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
 .nicknameRow {
   display: flex;
   gap: 8px;

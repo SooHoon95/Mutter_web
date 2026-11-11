@@ -91,6 +91,12 @@
   margin: 0.25rem 0 0;
 }
 
+/* 0037 상태(영구 / n일 남음 / 닫힘) — 날짜 뒤에 조용히. */
+.cardAccess {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
 .cardRecipient {
   font-size: 0.75rem;
   color: var(--text-tertiary);

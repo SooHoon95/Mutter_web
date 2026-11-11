@@ -10,7 +10,8 @@ import type { SentWithRecipient } from '../data/threads';
 import { getMyLetterOpens } from '../data/opens';
 import type { LetterOpenSummary } from '../data/opens';
 import type { Letter } from '../data/types';
-import { LinkManager } from '../features/delivery';
+import { LinkManager, SentLetterDetail } from '../features/delivery';
+import { useLetterAccessStates } from '../features/tickets';
 import { UndoToast } from '../components/UndoToast';
 import styles from './Sent.module.css';
 
@@ -46,6 +47,8 @@ export default function Sent(): React.ReactElement {
   // 방금 삭제함으로 옮긴 편지 — 토스트의 "되돌리기" 대상. 새로 지우면 key(id)가 바뀌어 타이머가 새로 돈다.
   const [undoTarget, setUndoTarget] = useState<string | null>(null);
   const closeToast = useCallback(() => setUndoTarget(null), []);
+  // 0037 상태(영구 / n일 남음 / 닫힘) — 서버 반영 전·실패면 비어 표시만 빠진다.
+  const { states: accessStates, labelFor } = useLetterAccessStates(letters.map((l) => l.id));
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -149,6 +152,10 @@ export default function Sent(): React.ReactElement {
                   <p className={styles.cardTitle}>{letter.title || '(제목 없음)'}</p>
                   <p className={styles.cardDate}>
                     {new Date(letter.updatedAt).toLocaleString('ko-KR')}
+                    {(() => {
+                      const label = labelFor(letter.id);
+                      return label ? <span className={styles.cardAccess}> · {label}</span> : null;
+                    })()}
                   </p>
                   <p className={styles.cardRecipient}>
                     {(() => {
@@ -199,6 +206,7 @@ export default function Sent(): React.ReactElement {
               {/* 링크 관리 패널 */}
               {expanded === letter.id && (
                 <div className={styles.linkPanel}>
+                  <SentLetterDetail letterId={letter.id} access={accessStates.get(letter.id)} />
                   <LinkManager letterId={letter.id} />
                 </div>
               )}

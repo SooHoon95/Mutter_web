@@ -1,4 +1,4 @@
-// 마이페이지 뷰. 닉네임 편집·로그아웃·계정 삭제를 제공한다.
+// 마이페이지 뷰. 닉네임 편집·편지권 잔액·로그아웃·계정 삭제를 제공한다.
 // 이메일은 세션에서 읽고, 프로필(닉네임)은 useProfile hook으로 관리한다.
 
 import { useState, useEffect } from 'react';
@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
 import { signOut } from '@/data/auth';
 import { deleteMyAccount } from '@/data/profiles';
+import { useEntitlements } from '@/features/tickets';
 import { useProfile } from './useProfile';
 import styles from './MyPageView.module.css';
 
@@ -13,6 +14,9 @@ export function MyPageView(): React.ReactElement {
   const { session } = useAuth();
   const { profile, isLoading, error, updateNickname, isUpdating } = useProfile();
   const navigate = useNavigate();
+  // 편지권(0038) — 웹은 잔액만 보이고 구매는 앱에서. 서버 반영 전·숨김 계정이면 섹션 자체가 없다.
+  const { entitlements, showBalance } = useEntitlements();
+  const tickets = entitlements?.tickets ?? 0;
 
   const [nicknameInput, setNicknameInput] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -121,6 +125,25 @@ export function MyPageView(): React.ReactElement {
         {saveError && <p className={styles.errorMsg}>{saveError}</p>}
       </section>
 
+      {showBalance && (
+        <>
+          <hr className={styles.divider} />
+          <section className={styles.section}>
+            <span className={styles.label}>편지권</span>
+            <span className={styles.value}>{tickets}장</span>
+            <p className={styles.hint}>
+              편지권 1장으로 편지 한 통을 기간 제한 없이 간직할 수 있어요.
+              {tickets <= 0 && (
+                <>
+                  <br />
+                  편지권은 뮤터 앱에서 살 수 있어요
+                </>
+              )}
+            </p>
+          </section>
+        </>
+      )}
+
       <hr className={styles.divider} />
 
       {/* 로그아웃 */}
@@ -163,6 +186,7 @@ export function MyPageView(): React.ReactElement {
               계정과 작성한 모든 편지·링크가 영구 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
               상대가 보관한 편지도 함께 사라집니다.
             </p>
+            {tickets > 0 && <p className={styles.modalBody}>남은 편지권 {tickets}장이 사라져요.</p>}
             {deleteError && <p className={styles.errorMsg}>{deleteError}</p>}
             <div className={styles.modalActions}>
               <button

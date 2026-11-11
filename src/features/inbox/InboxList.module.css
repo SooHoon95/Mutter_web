@@ -46,6 +46,12 @@
   margin-top: 0.2rem;
 }
 
+/* 0037 상태(영구 / n일 남음 / 닫힘) — 저장일 뒤에 조용히. */
+.access {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 /* 0019 답장 + 열기 액션 묶음 */
 .actions {
   flex-shrink: 0;
