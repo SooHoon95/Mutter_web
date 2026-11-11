@@ -95,7 +95,7 @@ describe('createHandler — 수신자 모드', () => {
     const res = await createHandler(deps)(post({ token: 'tok', password: 'pw' }));
 
     expect(res.status).toBe(200);
-    expect(deps.openByToken).toHaveBeenCalledWith('tok', 'pw');
+    expect(deps.openByToken).toHaveBeenCalledWith('tok', 'pw', null);
     expect(deps.selectOwnLetter).not.toHaveBeenCalled();
     expect(deps.fetchOwnerId).toHaveBeenCalledWith(LETTER);
     expect(deps.createSignedUrls).toHaveBeenCalledWith([`${OWNER}/${LETTER}/a.jpg`], 3600);
@@ -109,7 +109,7 @@ describe('createHandler — 수신자 모드', () => {
   it('password가 없거나 null이면 null로 넘긴다', async () => {
     const deps = makeDeps();
     await createHandler(deps)(post({ token: 'tok' }));
-    expect(deps.openByToken).toHaveBeenCalledWith('tok', null);
+    expect(deps.openByToken).toHaveBeenCalledWith('tok', null, null);
   });
 
   it('잘못된 암호(RPC 에러)면 403 { error: 메시지 그대로 }이고 서명하지 않는다', async () => {
@@ -131,11 +131,10 @@ describe('createHandler — 수신자 모드', () => {
     expect(await res.json()).toEqual({ error: 'LINK_REVOKED' });
   });
 
-  it('요청에 사용자 Authorization이 있어도 수신자 모드는 그것을 RPC에 넘기지 않는다', async () => {
+  it('요청에 Authorization이 있으면 수신자 모드도 그것을 넘긴다(로그인이 필요한 편지, 0037)', async () => {
     const deps = makeDeps();
     await createHandler(deps)(post({ token: 'tok', password: null }, { Authorization: 'Bearer user-jwt' }));
-    // openByToken 시그니처는 (token, password)뿐 — 헤더를 받을 통로가 없다.
-    expect(deps.openByToken).toHaveBeenCalledWith('tok', null);
+    expect(deps.openByToken).toHaveBeenCalledWith('tok', null, 'Bearer user-jwt');
     expect(deps.selectOwnLetter).not.toHaveBeenCalled();
   });
 

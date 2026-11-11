@@ -5,10 +5,11 @@
 // 실제 클라이언트 배선은 index.ts가 한다. 이 파일은 Deno 전역(Deno.env 등)을 쓰지 않는다.
 //
 // 계약(설계 §4 — iOS·Android·웹이 같이 쓰므로 바꾸지 않는다):
-//   요청  수신자 모드 { token: string, password: string | null }
+//   요청  수신자 모드 { token: string, password: string | null } (+ 로그인했다면 Authorization: Bearer <user JWT>)
 //         소유자 모드 { letterId: string } + Authorization: Bearer <user JWT>
 //   응답  200 { urls: { [path]: signedUrl }, expiresIn: 3600 }
-//         403 { error }  — RPC 거부(TOKEN_NOT_FOUND·LINK_REVOKED·LINK_EXPIRED·WRONG_PASSWORD 등)
+//         403 { error }  — RPC 거부(TOKEN_NOT_FOUND·LINK_REVOKED·LINK_EXPIRED·WRONG_PASSWORD·
+//                          LOGIN_REQUIRED·LETTER_LOCKED:<ISO>·LETTER_GONE 등)
 //                          또는 소유자 모드에서 편지가 안 보일 때(RLS)
 
 /** 서명 URL 유효 시간(초). 클라이언트는 path를 캐시 키로 쓰고 URL은 매번 새로 받는다. */
@@ -21,12 +22,14 @@ export interface DepError {
 
 export interface LetterPhotoUrlDeps {
   /**
-   * 수신자 모드: get_letter_by_token(token, password).
-   * 반드시 사용자 JWT 없는 anon 클라이언트로 호출해야 한다(받은함 저장 부수효과 차단 — index.ts 참조).
+   * 수신자 모드: get_letter_photo_access(token, password) — 본문 게이트와 같은 검사, 부수효과 없음(0037).
+   * authorization은 요청의 Authorization 헤더(없으면 null). 로그인이 필요한 편지는 호출자 신원이
+   * 있어야 열리므로 index.ts가 사용자 JWT일 때만 그 권한으로 부른다.
    */
   openByToken(
     token: string,
     password: string | null,
+    authorization: string | null,
   ): Promise<{ data: { id: string; paragraphs: unknown } | null; error: DepError | null }>;
   /** 소유자 모드: 호출자 JWT로 letters를 id로 select(RLS가 소유자만 보장). */
   selectOwnLetter(
@@ -131,7 +134,11 @@ export function createHandler(deps: LetterPhotoUrlDeps): (req: Request) => Promi
       let letter: { id: string; paragraphs: unknown };
       if (parsed.mode === 'recipient') {
         // 토큰·회수·만료·예약 공개·암호 검사는 RPC가 그대로 한다(검증 로직 복제 금지).
-        const { data, error } = await deps.openByToken(parsed.token, parsed.password);
+        const { data, error } = await deps.openByToken(
+          parsed.token,
+          parsed.password,
+          req.headers.get('Authorization'),
+        );
         if (error) return json({ error: error.message }, 403);
         if (!data) return json({ error: 'LETTER_NOT_FOUND' }, 403);
         letter = data;
