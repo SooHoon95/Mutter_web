@@ -414,3 +414,11 @@ verify_jwt = false
 # 삭제함 30일 정리(0035). pg_cron → pg_net이 매일 호출한다. 기한 지난 것만 지워 인증 불필요.
 [functions.purge-deleted-letters]
 verify_jwt = false
+
+# 같은 내용으로 한 통 더 보내기(사진 복사 포함). 함수 안에서 사용자 JWT를 직접 확인한다.
+[functions.duplicate-letter]
+verify_jwt = false
+
+# 편지권 구매 검증·지급. 함수 안에서 사용자 JWT를 직접 확인한다.
+[functions.verify-purchase]
+verify_jwt = false
