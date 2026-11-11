@@ -20,6 +20,7 @@ import {
   startKakaoLogin,
 } from '@/data/auth';
 import { useAuth } from '@/app/AuthProvider';
+import { takePostLoginPath } from '@/lib/postLoginPath';
 import styles from './Login.module.css';
 
 interface LocationState {
@@ -111,7 +112,9 @@ export default function Login(): React.ReactNode {
   // (사용자가 "시작하기"를 누르면 그때 이동).
   useEffect(() => {
     if (!loading && session && !justSignedUpRef.current) {
-      navigate(state?.from?.pathname ?? '/', { replace: true });
+      // 편지 봉투에서 온 경우 그 편지로(state가 우선, 적어 둔 경로는 함께 비운다).
+      const stored = takePostLoginPath();
+      navigate(state?.from?.pathname ?? stored ?? '/', { replace: true });
     }
   }, [session, loading, navigate, state]);
 

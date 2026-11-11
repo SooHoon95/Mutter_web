@@ -12,6 +12,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
 import { useProfile } from '@/features/profile';
 import { socialDisplayName } from '@/lib/userName';
+import { takePostLoginPath } from '@/lib/postLoginPath';
 import styles from './SetNickname.module.css';
 
 export default function SetNickname(): React.ReactElement | null {
@@ -53,7 +54,9 @@ export default function SetNickname(): React.ReactElement | null {
       return;
     }
     // 저장 성공 → 원래 가려던 경로(있으면)로 복귀, 없으면 가입 완료 축하 화면으로.
-    navigate(from?.pathname ?? '/welcome', { replace: true });
+    // 소셜 가입(OAuth)은 state가 없으므로 봉투 화면에서 적어 둔 편지 경로를 이어 쓴다.
+    const stored = takePostLoginPath();
+    navigate(from?.pathname ?? stored ?? '/welcome', { replace: true });
   }
 
   return (

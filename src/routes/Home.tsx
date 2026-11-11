@@ -9,6 +9,7 @@ import type { User } from '@supabase/supabase-js';
 import { useAuth } from '@/app/AuthProvider';
 import { useProfile } from '@/features/profile';
 import { resolveDisplayName } from '@/lib/userName';
+import { takePostLoginPath } from '@/lib/postLoginPath';
 import { listMyLetters } from '@/data/letters';
 import Landing from './Landing';
 import styles from './Home.module.css';
@@ -28,6 +29,14 @@ export default function Home(): React.ReactElement | null {
     if (!session) return;
     if (needsName) navigate('/set-nickname', { replace: true });
   }, [session, needsName, navigate]);
+
+  // 소셜 로그인(OAuth·카카오 기존 회원)은 '/'로 돌아온다 — 편지 봉투에서 시작했으면 그 편지로.
+  // 이름이 아직 없으면 SetNickname이 이름을 받은 뒤 꺼내 쓴다.
+  useEffect(() => {
+    if (!session || profileLoading || needsName) return;
+    const path = takePostLoginPath();
+    if (path) navigate(path, { replace: true });
+  }, [session, profileLoading, needsName, navigate]);
 
   if (loading) {
     return <div className="route-fallback">불러오는 중…</div>;

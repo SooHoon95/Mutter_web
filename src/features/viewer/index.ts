@@ -5,5 +5,7 @@ export { useLetterViewer } from './useLetterViewer';
 export type { ViewerLetter, ViewerStatus, UseLetterViewerResult } from './useLetterViewer';
 export { LetterView } from './LetterView';
 export { PasswordGate } from './PasswordGate';
+export { LetterEnvelope } from './LetterEnvelope';
+export { LockedLetter } from './LockedLetter';
 export { AudioUnlockGate } from './AudioUnlockGate';
 export { Credits } from './Credits';

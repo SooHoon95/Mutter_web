@@ -7,19 +7,32 @@
 // 상태 흐름(useLetterViewer):
 //   loading      → 로딩 표시
 //   needPassword → PasswordGate (암호 재시도)
+//   login        → LetterEnvelope (0037: 로그인해야 열리는 편지 — 로그인 뒤 같은 링크로 복귀)
+//   locked       → LockedLetter (0037: 무료 기간 끝 — 편지권으로 간직하기/앱 안내)
+//   gone         → "더 이상 열 수 없는 편지예요"
 //   error        → 정규화된 사용자 메시지
 //   ready        → LetterView (AudioUnlockGate → 스크롤 동기 본문)
 
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { injectNoIndex, removeNoIndex } from '@/lib/noindex';
 import { openAppScheme, appLetterUrl, HANDOFF_ENABLED } from '@/lib/appLinks';
 import { isIOS, isInAppBrowser } from '@/lib/device';
-import { useLetterViewer, LetterView, PasswordGate } from '@/features/viewer';
+import { rememberPostLoginPath } from '@/lib/postLoginPath';
+import { closingNotice } from '@/lib/accessLabel';
+import {
+  useLetterViewer,
+  LetterView,
+  PasswordGate,
+  LetterEnvelope,
+  LockedLetter,
+} from '@/features/viewer';
 import styles from './Viewer.module.css';
 
 export default function Viewer(): React.ReactElement {
   const { token } = useParams<{ token: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // noindex 메타 주입(수신 라우트 전용 — capability-links). cleanup으로 이탈 시 제거.
   // injectNoIndex/removeNoIndex는 useNoIndex가 묶어주는 동일 동작의 순수 함수다
@@ -47,6 +60,11 @@ export default function Viewer(): React.ReactElement {
     submitPassword,
     photoUrls,
     photoUrlsFailed,
+    accessUntil,
+    cover,
+    deleteAt,
+    password,
+    reload,
   } = useLetterViewer(token);
 
   if (status === 'notYet') {
@@ -96,6 +114,41 @@ export default function Viewer(): React.ReactElement {
     );
   }
 
+  if (status === 'login') {
+    return (
+      <LetterEnvelope
+        cover={cover}
+        onOpen={() => {
+          // 이메일 로그인은 state.from으로, 소셜(OAuth·카카오)은 sessionStorage로 같은 편지에 돌아온다.
+          rememberPostLoginPath(location.pathname);
+          navigate('/login', { state: { from: location } });
+        }}
+      />
+    );
+  }
+
+  if (status === 'locked' && token) {
+    return (
+      <LockedLetter
+        token={token}
+        password={password}
+        cover={cover}
+        deleteAt={deleteAt}
+        onKept={reload}
+      />
+    );
+  }
+
+  if (status === 'gone') {
+    return (
+      <div className={styles.center}>
+        <div className={styles.errorCard} role="alert">
+          <p className={styles.errorTitle}>더 이상 열 수 없는 편지예요</p>
+        </div>
+      </div>
+    );
+  }
+
   if (status === 'error' || !letter) {
     return (
       <div className={styles.center}>
@@ -115,6 +168,7 @@ export default function Viewer(): React.ReactElement {
       token={token}
       photoUrls={photoUrls}
       photoUrlsFailed={photoUrlsFailed}
+      closingNotice={closingNotice(accessUntil)}
     />
   );
 }

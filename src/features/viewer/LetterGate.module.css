@@ -1,0 +1,116 @@
+/* 0037 읽기 게이트 — 봉투(로그인 전)·잠김 화면. 예약 공개 봉인 화면(Viewer.module.css)과 같은 다크 톤. */
+
+.screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: #0d1117;
+  color: #e8e4da;
+  text-align: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.icon {
+  margin: 0 0 0.25rem;
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #f0ece2;
+  word-break: keep-all;
+}
+
+.letterTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #f0ece2;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.sender {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #aab3bf;
+}
+
+.body {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #e8e4da;
+  word-break: keep-all;
+  line-height: 1.5;
+}
+
+.hint {
+  margin: 0.2rem 0 0;
+  font-size: 0.875rem;
+  color: #aab3bf;
+  word-break: keep-all;
+  line-height: 1.5;
+}
+
+.error {
+  margin: 0.2rem 0 0;
+  font-size: 0.875rem;
+  color: #f97066;
+  word-break: keep-all;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.primary {
+  min-width: 10rem;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 999px;
+  background: #d4af37;
+  color: #0d1117;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.secondary {
+  padding: 0.75rem 1.1rem;
+  border: 1px solid #3a414b;
+  border-radius: 999px;
+  background: transparent;
+  color: #e8e4da;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

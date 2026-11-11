@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { kakaoCodeLogin, kakaoSignup } from '@/data/auth';
+import { takePostLoginPath } from '@/lib/postLoginPath';
 import styles from './SetNickname.module.css';
 
 type Phase = 'loading' | 'nickname' | 'error';
@@ -67,7 +68,8 @@ export default function KakaoCallback(): React.ReactElement {
     setError(null);
     try {
       await kakaoSignup(idToken, finalName);
-      navigate('/welcome', { replace: true });
+      // 편지 봉투에서 로그인을 시작했으면 그 편지로 바로 돌아간다.
+      navigate(takePostLoginPath() ?? '/welcome', { replace: true });
     } catch {
       setError('가입에 실패했어요. 잠시 후 다시 시도해 주세요.');
       setBusy(false);

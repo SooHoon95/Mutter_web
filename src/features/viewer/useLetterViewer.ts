@@ -15,6 +15,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { openByToken, LinkNotYetError } from '@/data/links';
+import {
+  getLetterCover,
+  LetterGoneError,
+  LetterLockedError,
+  LoginRequiredError,
+  type LetterCover,
+} from '@/data/access';
 import { fetchLetterPhotoUrls, type PhotoUrlMap } from '@/data/letterPhotos';
 import type { LetterPhoto, MusicCue, Paragraph } from '@/data/types';
 
@@ -39,7 +46,16 @@ export interface ViewerLetter {
   audioDisabled: boolean;
 }
 
-export type ViewerStatus = 'loading' | 'needPassword' | 'notYet' | 'error' | 'ready';
+export type ViewerStatus =
+  | 'loading'
+  | 'needPassword'
+  | 'notYet'
+  // 0037 읽기 게이트: 로그인 전 봉투 · 잠김 · 삭제 대상
+  | 'login'
+  | 'locked'
+  | 'gone'
+  | 'error'
+  | 'ready';
 
 export interface UseLetterViewerResult {
   status: ViewerStatus;
@@ -60,6 +76,16 @@ export interface UseLetterViewerResult {
   photoUrls: PhotoUrlMap | null;
   /** 서명 URL 요청이 실패했는지 — true면 사진 자리에 차분한 실패 플레이스홀더. 본문은 그대로. */
   photoUrlsFailed: boolean;
+  /** status==='ready'일 때 받은 사람에게 닫히는 시각(ISO). 영구·서버 반영 전은 null. */
+  accessUntil: string | null;
+  /** status==='login'|'locked'일 때 봉투(제목·보낸 사람). 받는 중이거나 조회 실패면 null. */
+  cover: LetterCover | null;
+  /** status==='locked'일 때 다시 열 수 있는 마지막 시각(삭제 예정, ISO). */
+  deleteAt: string | null;
+  /** 마지막으로 넣은 암호 — 잠긴 편지를 편지권으로 간직할 때 같은 암호를 보낸다. */
+  password: string | null;
+  /** 같은 암호로 다시 연다(편지권으로 간직한 뒤). */
+  reload: () => void;
 }
 
 // 첫 시도가 암호 없이 실패했을 때 "암호 필요"로 해석할 정규화 메시지.
@@ -164,6 +190,11 @@ export function useLetterViewer(token: string | undefined): UseLetterViewerResul
   const [submitting, setSubmitting] = useState(false);
   const [photoUrls, setPhotoUrls] = useState<PhotoUrlMap | null>(null);
   const [photoUrlsFailed, setPhotoUrlsFailed] = useState(false);
+  const [accessUntil, setAccessUntil] = useState<string | null>(null);
+  const [cover, setCover] = useState<LetterCover | null>(null);
+  const [deleteAt, setDeleteAt] = useState<string | null>(null);
+  const [password, setPassword] = useState<string | null>(null);
+  const passwordRef = useRef<string | null>(null);
 
   // 마지막 시도가 암호 없이였는지 추적 — WRONG_PASSWORD가 오면 needPassword로 전이.
   const triedWithoutPassword = useRef(false);
@@ -179,11 +210,14 @@ export function useLetterViewer(token: string | undefined): UseLetterViewerResul
       }
 
       triedWithoutPassword.current = password === undefined;
+      passwordRef.current = password ?? null;
+      setPassword(password ?? null);
       try {
         const payload = await openByToken(token, password);
         if (!aliveRef.current) return;
         const normalized = normalizeLetter(payload);
         setLetter(normalized);
+        setAccessUntil(payload.isPermanent ? null : payload.accessUntil);
         setStatus('ready');
         setErrorMessage(null);
         // 사진이 있으면 같은 토큰·암호로 서명 URL을 한 번 받는다(설계 §5).
@@ -205,6 +239,25 @@ export function useLetterViewer(token: string | undefined): UseLetterViewerResul
           setRevealAt(err.revealAt);
           setStatus('notYet');
           setErrorMessage(null);
+          return;
+        }
+        // 0037 읽기 게이트. 봉투(제목·보낸 사람)는 부가 정보라 실패하면 조용히 빈 겉면으로 둔다.
+        if (err instanceof LoginRequiredError || err instanceof LetterLockedError) {
+          setDeleteAt(err instanceof LetterLockedError ? err.deleteAt : null);
+          setStatus(err instanceof LetterLockedError ? 'locked' : 'login');
+          setErrorMessage(null);
+          void getLetterCover(token)
+            .then((c) => {
+              if (aliveRef.current) setCover(c);
+            })
+            .catch(() => {
+              /* 서버 반영 전·일시 오류 — 겉면 없이 안내만 */
+            });
+          return;
+        }
+        if (err instanceof LetterGoneError) {
+          setStatus('gone');
+          setErrorMessage(err.message);
           return;
         }
         const message = err instanceof Error ? err.message : '편지를 불러올 수 없습니다.';
@@ -241,6 +294,11 @@ export function useLetterViewer(token: string | undefined): UseLetterViewerResul
     [attempt],
   );
 
+  const reload = useCallback(() => {
+    setStatus('loading');
+    void attempt(passwordRef.current ?? undefined);
+  }, [attempt]);
+
   return {
     status,
     letter,
@@ -250,5 +308,10 @@ export function useLetterViewer(token: string | undefined): UseLetterViewerResul
     submitPassword,
     photoUrls,
     photoUrlsFailed,
+    accessUntil,
+    cover,
+    deleteAt,
+    password,
+    reload,
   };
 }

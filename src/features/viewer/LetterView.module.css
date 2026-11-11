@@ -123,3 +123,13 @@
   border-left: 3px solid var(--tpl-muted, #8a7a5e);
   border-radius: 0 4px 4px 0;
 }
+
+/* 0037 닫힘 예고 — 본문 아래 조용한 한 줄. */
+.closingNotice {
+  max-width: 40rem;
+  margin: 0 auto 1.5rem;
+  padding: 0 1.25rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--tpl-muted, #8a7a5e);
+}
