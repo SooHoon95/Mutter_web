@@ -227,6 +227,12 @@ export default function Sent(): React.ReactElement {
             <h2 id="delete-letter-modal-title" className={styles.modalTitle}>
               편지를 삭제함으로 옮길까요?
             </h2>
+            {/* 받은 사람이 편지권으로 간직한 편지면 영구가 풀린다는 경고를 먼저 보인다(0038 환급). */}
+            {accessStates.get(deleteTargetId)?.keptByRecipient === true && (
+              <p className={styles.modalBody}>
+                <strong>받은 분이 편지권으로 간직한 편지예요. 지우면 영구가 풀려요.</strong>
+              </p>
+            )}
             <p className={styles.modalBody}>
               받은 사람에게도 보이지 않게 돼요. 삭제함에서 30일 안에 되살릴 수 있고, 그 뒤엔 완전히
               지워져요.

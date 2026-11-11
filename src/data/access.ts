@@ -79,6 +79,8 @@ export interface LetterAccess {
   accessUntil: string | null;
   /** 삭제 예정 시각. */
   deleteAt: string | null;
+  /** 받은 사람이 자기 편지권으로 영구로 만든 편지(보낸 사람에게만 true). 삭제 확인 경고용. */
+  keptByRecipient: boolean;
 }
 
 function toState(raw: unknown): LetterState {
@@ -90,6 +92,7 @@ interface AccessStateRow {
   state: string;
   access_until: string | null;
   delete_at: string | null;
+  kept_by_recipient?: boolean | null;
 }
 
 /**
@@ -105,7 +108,12 @@ export async function getLetterAccessStates(letterIds: string[]): Promise<Map<st
   return new Map(
     ((data ?? []) as AccessStateRow[]).map((row) => [
       row.letter_id,
-      { state: toState(row.state), accessUntil: row.access_until, deleteAt: row.delete_at },
+      {
+        state: toState(row.state),
+        accessUntil: row.access_until,
+        deleteAt: row.delete_at,
+        keptByRecipient: row.kept_by_recipient === true,
+      },
     ]),
   );
 }
@@ -155,6 +163,7 @@ export async function getLetterCover(token: string): Promise<LetterCover> {
       state: toState(row.state),
       accessUntil: row.access_until ?? null,
       deleteAt: row.delete_at ?? null,
+      keptByRecipient: false,
     },
     loginRequired: row.login_required === true,
   };
