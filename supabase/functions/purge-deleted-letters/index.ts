@@ -1,9 +1,10 @@
 // supabase/functions/purge-deleted-letters/index.ts
 //
-// 삭제함(letters_all.deleted_at, 0035)에서 보관 기간(30일)이 지난 편지를 사진까지 영구 삭제한다.
-// pg_cron이 매일 03:00 KST에 pg_net으로 호출한다.
+// 두 종류의 편지를 사진까지 영구 삭제한다. pg_cron이 매일 03:00 KST에 pg_net으로 호출한다.
+//   1) 삭제함(letters_all.deleted_at, 0035)에서 보관 기간(30일)이 지난 편지
+//   2) 무료 기간과 잠김 유예가 모두 끝난 편지(0036~0039 — 영구 편지권을 붙이지 않은 편지)
 //
-// 요청: POST, 본문 없음. 응답 200 { purged: number, failed: number }
+// 요청: POST, 본문 없음. 응답 200 { purged: number, failed: number, expired: number }
 // 인증 없음(verify_jwt=false) — 기한이 지난 것만 지우므로 누가 불러도 정리가 앞당겨질 뿐 무해하다.
 //
 // 순서: 사진 폴더(<owner_id>/<letter_id>/)를 먼저 지우고 행을 지운다(연관 행은 FK cascade).
@@ -73,5 +74,31 @@ Deno.serve(async (req) => {
     }
   }
 
-  return json(200, { purged, failed });
+  // 2) 유예가 끝난 무료 편지. 지우기 직전에 claim_expired_letter로 다시 확인한다 —
+  //    목록을 받은 뒤 편지권이 붙은 편지의 사진을 지우면 되돌릴 수 없다.
+  let expired = 0;
+  const { data: expiredRows, error: expiredError } = await admin.rpc('expired_letter_ids', {
+    p_limit: BATCH,
+  });
+  if (expiredError) return json(500, { error: expiredError.message });
+
+  for (const row of (expiredRows ?? []) as { id: string; owner_id: string }[]) {
+    try {
+      const { data: claimed, error: claimError } = await admin.rpc('claim_expired_letter', {
+        p_letter_id: row.id,
+      });
+      if (claimError) throw new Error(claimError.message);
+      if (claimed !== true) continue; // 그사이 영구가 됐다
+
+      await removePhotoFolder(row.owner_id, row.id);
+      const { error: deleteError } = await admin.from('letters_all').delete().eq('id', row.id);
+      if (deleteError) throw new Error(deleteError.message);
+      expired += 1;
+    } catch (e) {
+      failed += 1;
+      console.error(`[purge-deleted-letters] expired ${row.id}: ${(e as Error).message}`);
+    }
+  }
+
+  return json(200, { purged, failed, expired });
 });
