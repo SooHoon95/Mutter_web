@@ -46,6 +46,8 @@ const samplePayload: LetterPayload = {
   templateId: 'classic-serif',
   cues: [],
   audioDisabled: false,
+  isPermanent: false,
+  accessUntil: null,
 };
 
 beforeEach(() => {

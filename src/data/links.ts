@@ -11,6 +11,7 @@
 
 import { getSupabase } from './supabase';
 import { generateToken } from '../lib/token';
+import { toAccessError } from './access';
 import type { DeliveryLink } from './types';
 
 // ---------------------------------------------------------------------------
@@ -103,6 +104,10 @@ export interface LetterPayload {
   cues: unknown;
   /** T9: 권리주장자 takedown 통지로 오디오가 비활성화된 경우 true. 본문은 유지된다. */
   audioDisabled: boolean;
+  /** 0037: 기간 제한 없는 편지. 서버 반영 전 응답에는 키가 없어 false. */
+  isPermanent: boolean;
+  /** 0037: 받은 사람에게 닫히는 시각(ISO). 영구·아직 안 열린 편지·서버 반영 전은 null. */
+  accessUntil: string | null;
 }
 
 /**
@@ -293,6 +298,9 @@ export async function openByToken(
     const msg = extractMessage(error);
     const notYet = msg.match(/NOT_YET_REVEALED:(.+)$/);
     if (notYet) throw new LinkNotYetError(notYet[1].trim());
+    // 0037 읽기 게이트: 로그인 요구·잠김·삭제 대상은 화면이 분기하도록 타입 있는 에러로.
+    const accessError = toAccessError(error);
+    if (accessError) throw accessError;
     normalizeOpenError(error);
   }
   if (!data) throw new Error('편지를 찾을 수 없습니다.');
@@ -305,6 +313,8 @@ export async function openByToken(
     template_id: string;
     cues: unknown;
     audio_disabled: boolean;
+    is_permanent?: boolean;
+    access_until?: string | null;
   };
 
   return {
@@ -314,6 +324,8 @@ export async function openByToken(
     templateId: raw.template_id,
     cues: raw.cues,
     audioDisabled: raw.audio_disabled === true,
+    isPermanent: raw.is_permanent === true,
+    accessUntil: raw.access_until ?? null,
   };
 }
 
