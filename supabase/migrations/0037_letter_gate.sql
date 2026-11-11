@@ -274,18 +274,27 @@ revoke all on function public.get_letter_readers(uuid) from public, anon, authen
 grant execute on function public.get_letter_readers(uuid) to authenticated;
 
 -- 내가 보냈거나 받은 편지함에 가진 편지만 돌려준다(나머지 id는 조용히 빠진다).
+-- kept_by_recipient: 받은 사람이 자기 편지권으로 영구로 만든 편지인가. 보낸 사람에게만 true가 된다
+-- (삭제 확인에서 "지우면 영구가 풀려요"를 알리는 데 쓴다. 받은 사람에게 남의 결제 여부를 알리지 않는다).
 create or replace function public.get_letter_access_states(p_letter_ids uuid[])
 returns table (
-  letter_id    uuid,
-  state        text,
-  access_until timestamptz,
-  delete_at    timestamptz
+  letter_id         uuid,
+  state             text,
+  access_until      timestamptz,
+  delete_at         timestamptz,
+  kept_by_recipient boolean
 )
 language plpgsql stable security definer set search_path = public as $$
 begin
   if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
   return query
-    select l.id, s.state, s.access_until, s.delete_at
+    select l.id, s.state, s.access_until, s.delete_at,
+           l.owner_id = auth.uid() and exists (
+             select 1 from letter_access a
+              where a.letter_id = l.id
+                and a.permanent_source = 'ticket'
+                and a.permanent_by is distinct from l.owner_id
+           )
       from letters_all l
       cross join lateral private.letter_state(l.id) s
      where l.id = any (p_letter_ids)
