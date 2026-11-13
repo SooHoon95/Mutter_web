@@ -97,6 +97,20 @@ export async function keepReceivedLetter(token: string, password: string | null)
   if (error) throwMapped(error);
 }
 
+/**
+ * 받은 사람이 잠긴 편지를 보낸 사람에게 "간직하고 싶어요"로 알린다(0040, 편지권을 쓰지 않는다).
+ * 새로 알렸으면 true, 이미 알렸거나 알릴 일이 없으면(영구·내 편지) false — 둘 다 성공이다.
+ * 링크 오류들과 AUTH_REQUIRED·LETTER_GONE. p_password는 없어도 null을 보낸다.
+ */
+export async function requestKeepLetter(token: string, password: string | null): Promise<boolean> {
+  const { data, error } = await getSupabase().rpc('request_keep_letter', {
+    p_token: token,
+    p_password: password ?? null,
+  });
+  if (error) throwMapped(error);
+  return data === true;
+}
+
 // ---------------------------------------------------------------------------
 // 사본 — Edge Function duplicate-letter
 // ---------------------------------------------------------------------------

@@ -1,6 +1,8 @@
 // SentLetterDetail — 보낸 편지 상세(0037·0038). 보낸 편지 목록의 펼친 패널에서 LinkManager 위에 놓인다.
 //
 //   - 열람자: "{닉네임} · {M}월 {D}일에 열어봄"(get_letter_readers). 조회 실패·아무도 안 열었으면 숨김.
+//   - 간직 요청자(0040): keep_request_count > 0이면 get_letter_keep_requests로 받아 영구 버튼 바로 위에
+//     "{닉네임}님이 간직하고 싶어 해요". 영구가 되면 상태 재조회로 건수가 0이 되어 사라진다.
 //   - 영구 편지로 만들기 · 편지권 1장: 영구가 아닌 편지에, 편지권을 쓸 수 있을 때만. 잔액이 없으면 앱 안내.
 //   - 같은 내용으로 한 통 더 보내기: duplicate-letter로 새 편지를 만들고 기존 발송 흐름(/create/:id)으로.
 // 서버 반영 전에는 편지권 조회가 null이라 위 기능이 모두 숨는다(오늘의 화면 그대로).
@@ -8,7 +10,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getLetterReaders, LetterGoneError, NoTicketError, type LetterAccess } from '@/data/access';
+import {
+  getLetterKeepRequests,
+  getLetterReaders,
+  LetterGoneError,
+  NoTicketError,
+  type LetterAccess,
+} from '@/data/access';
 import { duplicateLetter, makeLetterPermanent } from '@/data/tickets';
 import {
   useEntitlements,
@@ -32,6 +40,14 @@ export function SentLetterDetail({ letterId, access }: SentLetterDetailProps): R
   const { data: readers } = useQuery({
     queryKey: ['letterReaders', letterId],
     queryFn: () => getLetterReaders(letterId).catch(() => []),
+    retry: false,
+  });
+
+  const keepRequestCount = access?.keepRequestCount ?? 0;
+  const { data: keepRequests } = useQuery({
+    queryKey: ['letterKeepRequests', letterId, keepRequestCount],
+    queryFn: () => getLetterKeepRequests(letterId).catch(() => []),
+    enabled: keepRequestCount > 0,
     retry: false,
   });
 
@@ -75,8 +91,9 @@ export function SentLetterDetail({ letterId, access }: SentLetterDetailProps): R
   }
 
   const hasReaders = !!readers && readers.length > 0;
+  const hasKeepRequests = keepRequestCount > 0 && !!keepRequests && keepRequests.length > 0;
   // 서버(0038) 반영 전이면 entitlements가 null — 새 기능을 통째로 숨긴다.
-  if (!hasReaders && entitlements === null) return null;
+  if (!hasReaders && !hasKeepRequests && entitlements === null) return null;
 
   return (
     <div className={styles.container}>
@@ -91,6 +108,18 @@ export function SentLetterDetail({ letterId, access }: SentLetterDetailProps): R
             ))}
           </ul>
         </div>
+      )}
+
+      {hasKeepRequests && (
+        <ul className={styles.readers}>
+          {keepRequests.map((r) => (
+            <li key={r.userId} className={styles.reader}>
+              {r.nickname?.trim()
+                ? `${r.nickname.trim()}님이 간직하고 싶어 해요`
+                : '이름 없는 사용자가 간직하고 싶어 해요'}
+            </li>
+          ))}
+        </ul>
       )}
 
       {entitlements !== null && (

@@ -156,6 +156,13 @@ export default function Sent(): React.ReactElement {
                       const label = labelFor(letter.id);
                       return label ? <span className={styles.cardAccess}> · {label}</span> : null;
                     })()}
+                    {(() => {
+                      // 0040 간직 요청 — 받은 사람이 보낸 사람에게 영구 편지를 요청한 수.
+                      const count = accessStates.get(letter.id)?.keepRequestCount ?? 0;
+                      return count > 0 ? (
+                        <span className={styles.cardAccess}> · 간직 요청 {count}</span>
+                      ) : null;
+                    })()}
                   </p>
                   <p className={styles.cardRecipient}>
                     {(() => {
