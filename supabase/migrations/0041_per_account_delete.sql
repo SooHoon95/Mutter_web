@@ -170,6 +170,51 @@ begin
 end $$;
 revoke all on function private.open_letter(text, text, boolean) from public, anon, authenticated;
 
+-- get_letter_by_token — 0037과 같고 is_mine만 더한다: 받은 사람용 "간직하기"를 보낸 사람 본인에게 보이지 않게.
+create or replace function public.get_letter_by_token(
+  p_token    text,
+  p_password text
+)
+returns json
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_letter letters_all;
+  v_state  text;
+  v_until  timestamptz;
+  v_result json;
+begin
+  v_letter := private.open_letter(p_token, p_password, true);
+
+  select s.state, s.access_until into v_state, v_until from private.letter_state(v_letter.id) s;
+
+  v_result := json_build_object(
+    'id',             v_letter.id,
+    'title',          v_letter.title,
+    'paragraphs',     v_letter.paragraphs,
+    'template_id',    v_letter.template_id,
+    'cues',           '[]'::json,
+    'audio_disabled', v_letter.audio_disabled,
+    'is_permanent',   v_state = 'permanent',
+    'access_until',   v_until,
+    'is_mine',        auth.uid() is not null and auth.uid() = v_letter.owner_id
+  );
+
+  if auth.uid() is not null and auth.uid() <> v_letter.owner_id then
+    insert into inbox (user_id, letter_id, token)
+    values (auth.uid(), v_letter.id, p_token)
+    on conflict (user_id, letter_id)
+      do update set token = excluded.token, saved_at = now();
+  end if;
+
+  return v_result;
+end;
+$$;
+revoke all on function public.get_letter_by_token(text, text) from public;
+grant execute on function public.get_letter_by_token(text, text) to anon, authenticated;
+
 create or replace function public.get_letter_cover(p_token text)
 returns json
 language plpgsql stable security definer set search_path = public as $$
