@@ -1,7 +1,8 @@
 -- supabase/dev/mock_cases.sql
 --
 -- 로컬 개발 서버 전용 목데이터 — 영구 편지권 화면을 케이스별로 볼 수 있게 한다.
--- 실행: scripts/dev-mock.sh [계정A 이메일] [계정B 이메일]   (기본 sender@test.local, recipient@test.local)
+-- 실행: scripts/dev-mock.sh [계정A 이메일] [계정B 이메일] [계정A 편지권 장수]
+--       (기본 sender@test.local, recipient@test.local, 3장. 결제 화면을 보려면 0)
 --
 -- 두 계정이 같은 케이스 묶음을 서로에게 보낸 상태를 만든다 → 어느 쪽으로 로그인해도
 -- 보낸 편지 목록과 받은 편지함에서 모든 케이스가 보인다.
@@ -10,13 +11,14 @@
 -- 다시 실행하면 이전 목데이터(토큰이 mock- 로 시작하는 편지)를 지우고 새로 만든다.
 -- 날짜는 실행 시각 기준이라 하루가 지나면 "내일 닫힘"이 "닫힘"이 된다 — 그때 다시 실행한다.
 
-select set_config('mock.a', :'a', false), set_config('mock.b', :'b', false) \gset
+select set_config('mock.a', :'a', false), set_config('mock.b', :'b', false),
+       set_config('mock.tickets', :'tickets', false) \gset
 
 do $$
 declare
   a uuid; b uuid; g uuid;
   s uuid; r uuid; tag text; c jsonb; l uuid; tok text;
-  v_age int; v_opened int; v_para jsonb; u uuid; v_bal int;
+  v_age int; v_opened int; v_para jsonb; u uuid; v_bal int; v_target int;
   cases jsonb := $j$[
     {"k":"perm","title":"영구 편지 · 보낸 사람이 편지권 사용","tpl":"classic-serif","age":20,"opened":18,"sp":true,
      "body":["보내기 전에 '영구 편지로 보내기'를 고른 편지예요.","받은 사람이 연 지 18일이 지났지만 닫히지 않아요. 편지 끝에 닫힘 안내나 '계속 간직하기'가 보이면 안 돼요.","보낸 사람 목록에는 영구 편지로 표시돼요."]},
@@ -63,7 +65,7 @@ begin
   update profiles set nickname = '보내는이' where id = a and nickname is null;
   update profiles set nickname = '받는이'   where id = b and nickname is null;
 
-  -- 편지권: 목데이터가 쓸 만큼 먼저 넣고, 끝에서 3장으로 맞춘다
+  -- 편지권: 목데이터가 쓸 만큼 먼저 넣고, 끝에서 정한 장수로 맞춘다
   delete from ticket_ledger where user_id in (a, b) and purchase_id is null;
   insert into ticket_ledger (user_id, delta, reason) values (a, 5, 'grant'), (b, 5, 'grant');
 
@@ -183,11 +185,12 @@ begin
 
   delete from auth.users where id = g;   -- 탈퇴: 편지는 받은 사람에게 남는다
 
-  -- 편지권을 3장으로 맞춘다
+  -- 편지권을 맞춘다: 계정A는 지정한 장수(기본 3), 계정B는 3장
   foreach u in array array[a, b] loop
     v_bal := private.ticket_balance(u);
-    if v_bal <> 3 then
-      insert into ticket_ledger (user_id, delta, reason) values (u, 3 - v_bal, 'grant');
+    v_target := case when u = a then current_setting('mock.tickets')::int else 3 end;
+    if v_bal <> v_target then
+      insert into ticket_ledger (user_id, delta, reason) values (u, v_target - v_bal, 'grant');
     end if;
   end loop;
 end $$;
