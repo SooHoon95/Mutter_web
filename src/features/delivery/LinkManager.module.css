@@ -215,43 +215,99 @@
   padding: 1rem 0;
 }
 
-/* 보내기 전 선택(SendChoiceGate) — 발급 폼과 같은 상자 안에 선택지 둘. 영구가 먼저·강조. */
-.choice {
+/* 보내기 전 선택(SendChoiceGate) — 발급 폼과 같은 상자 안에서 라디오로 고르고, 맨 아래 버튼으로 진행한다. */
+.choiceGroup {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.2rem;
-  width: 100%;
+  gap: 0.5rem;
+}
+
+.choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   padding: 0.75rem;
   border: 1px solid var(--border-secondary);
   border-radius: var(--radius-xs);
   background: var(--bg-primary);
   color: var(--text-primary);
-  text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
 }
 
-.choice:hover:not(:disabled) {
+.choice:hover:not(.choiceDisabled) {
   border-color: var(--border-brand);
 }
 
-.choice:disabled {
+.choiceSelected {
+  border-color: var(--border-brand);
+  background: var(--bg-brand-subtle);
+  box-shadow: 0 0 0 0.5px var(--border-brand);
+}
+
+.choiceDisabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.choicePrimary {
-  border: 1.5px solid var(--border-brand);
+/* 실제 라디오는 화면에서만 숨긴다 — 키보드(Tab·방향키)와 보조기기는 그대로 쓴다. */
+.choiceInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.choiceDot {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1.5px solid var(--border-primary);
+  border-radius: var(--radius-full);
+  background: var(--bg-primary);
+}
+
+.choiceDot::after {
+  content: '';
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-brand);
+  transform: scale(0);
+  transition: transform 0.15s;
+}
+
+.choiceInput:checked + .choiceDot {
+  border-color: var(--border-brand);
+}
+
+.choiceInput:checked + .choiceDot::after {
+  transform: scale(1);
+}
+
+.choiceInput:focus-visible + .choiceDot {
+  outline: 2px solid var(--gold-deep);
+  outline-offset: 2px;
+}
+
+.choiceBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
 .choiceTitle {
   font-size: 0.9375rem;
   font-weight: 600;
-}
-
-.choicePrimary .choiceTitle {
-  color: var(--text-brand);
 }
 
 .choiceDesc {
@@ -261,11 +317,23 @@
 
 .choiceMeta {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  font-weight: 600;
+  color: var(--text-brand);
 }
 
-.choiceConfirm {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+.choicePrice {
+  flex: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.choiceSelected .choicePrice {
+  color: var(--text-brand);
+}
+
+/* 카드 맨 아래 진행 버튼 — 발급 버튼(.issueBtn)과 같은 모양을 카드 폭으로. */
+.choiceSubmit {
+  align-self: stretch;
+  padding: 0.625rem 1rem;
 }
