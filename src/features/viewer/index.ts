@@ -7,5 +7,6 @@ export { LetterView } from './LetterView';
 export { PasswordGate } from './PasswordGate';
 export { LetterEnvelope } from './LetterEnvelope';
 export { LockedLetter } from './LockedLetter';
+export { LetterKeepNotice } from './LetterKeepNotice';
 export { AudioUnlockGate } from './AudioUnlockGate';
 export { Credits } from './Credits';

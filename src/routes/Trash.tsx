@@ -66,7 +66,9 @@ export default function Trash(): React.ReactElement {
   return (
     <main className={sent.page}>
       <h1 className={sent.heading}>보낸 편지 삭제함</h1>
-      <p className={styles.notice}>삭제한 편지는 30일 동안 보관된 뒤 완전히 지워져요.</p>
+      <p className={styles.notice}>
+        삭제한 편지는 30일 동안 보관된 뒤 완전히 지워져요. 이미 받은 분의 편지함에는 남아요.
+      </p>
 
       {error && <p className={sent.errorMsg}>{error}</p>}
 
@@ -118,7 +120,7 @@ export default function Trash(): React.ReactElement {
             <h2 id="purge-modal-title" className={sent.modalTitle}>
               완전히 삭제할까요?
             </h2>
-            <p className={sent.modalBody}>되돌릴 수 없어요. 사진도 함께 지워져요.</p>
+            <p className={sent.modalBody}>되돌릴 수 없어요. 이미 받은 분의 편지함에는 남아요.</p>
             <div className={sent.modalActions}>
               <button
                 type="button"

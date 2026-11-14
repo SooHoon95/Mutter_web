@@ -18,11 +18,15 @@ export function monthDay(iso: string): string {
   return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
 
-/** 받은 사람 뷰어의 닫힘 예고 — 남은 기간이 3일 이하일 때만, 그 전에는 null. */
-export function closingNotice(accessUntil: string | null, now: Date = new Date()): string | null {
+/** 받은 사람 뷰어의 닫힘 예고 — 남은 기간이 warnDays일 이하일 때만, 그 전에는 null. */
+export function closingNotice(
+  accessUntil: string | null,
+  warnDays: number,
+  now: Date = new Date(),
+): string | null {
   if (!accessUntil) return null;
   const days = calendarDaysUntil(accessUntil, now);
-  if (days > 3) return null;
+  if (days > warnDays) return null;
   return days <= 0 ? '이 편지는 오늘 닫혀요' : `이 편지는 ${days}일 뒤 닫혀요`;
 }
 

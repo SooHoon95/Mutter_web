@@ -156,13 +156,6 @@ export default function Sent(): React.ReactElement {
                       const label = labelFor(letter.id);
                       return label ? <span className={styles.cardAccess}> · {label}</span> : null;
                     })()}
-                    {(() => {
-                      // 0040 간직 요청 — 받은 사람이 보낸 사람에게 영구 편지를 요청한 수.
-                      const count = accessStates.get(letter.id)?.keepRequestCount ?? 0;
-                      return count > 0 ? (
-                        <span className={styles.cardAccess}> · 간직 요청 {count}</span>
-                      ) : null;
-                    })()}
                   </p>
                   <p className={styles.cardRecipient}>
                     {(() => {
@@ -245,15 +238,10 @@ export default function Sent(): React.ReactElement {
             <h2 id="delete-letter-modal-title" className={styles.modalTitle}>
               편지를 삭제함으로 옮길까요?
             </h2>
-            {/* 받은 사람이 편지권으로 간직한 편지면 영구가 풀린다는 경고를 먼저 보인다(0038 환급). */}
-            {accessStates.get(deleteTargetId)?.keptByRecipient === true && (
-              <p className={styles.modalBody}>
-                <strong>받은 분이 편지권으로 간직한 편지예요. 지우면 영구가 풀려요.</strong>
-              </p>
-            )}
+            {/* 0041 삭제는 계정 단위 — 받은 편지함에 가진 사람은 계속 연다. 링크로만 읽던 사람에게는 닫힌다. */}
             <p className={styles.modalBody}>
-              받은 사람에게도 보이지 않게 돼요. 삭제함에서 30일 안에 되살릴 수 있고, 그 뒤엔 완전히
-              지워져요.
+              이미 받은 분의 편지함에는 남아요. 아직 받지 않은 분은 링크로 열 수 없게 돼요. 삭제함에서
+              30일 안에 되살릴 수 있어요.
             </p>
             {deleteError && <p className={styles.errorMsg}>{deleteError}</p>}
             <div className={styles.modalActions}>

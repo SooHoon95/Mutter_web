@@ -18,6 +18,8 @@ export interface Entitlements {
   paidEnabled: boolean;
   freeDays: number;
   graceDays: number;
+  /** 닫힘 예고를 며칠 전부터 보일지(0041). 키가 없으면 2. */
+  warnDays: number;
 }
 
 interface EntitlementsRow {
@@ -26,6 +28,7 @@ interface EntitlementsRow {
   paid_enabled: boolean | null;
   free_days: number;
   grace_days: number;
+  warn_days?: number | null;
 }
 
 /** 내 편지권 잔액과 화면 노출 판단에 쓰는 값. 로그인 필요. */
@@ -39,6 +42,7 @@ export async function getMyEntitlements(): Promise<Entitlements> {
     paidEnabled: row.paid_enabled === true,
     freeDays: Number(row.free_days),
     graceDays: Number(row.grace_days),
+    warnDays: Number(row.warn_days ?? 2),
   };
 }
 
@@ -87,6 +91,7 @@ export async function makeLetterPermanent(letterId: string): Promise<void> {
 
 /**
  * 받은 사람이 링크로 받은 편지를 간직한다. 성공하면 받은 편지함에 들어간다.
+ * 무료 기간 안(open)에도, 잠긴 뒤(locked)에도 쓸 수 있다(0041).
  * p_password는 암호가 없어도 키를 생략하지 않고 null을 보낸다(PostgREST 함수 매칭).
  */
 export async function keepReceivedLetter(token: string, password: string | null): Promise<void> {
@@ -95,20 +100,6 @@ export async function keepReceivedLetter(token: string, password: string | null)
     p_password: password,
   });
   if (error) throwMapped(error);
-}
-
-/**
- * 받은 사람이 잠긴 편지를 보낸 사람에게 "간직하고 싶어요"로 알린다(0040, 편지권을 쓰지 않는다).
- * 새로 알렸으면 true, 이미 알렸거나 알릴 일이 없으면(영구·내 편지) false — 둘 다 성공이다.
- * 링크 오류들과 AUTH_REQUIRED·LETTER_GONE. p_password는 없어도 null을 보낸다.
- */
-export async function requestKeepLetter(token: string, password: string | null): Promise<boolean> {
-  const { data, error } = await getSupabase().rpc('request_keep_letter', {
-    p_token: token,
-    p_password: password ?? null,
-  });
-  if (error) throwMapped(error);
-  return data === true;
 }
 
 // ---------------------------------------------------------------------------

@@ -9,23 +9,24 @@
 //   needPassword → PasswordGate (암호 재시도)
 //   login        → LetterEnvelope (0037: 로그인해야 열리는 편지 — 로그인 뒤 같은 링크로 복귀)
 //   locked       → LockedLetter (0037: 무료 기간 끝 — 편지권으로 간직하기/앱 안내)
+//   (ready 본문 끝에는 LetterKeepNotice — 기간 안내·닫힘 예고와 간직하기)
 //   gone         → "더 이상 열 수 없는 편지예요"
 //   error        → 정규화된 사용자 메시지
 //   ready        → LetterView (AudioUnlockGate → 스크롤 동기 본문)
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { injectNoIndex, removeNoIndex } from '@/lib/noindex';
 import { openAppScheme, appLetterUrl, HANDOFF_ENABLED } from '@/lib/appLinks';
 import { isIOS, isInAppBrowser } from '@/lib/device';
 import { rememberPostLoginPath } from '@/lib/postLoginPath';
-import { closingNotice } from '@/lib/accessLabel';
 import {
   useLetterViewer,
   LetterView,
   PasswordGate,
   LetterEnvelope,
   LockedLetter,
+  LetterKeepNotice,
 } from '@/features/viewer';
 import styles from './Viewer.module.css';
 
@@ -66,6 +67,8 @@ export default function Viewer(): React.ReactElement {
     password,
     reload,
   } = useLetterViewer(token);
+  // 이 화면에서 편지권으로 간직했는지 — 본문 끝 안내가 "간직한 편지예요"로 바뀐다(잠김에서 간직해 다시 연 뒤에도).
+  const [kept, setKept] = useState(false);
 
   if (status === 'notYet') {
     // 0018 예약 공개: reveal_at 이전 — 본문/암호 없이 "이 시각에 열려요"만 안내.
@@ -134,7 +137,10 @@ export default function Viewer(): React.ReactElement {
         password={password}
         cover={cover}
         deleteAt={deleteAt}
-        onKept={reload}
+        onKept={() => {
+          setKept(true);
+          reload();
+        }}
       />
     );
   }
@@ -168,7 +174,18 @@ export default function Viewer(): React.ReactElement {
       token={token}
       photoUrls={photoUrls}
       photoUrlsFailed={photoUrlsFailed}
-      closingNotice={closingNotice(accessUntil)}
+      endNotice={
+        token && (
+          <LetterKeepNotice
+            letterId={letter.id}
+            token={token}
+            password={password}
+            accessUntil={accessUntil}
+            kept={kept}
+            onKept={() => setKept(true)}
+          />
+        )
+      }
     />
   );
 }

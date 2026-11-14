@@ -133,3 +133,37 @@
   font-size: 0.8125rem;
   color: var(--tpl-muted, #8a7a5e);
 }
+
+/* 받은 사람의 간직하기(LetterKeepNotice·KeepLetterAction) — 닫힘 예고 줄 안의 글자 버튼. */
+.keepButton {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.keepButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.keepText {
+  display: block;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.keepActions {
+  display: inline-flex;
+  gap: 1rem;
+}
+
+.keepError {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text-error, #b42318);
+}

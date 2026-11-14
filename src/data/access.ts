@@ -3,7 +3,7 @@
 //
 // - 봉투(get_letter_cover): 로그인 전 화면·잠김 화면의 겉면(제목·보낸 사람). 본문·열람 기록 없음.
 // - 목록 상태(get_letter_access_states): 보낸 편지·받은 편지함에 합칠 영구/남은 기간/닫힘.
-// - 열람자(get_letter_readers)·간직 요청자(get_letter_keep_requests): 보낸 사람(소유자)만.
+// - 열람자(get_letter_readers): 보낸 사람(소유자)만.
 // - 게이트 오류 코드(LOGIN_REQUIRED·LETTER_LOCKED:<ISO>·LETTER_GONE·NO_TICKET)를 타입 있는 에러로 바꾼다.
 
 import { getSupabase } from './supabase';
@@ -79,10 +79,6 @@ export interface LetterAccess {
   accessUntil: string | null;
   /** 삭제 예정 시각. */
   deleteAt: string | null;
-  /** 받은 사람이 자기 편지권으로 영구로 만든 편지(보낸 사람에게만 true). 삭제 확인 경고용. */
-  keptByRecipient: boolean;
-  /** 간직 요청 수(보낸 사람에게만, 영구가 아닌 편지에만 0보다 크다). 서버 0040 반영 전이면 0. */
-  keepRequestCount: number;
 }
 
 function toState(raw: unknown): LetterState {
@@ -94,8 +90,6 @@ interface AccessStateRow {
   state: string;
   access_until: string | null;
   delete_at: string | null;
-  kept_by_recipient?: boolean | null;
-  keep_request_count?: number | null;
 }
 
 /**
@@ -115,8 +109,6 @@ export async function getLetterAccessStates(letterIds: string[]): Promise<Map<st
         state: toState(row.state),
         accessUntil: row.access_until,
         deleteAt: row.delete_at,
-        keptByRecipient: row.kept_by_recipient === true,
-        keepRequestCount: Number(row.keep_request_count ?? 0),
       },
     ]),
   );
@@ -139,8 +131,6 @@ export type LetterCover =
       access: LetterAccess;
       /** 이 편지가 로그인을 요구하는지(호출자의 로그인 여부와 무관). */
       loginRequired: boolean;
-      /** 호출한 로그인 사용자가 이 편지에 간직 요청을 이미 보냈는지(익명·서버 0040 반영 전이면 false). */
-      keepRequested: boolean;
     };
 
 interface CoverRow {
@@ -152,7 +142,6 @@ interface CoverRow {
   access_until?: string | null;
   delete_at?: string | null;
   login_required?: boolean | null;
-  keep_requested?: boolean | null;
 }
 
 /** 토큰의 봉투(겉면)를 받는다. anon·로그인 모두 호출 가능, 부수효과 없음. */
@@ -170,11 +159,8 @@ export async function getLetterCover(token: string): Promise<LetterCover> {
       state: toState(row.state),
       accessUntil: row.access_until ?? null,
       deleteAt: row.delete_at ?? null,
-      keptByRecipient: false,
-      keepRequestCount: 0,
     },
     loginRequired: row.login_required === true,
-    keepRequested: row.keep_requested === true,
   };
 }
 
@@ -208,32 +194,5 @@ export async function getLetterReaders(letterId: string): Promise<LetterReader[]
     firstOpenedAt: row.first_opened_at,
     lastOpenedAt: row.last_opened_at,
     openCount: Number(row.open_count),
-  }));
-}
-
-// ---------------------------------------------------------------------------
-// 간직 요청자 (보낸 사람 전용)
-// ---------------------------------------------------------------------------
-
-export interface LetterKeepRequest {
-  userId: string;
-  nickname: string | null;
-  requestedAt: string;
-}
-
-interface KeepRequestRow {
-  user_id: string;
-  nickname: string | null;
-  requested_at: string;
-}
-
-/** 내 편지에 간직 요청을 보낸 사람들 — 요청한 순. 소유자가 아니면 서버가 FORBIDDEN. */
-export async function getLetterKeepRequests(letterId: string): Promise<LetterKeepRequest[]> {
-  const { data, error } = await getSupabase().rpc('get_letter_keep_requests', { p_letter_id: letterId });
-  if (error) throw error;
-  return ((data ?? []) as KeepRequestRow[]).map((row) => ({
-    userId: row.user_id,
-    nickname: row.nickname,
-    requestedAt: row.requested_at,
   }));
 }

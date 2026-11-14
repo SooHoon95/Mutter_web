@@ -38,8 +38,8 @@ interface LetterViewProps {
   photoUrls?: Record<string, string> | null;
   /** 서명 URL 요청 실패 — 사진 자리에 실패 플레이스홀더, 본문은 그대로. */
   photoUrlsFailed?: boolean;
-  /** 0037: 남은 기간 3일 이하일 때 본문 아래 조용한 한 줄("이 편지는 n일 뒤 닫혀요"). */
-  closingNotice?: string | null;
+  /** 본문·사진이 끝난 자리의 조용한 한 줄(기간 안내·간직하기 — LetterKeepNotice). */
+  endNotice?: React.ReactNode;
 }
 
 export function LetterView({
@@ -47,7 +47,7 @@ export function LetterView({
   token,
   photoUrls = null,
   photoUrlsFailed = false,
-  closingNotice = null,
+  endNotice = null,
 }: LetterViewProps): React.ReactElement {
   const { title, templateId, paragraphs, cues, audioDisabled } = letter;
   // SoundCloud 원곡 링크 — 플레이어에 브랜딩 + 링크백 표시(Widget Terms: 출처 노출·원곡 이동).
@@ -162,11 +162,7 @@ export function LetterView({
         className={styles.reader}
       />
 
-      {closingNotice && (
-        <p className={styles.closingNotice} role="note">
-          {closingNotice}
-        </p>
-      )}
+      {endNotice}
 
       {/* CC-BY 크레딧 — 미렌더 시 침해(license-compliance). 본문 하단에 항상 표기. */}
       <Credits cues={cues} />

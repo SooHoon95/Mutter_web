@@ -137,6 +137,13 @@ export async function getLetter(id: string): Promise<Letter | null> {
   return rowToLetter(data);
 }
 
+/** 이 편지가 내 편지인지 — RLS가 소유자에게만 행을 준다. 수신 뷰어가 보낸 사람 본인인지 가리는 데 쓴다. */
+export async function isMyLetter(id: string): Promise<boolean> {
+  const { data, error } = await getSupabase().from('letters').select('id').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
 /**
  * 현재 사용자가 소유한 편지 목록을 반환한다.
  * updated_at 내림차순(최신 수정 순).

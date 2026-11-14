@@ -183,8 +183,8 @@ export function MyPageView(): React.ReactElement {
               계정을 삭제할까요?
             </h2>
             <p className={styles.modalBody}>
-              계정과 작성한 모든 편지·링크가 영구 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
-              상대가 보관한 편지도 함께 사라집니다.
+              계정과 작성한 편지·링크가 내 쪽에서 영구 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+              보낸 편지는 받은 분의 편지함에 남아요.
             </p>
             {tickets > 0 && <p className={styles.modalBody}>남은 편지권 {tickets}장이 사라져요.</p>}
             {deleteError && <p className={styles.errorMsg}>{deleteError}</p>}
