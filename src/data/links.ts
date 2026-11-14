@@ -11,7 +11,7 @@
 
 import { getSupabase } from './supabase';
 import { generateToken } from '../lib/token';
-import { toAccessError } from './access';
+import { NoTicketError, toAccessError } from './access';
 import type { DeliveryLink } from './types';
 
 // ---------------------------------------------------------------------------
@@ -93,6 +93,8 @@ export interface IssueLinkInput {
   expiresAt?: string;
   /** 예약 공개 시각 ISO 문자열 (옵션). 이 시각 이후에만 열림(0018). */
   revealAt?: string;
+  /** 영구 편지로 보낸다(0041) — 서버가 링크 발급과 같은 트랜잭션에서 편지권 1장을 쓴다. 잔액이 없으면 NoTicketError. */
+  permanent?: boolean;
 }
 
 /** RPC get_letter_by_token 반환 타입 (편지 본문 + 큐 메타) */
@@ -157,6 +159,8 @@ function normalizeIssueError(err: unknown): never {
   if (msg.includes('LETTER_NOT_FOUND')) {
     throw new Error('편지를 찾을 수 없습니다.');
   }
+  // 0041: 영구 편지로 발급하려 했는데 편지권이 없다 — 링크는 만들어지지 않았다.
+  if (msg.includes('NO_TICKET')) throw new NoTicketError();
   throw new Error(msg || '링크 발급에 실패했습니다. 잠시 후 다시 시도해 주세요.');
 }
 
@@ -208,6 +212,8 @@ export async function issueLink(letterId: string, input: IssueLinkInput): Promis
     p_expires_at: input.expiresAt ?? null,
   };
   if (input.revealAt) params.p_reveal_at = input.revealAt;
+  // p_permanent(0041)도 true일 때만 싣는다 — 0041 이전 서버에는 이 인자가 없어, 늘 보내면 발급 자체가 실패한다.
+  if (input.permanent) params.p_permanent = true;
 
   const { data, error } = await sb.rpc('issue_link', params);
 

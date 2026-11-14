@@ -209,11 +209,11 @@ export default function Sent(): React.ReactElement {
                   {/* 보내기 전 선택 — 아직 링크가 없는 14일 편지면 링크 발급 전에 영구/14일을 묻는다. */}
                   <SendChoiceGate
                     letterId={letter.id}
-                    before={(choosing) => (
+                    before={(unsent) => (
                       <SentLetterDetail
                         letterId={letter.id}
                         access={accessStates.get(letter.id)}
-                        hidePermanent={choosing}
+                        hidePermanent={unsent}
                       />
                     )}
                   >

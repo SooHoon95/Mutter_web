@@ -5,7 +5,8 @@
 import { useState } from 'react';
 import { useLinks } from './useLinks';
 import { validateSchedule } from './validateSchedule';
-import { useEntitlements, useLetterAccessStates } from '@/features/tickets';
+import { NoTicketError } from '@/data/access';
+import { useEntitlements, useLetterAccessStates, useSendChoice } from '@/features/tickets';
 import styles from './LinkManager.module.css';
 
 interface LinkManagerProps {
@@ -28,7 +29,10 @@ export function LinkManager({ letterId }: LinkManagerProps) {
   // 0037: 기간 규칙이 붙은 편지(state=open)에만 안내 한 줄. 일수는 서버 값(free_days).
   const { entitlements } = useEntitlements();
   const { states } = useLetterAccessStates([letterId]);
-  const freeDays = states.get(letterId)?.state === 'open' ? entitlements?.freeDays : undefined;
+  // 보내기 전 선택에서 영구 편지를 골랐으면 발급과 함께 편지권 1장이 쓰인다(그 전에는 쓰이지 않는다).
+  const { permanent, onSent, onNoTicket } = useSendChoice();
+  const freeDays =
+    !permanent && states.get(letterId)?.state === 'open' ? entitlements?.freeDays : undefined;
 
   // 발급 폼 상태
   const [passwordEnabled, setPasswordEnabled] = useState(true); // 암호 기본 ON
@@ -59,11 +63,20 @@ export function LinkManager({ letterId }: LinkManagerProps) {
       return;
     }
     setValidationError(null);
-    await issue({
-      password: passwordEnabled && password.trim() ? password.trim() : undefined,
-      expiresAt: expiresIso,
-      revealAt: revealIso,
-    });
+    try {
+      await issue({
+        password: passwordEnabled && password.trim() ? password.trim() : undefined,
+        expiresAt: expiresIso,
+        revealAt: revealIso,
+        permanent,
+      });
+    } catch (err) {
+      // 편지권이 없으면 링크는 만들어지지 않았다 — 선택 카드로 돌아가 {n}일 편지를 고를 수 있게 한다.
+      // 그 밖의 실패는 useLinks가 error로 보인다(입력은 그대로 둔다).
+      if (err instanceof NoTicketError) onNoTicket();
+      return;
+    }
+    onSent(permanent);
     setPassword('');
     setExpiresAt('');
     setRevealAt('');

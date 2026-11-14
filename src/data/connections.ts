@@ -4,6 +4,7 @@
 // 토큰은 capability-links 규칙대로 클라이언트에서 generateToken()으로 생성해 RPC에 넘긴다.
 
 import { generateToken } from '@/lib/token';
+import { NoTicketError } from './access';
 import { getSupabase } from './supabase';
 
 // ---------------------------------------------------------------------------
@@ -166,6 +167,8 @@ function normalizeAcceptError(err: unknown): Error {
  */
 function normalizeSendError(err: unknown): Error {
   const message = errorMessage(err);
+  // 0041: 영구 편지로 보내려 했는데 편지권이 없다 — 발송은 일어나지 않았다. 화면이 instanceof로 분기한다.
+  if (message.includes('NO_TICKET')) return new NoTicketError();
   for (const [code, userMsg] of Object.entries(SEND_ERROR_MESSAGES)) {
     if (message.includes(code)) {
       return new Error(userMsg);
@@ -260,19 +263,25 @@ export async function disconnect(otherUser: string): Promise<void> {
 /**
  * 연결된 사람에게 편지를 직접 발송한다(상대 받은 편지함으로).
  * 토큰은 클라이언트에서 generateToken()으로 생성해 RPC에 넘긴다.
- * RPC send_to_connection(p_letter_id, p_recipient, p_token).
+ * RPC send_to_connection(p_letter_id, p_recipient, p_token[, p_permanent]).
+ *
+ * permanent(0041)가 true면 서버가 같은 트랜잭션에서 편지권 1장을 쓰고 보낸다(잔액이 없으면 NoTicketError).
+ * p_permanent는 true일 때만 싣는다 — 0041 이전 서버에는 이 인자가 없어, 늘 보내면 발송 자체가 실패한다.
  */
 export async function sendToConnection(
   letterId: string,
   recipientId: string,
+  permanent = false,
 ): Promise<void> {
   const sb = getSupabase();
   const token = generateToken();
-  const { error } = await sb.rpc('send_to_connection', {
+  const params: Record<string, unknown> = {
     p_letter_id: letterId,
     p_recipient: recipientId,
     p_token: token,
-  });
+  };
+  if (permanent) params.p_permanent = true;
+  const { error } = await sb.rpc('send_to_connection', params);
   // 내부 Postgres 코드(FORBIDDEN/NOT_CONNECTED/TOKEN_INVALID/CANNOT_SEND_SELF)를 그대로
   // UI에 노출하지 않고 한국어 메시지로 정규화해 re-throw한다(links.ts normalizeOpenError 정책).
   if (error) throw normalizeSendError(error);

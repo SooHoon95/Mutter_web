@@ -334,6 +334,57 @@
   color: var(--text-brand);
 }
 
+/* 영구 편지를 고른 뒤 발송 UI 위에 두는 안내 — 편지권은 아직 쓰이지 않았다는 것과 "다시 고르기". */
+.permanentNotice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  margin-bottom: 0.75rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-brand-subtle);
+}
+
+.permanentNoticeText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  word-break: keep-all;
+}
+
+.permanentNoticeTitle {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.textBtn {
+  flex: none;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-brand);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.6;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.textBtn:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.textBtn:focus-visible {
+  outline: 2px solid var(--gold-deep);
+  outline-offset: 2px;
+}
+
 /* 카드 맨 아래 진행 버튼 — 발급 버튼(.issueBtn)과 같은 모양을 카드 폭으로. */
 .choiceSubmit {
   align-self: stretch;

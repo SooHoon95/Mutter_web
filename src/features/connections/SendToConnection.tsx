@@ -1,8 +1,11 @@
 // SendToConnection — 연결된 사람을 골라 편지를 직접 발송한다(상대 받은 편지함으로).
 // ConnectionPicker로 수신자를 선택하고 "보내기"로 sendToConnection을 호출한다.
 // 발송 성공 시 "○○님 받은 편지함으로 보냈어요"를 표시한다.
+// 보내기 전 선택에서 영구 편지를 골랐으면(useSendChoice) 발송과 함께 편지권 1장이 쓰인다.
 
 import { useState, useEffect } from 'react';
+import { NoTicketError } from '@/data/access';
+import { useSendChoice } from '@/features/tickets';
 import { useConnections } from './useConnections';
 import { ConnectionPicker } from './ConnectionPicker';
 import styles from './SendToConnection.module.css';
@@ -18,6 +21,7 @@ export function SendToConnection({
   preselectId,
 }: SendToConnectionProps): React.ReactElement {
   const { connections, sendToConnection, isSending } = useConnections();
+  const { permanent, onSent, onNoTicket } = useSendChoice();
   const [selectedId, setSelectedId] = useState<string | null>(preselectId ?? null);
   const [sentName, setSentName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,10 +40,16 @@ export function SendToConnection({
     if (selectedId === null) return;
     setError(null);
     try {
-      await sendToConnection(letterId, selectedId);
+      await sendToConnection(letterId, selectedId, permanent);
       const recipient = connections.find((c) => c.userId === selectedId);
       setSentName(recipient?.nickname ?? '상대');
+      onSent(permanent);
     } catch (err) {
+      // 편지권이 없으면 보내지지 않았다 — 선택 카드로 돌아가 {n}일 편지를 고를 수 있게 한다.
+      if (err instanceof NoTicketError) {
+        onNoTicket();
+        return;
+      }
       setError(err instanceof Error ? err.message : '보내는 중 오류가 발생했습니다.');
     }
   }

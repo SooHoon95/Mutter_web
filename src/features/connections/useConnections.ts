@@ -26,7 +26,8 @@ interface UseConnectionsReturn {
   isAccepting: boolean;
   disconnect: (otherUser: string) => Promise<void>;
   isDisconnecting: boolean;
-  sendToConnection: (letterId: string, recipientId: string) => Promise<void>;
+  /** permanent — 영구 편지로 보낸다(편지권 1장, 0041). 기본은 false. */
+  sendToConnection: (letterId: string, recipientId: string, permanent?: boolean) => Promise<void>;
   isSending: boolean;
 }
 
@@ -61,8 +62,13 @@ export function useConnections(): UseConnectionsReturn {
     onSuccess: invalidate,
   });
 
-  const sendMutation = useMutation<void, Error, { letterId: string; recipientId: string }>({
-    mutationFn: ({ letterId, recipientId }) => sendToConnection(letterId, recipientId),
+  const sendMutation = useMutation<
+    void,
+    Error,
+    { letterId: string; recipientId: string; permanent: boolean }
+  >({
+    mutationFn: ({ letterId, recipientId, permanent }) =>
+      sendToConnection(letterId, recipientId, permanent),
     // 발송 성공 → 상대 목록/스레드가 바뀌므로(새 교류·새 상대) 무효화해 재조회한다.
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: COUNTERPARTS_QUERY_KEY });
@@ -80,8 +86,8 @@ export function useConnections(): UseConnectionsReturn {
     isAccepting: acceptMutation.isPending,
     disconnect: disconnectMutation.mutateAsync,
     isDisconnecting: disconnectMutation.isPending,
-    sendToConnection: (letterId, recipientId) =>
-      sendMutation.mutateAsync({ letterId, recipientId }),
+    sendToConnection: (letterId, recipientId, permanent = false) =>
+      sendMutation.mutateAsync({ letterId, recipientId, permanent }),
     isSending: sendMutation.isPending,
   };
 }
