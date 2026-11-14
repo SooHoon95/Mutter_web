@@ -1,7 +1,7 @@
 // supabase/functions/purge-deleted-letters/index.ts
 //
 // 두 종류의 편지를 사진까지 영구 삭제한다. pg_cron이 매일 03:00 KST에 pg_net으로 호출한다.
-//   1) 삭제함(letters_all.deleted_at, 0035)에서 보관 기간(30일)이 지난 편지
+//   1) 보낸 사람 쪽에서 끊겼고(삭제함 30일 경과·영구 삭제·탈퇴) 받은 편지함에 가진 사람도 없는 편지(0041)
 //   2) 무료 기간과 잠김 유예가 모두 끝난 편지(0036~0039 — 영구 편지권을 붙이지 않은 편지)
 //
 // 요청: POST, 본문 없음. 응답 200 { purged: number, failed: number, expired: number }
@@ -17,7 +17,6 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-const RETENTION_DAYS = 30; // 0035 get_my_deleted_letters의 purge_at과 같은 값
 const BATCH = 200;
 const BUCKET = 'letter-photos';
 
@@ -46,14 +45,13 @@ async function removePhotoFolder(ownerId: string, letterId: string): Promise<voi
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
 
-  const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
-  const { data, error } = await admin
-    .from('letters_all')
-    .select('id, owner_id')
-    .not('deleted_at', 'is', null)
-    .lt('deleted_at', cutoff)
-    .order('deleted_at', { ascending: true })
-    .limit(BATCH);
+  // 1) 보낸 사람 쪽에서 끊긴 편지(삭제함 30일 경과·영구 삭제·탈퇴) 가운데 받은 편지함에 가진 사람이 없는 것.
+  //    먼저 30일 지난 삭제함을 끊고(settle), 지워도 되는 편지만 받아 사진 → 행 순서로 지운다.
+  //    받은 사람이 가진 편지는 행과 사진이 그대로 남는다(0041).
+  const { error: settleError } = await admin.rpc('settle_trashed_letters');
+  if (settleError) return json(500, { error: settleError.message });
+
+  const { data, error } = await admin.rpc('deletable_letter_ids', { p_limit: BATCH });
   if (error) return json(500, { error: error.message });
 
   let purged = 0;
@@ -65,7 +63,7 @@ Deno.serve(async (req) => {
         .from('letters_all')
         .delete()
         .eq('id', row.id)
-        .not('deleted_at', 'is', null);
+        .not('owner_purged_at', 'is', null);
       if (deleteError) throw new Error(deleteError.message);
       purged += 1;
     } catch (e) {

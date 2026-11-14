@@ -78,8 +78,9 @@ Deno.serve(
     },
 
     async fetchOwnerId(letterId) {
+      // letters_all: 보낸 사람이 지운 편지도 이미 받은 사람은 연다(0041) — 게이트는 앞에서 지났다.
       const { data, error } = await admin
-        .from('letters')
+        .from('letters_all')
         .select('owner_id')
         .eq('id', letterId)
         .maybeSingle();
