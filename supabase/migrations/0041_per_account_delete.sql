@@ -677,3 +677,104 @@ grant execute on function public.get_thread(uuid) to authenticated;
 grant execute on function public.get_counterparts() to authenticated;
 grant execute on function public.save_to_inbox(text) to authenticated;
 grant execute on function public.get_my_deleted_inbox() to authenticated;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 9. 편지권은 실제로 보낼 때만 쓴다 — 링크 발급·연결 발송과 같은 트랜잭션에서 차감.
+--    보내기 전 선택에서 "영구 편지"를 고른 것만으로는 아무것도 쓰지 않는다(고르고 나서 보내지 않으면
+--    편지권만 나가던 문제). 클라이언트는 선택을 기억했다가 p_permanent => true로 발급·발송한다.
+--    spend_ticket_on은 이미 영구면 아무것도 하지 않고, 잔액이 없으면 NO_TICKET, 사라진 편지면 LETTER_GONE.
+--    예외가 나면 링크·발송도 함께 되돌려진다(같은 트랜잭션).
+--    반환 컬럼·기존 파라미터는 그대로 — p_permanent에 기본값이 있어 예전 클라이언트 호출도 그대로 통한다.
+--    시그니처가 바뀌므로 옛 함수를 지우고 새로 만든다(남겨 두면 이름 있는 인자 호출이 모호해진다).
+-- ─────────────────────────────────────────────────────────────────────────────
+drop function if exists public.issue_link(uuid, text, text, timestamptz, timestamptz);
+create function public.issue_link(
+  p_letter_id  uuid,
+  p_token      text,
+  p_password   text,
+  p_expires_at timestamptz,
+  p_reveal_at  timestamptz default null,
+  p_permanent  boolean default false
+)
+returns setof delivery_links
+language plpgsql security definer set search_path = public, extensions as $$
+declare
+  v_owner_id uuid;
+  v_hash     text;
+  v_row      delivery_links;
+begin
+  -- 호출자 = 편지 소유자 검증 (RLS 우회이므로 수동 확인)
+  select owner_id into v_owner_id from letters where id = p_letter_id;
+  if v_owner_id is null then raise exception 'LETTER_NOT_FOUND'; end if;
+  if v_owner_id <> auth.uid() then raise exception 'FORBIDDEN'; end if;
+
+  -- M-2: 토큰 형식 서버 검증
+  if length(p_token) < 22 then raise exception 'TOKEN_TOO_SHORT'; end if;
+  if p_token !~ '^[A-Za-z0-9_\-]+$' then raise exception 'TOKEN_INVALID_FORMAT'; end if;
+
+  -- 영구 편지로 보낸다 — 여기서 편지권 1장을 쓴다(아래 insert가 실패하면 함께 되돌려진다).
+  if p_permanent then
+    perform private.spend_ticket_on(auth.uid(), p_letter_id);
+  end if;
+
+  -- 암호가 있으면 bcrypt 해시 (blowfish, cost 10) — crypt/gen_salt는 extensions 스키마.
+  if p_password is not null and p_password <> '' then
+    v_hash := crypt(p_password, gen_salt('bf'));
+  else
+    v_hash := null;
+  end if;
+
+  insert into delivery_links (
+    letter_id, owner_id, token, password_hash, expires_at, reveal_at
+  ) values (
+    p_letter_id, v_owner_id, p_token, v_hash, p_expires_at, p_reveal_at
+  )
+  returning * into v_row;
+
+  return next v_row;
+end;
+$$;
+revoke all on function public.issue_link(uuid, text, text, timestamptz, timestamptz, boolean) from public, anon;
+grant execute on function public.issue_link(uuid, text, text, timestamptz, timestamptz, boolean) to authenticated;
+
+drop function if exists public.send_to_connection(uuid, uuid, text);
+create function public.send_to_connection(
+  p_letter_id uuid,
+  p_recipient uuid,
+  p_token     text,
+  p_permanent boolean default false
+)
+returns text
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
+  if p_recipient = auth.uid() then raise exception 'CANNOT_SEND_SELF'; end if;
+  if not exists (select 1 from letters where id = p_letter_id and owner_id = auth.uid()) then
+    raise exception 'FORBIDDEN';
+  end if;
+  if not exists (
+    select 1 from connections
+    where user_a = least(auth.uid(), p_recipient)
+      and user_b = greatest(auth.uid(), p_recipient)
+  ) then
+    raise exception 'NOT_CONNECTED';
+  end if;
+  if length(p_token) < 22 or p_token !~ '^[A-Za-z0-9_\-]+$' then raise exception 'TOKEN_INVALID'; end if;
+
+  -- 영구 편지로 보낸다 — 여기서 편지권 1장을 쓴다(아래 insert가 실패하면 함께 되돌려진다).
+  if p_permanent then
+    perform private.spend_ticket_on(auth.uid(), p_letter_id);
+  end if;
+
+  insert into delivery_links (letter_id, owner_id, token)
+  values (p_letter_id, auth.uid(), p_token);
+
+  insert into inbox (user_id, letter_id, token)
+  values (p_recipient, p_letter_id, p_token)
+  on conflict (user_id, letter_id) do update set token = excluded.token, saved_at = now();
+
+  return p_token;
+end;
+$$;
+revoke all on function public.send_to_connection(uuid, uuid, text, boolean) from public, anon;
+grant execute on function public.send_to_connection(uuid, uuid, text, boolean) to authenticated;
