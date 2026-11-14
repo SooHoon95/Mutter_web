@@ -98,6 +98,13 @@ returns text language sql stable security definer set search_path = public as $$
 $$;
 revoke all on function private.sender_nickname(uuid) from public, anon, authenticated;
 
+-- 탈퇴한 계정인가 — 받은 편지함·주고받은 목록이 "답장"·"편지 쓰기"를 숨기는 데 쓴다(보낼 상대가 없다).
+create or replace function private.user_gone(p_user uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select p_user is not null and not exists (select 1 from auth.users u where u.id = p_user);
+$$;
+revoke all on function private.user_gone(uuid) from public, anon, authenticated;
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 3. 읽기 게이트 — 0037과 같고 "편지 존재" 판정만 바뀐다.
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -320,20 +327,23 @@ $$;
 -- 4. 받은 사람 목록 — 보낸 사람이 지운 편지도 남는다(letters 뷰 대신 letters_all).
 --    죽은 링크(회수·만료) 제외는 그대로: 회수는 보낸 사람이 접근을 끊는 수단으로 남는다.
 -- ─────────────────────────────────────────────────────────────────────────────
-create or replace function public.get_my_inbox()
+drop function if exists public.get_my_inbox();   -- 반환 컬럼 추가(sender_gone)
+create function public.get_my_inbox()
 returns table (
   letter_id       uuid,
   token           text,
   title           text,
   saved_at        timestamptz,
   sender_id       uuid,
-  sender_nickname text
+  sender_nickname text,
+  sender_gone     boolean   -- 보낸 사람이 탈퇴했다 → 답장 버튼을 숨긴다
 )
 language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
   return query
-    select i.letter_id, i.token, l.title, i.saved_at, l.owner_id, private.sender_nickname(l.owner_id)
+    select i.letter_id, i.token, l.title, i.saved_at, l.owner_id, private.sender_nickname(l.owner_id),
+           private.user_gone(l.owner_id)
     from inbox i
     join letters_all l on l.id = i.letter_id
     join delivery_links dl on dl.token = i.token
@@ -392,16 +402,20 @@ begin
       and dl.revoked = false
       and (dl.expires_at is null or dl.expires_at > now())
     where i.user_id = auth.uid() and l.owner_id = p_counterpart
-    order by at;
+    -- 출력 위치로 정렬한다. `order by at`은 UNION에서 반환 변수 at과 겹쳐 실행 오류가 난다
+    -- (운영에는 이 수정이 마이그레이션 밖에서 직접 들어가 있었다 — 여기서 이력에 맞춘다).
+    order by 5;
 end;
 $$;
 
-create or replace function public.get_counterparts()
+drop function if exists public.get_counterparts();   -- 반환 컬럼 추가(gone)
+create function public.get_counterparts()
 returns table (
   counterpart_id uuid,
   nickname       text,
   letter_count   bigint,
-  last_at        timestamptz
+  last_at        timestamptz,
+  gone           boolean   -- 상대가 탈퇴했다 → "편지 쓰기"를 숨긴다
 )
 language plpgsql security definer set search_path = public as $$
 begin
@@ -418,7 +432,7 @@ begin
     join letters_all l on l.id = i.letter_id
     where i.user_id = auth.uid() and l.owner_id <> auth.uid()
   )
-  select e.cp, private.sender_nickname(e.cp), count(*)::bigint, max(e.at)
+  select e.cp, private.sender_nickname(e.cp), count(*)::bigint, max(e.at), private.user_gone(e.cp)
   from exchanges e
   group by e.cp
   order by max(e.at) desc;

@@ -4,7 +4,7 @@
 //   - direction='sent'     → /preview/:letterId (소유자 읽기 전용 미리보기 — 편집기로 보내지 않는다)
 
 import { Link } from 'react-router-dom';
-import { useThread } from './useThreads';
+import { useCounterparts, useThread } from './useThreads';
 import type { ThreadLetter } from '@/data/threads';
 import styles from './ThreadView.module.css';
 
@@ -35,6 +35,9 @@ interface ThreadViewProps {
 
 export function ThreadView({ counterpartId }: ThreadViewProps): React.ReactElement {
   const { letters, isLoading, error } = useThread(counterpartId);
+  // 탈퇴한 상대에게는 보낼 수 없다 — 받은 편지는 남아 있어 스레드는 그대로 보여 준다.
+  const { counterparts } = useCounterparts();
+  const isGone = counterparts.some((c) => c.counterpartId === counterpartId && c.gone);
 
   let content: React.ReactElement;
   if (isLoading) {
@@ -75,9 +78,11 @@ export function ThreadView({ counterpartId }: ThreadViewProps): React.ReactEleme
   return (
     <div className={styles.wrap}>
       {/* 0019 답장 플로우: 이 상대에게 바로 편지 쓰기(연결돼 있으면 보내기에서 자동 선택). */}
-      <Link to={`/create?to=${counterpartId}`} className={styles.replyAction}>
-        ✍️ 이 사람에게 답장 쓰기
-      </Link>
+      {!isGone && (
+        <Link to={`/create?to=${counterpartId}`} className={styles.replyAction}>
+          ✍️ 이 사람에게 답장 쓰기
+        </Link>
+      )}
       {content}
     </div>
   );

@@ -101,12 +101,14 @@ describe('getCounterparts', () => {
       nickname: '상대일',
       letterCount: 3,
       lastAt: '2026-06-16T00:00:00Z',
+      gone: false,
     });
     expect(result[1]).toEqual({
       counterpartId: 'cp-002',
       nickname: null,
       letterCount: 1,
       lastAt: '2026-06-15T00:00:00Z',
+      gone: false,
     });
   });
 

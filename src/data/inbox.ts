@@ -16,6 +16,8 @@ interface InboxRow {
   saved_at: string;
   sender_id: string | null;
   sender_nickname: string | null;
+  /** 0041 — 보낸 사람이 탈퇴했다. 서버 반영 전에는 없다. */
+  sender_gone?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -31,6 +33,8 @@ export interface InboxItem {
   // 보낸이 — 닉네임 미설정/무계정이면 null일 수 있다(안전 처리는 뷰에서).
   senderId: string | null;
   senderNickname: string | null;
+  /** 보낸 사람이 탈퇴했다 — 답장할 상대가 없다. */
+  senderGone: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -45,6 +49,7 @@ function rowToInboxItem(row: InboxRow): InboxItem {
     savedAt: row.saved_at,
     senderId: row.sender_id,
     senderNickname: row.sender_nickname,
+    senderGone: row.sender_gone === true,
   };
 }
 

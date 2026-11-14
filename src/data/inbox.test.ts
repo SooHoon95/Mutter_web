@@ -87,6 +87,7 @@ describe('getMyInbox', () => {
       savedAt: '2026-06-16T00:00:00Z',
       senderId: 'sender-001',
       senderNickname: '보낸이일',
+      senderGone: false,
     });
     expect(result[1]).toEqual({
       letterId: 'letter-002',
@@ -95,6 +96,7 @@ describe('getMyInbox', () => {
       savedAt: '2026-06-15T00:00:00Z',
       senderId: null,
       senderNickname: null,
+      senderGone: false,
     });
   });
 

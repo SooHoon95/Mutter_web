@@ -14,6 +14,8 @@ interface CounterpartRow {
   nickname: string | null;
   letter_count: number;
   last_at: string;
+  /** 0041 — 상대가 탈퇴했다. 서버 반영 전에는 없다. */
+  gone?: boolean;
 }
 
 /** get_thread RPC가 반환하는 row 구조 */
@@ -49,6 +51,8 @@ export interface Counterpart {
   nickname: string | null;
   letterCount: number;
   lastAt: string;
+  /** 상대가 탈퇴했다 — 편지를 보낼 수 없다. */
+  gone: boolean;
 }
 
 /** 특정 상대와 주고받은 편지 한 통 */
@@ -82,6 +86,7 @@ function rowToCounterpart(row: CounterpartRow): Counterpart {
     nickname: row.nickname,
     letterCount: row.letter_count,
     lastAt: row.last_at,
+    gone: row.gone === true,
   };
 }
 

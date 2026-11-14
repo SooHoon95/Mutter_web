@@ -184,8 +184,8 @@ export function InboxList({ title }: InboxListProps): React.ReactElement {
                   <>
                     {meta}
                     <div className={styles.actions}>
-                      {/* 0019 답장: 보낸이를 알면 그 사람에게 바로 답장 쓰기로 이동. */}
-                      {item.senderId !== null && (
+                      {/* 0019 답장: 보낸이를 알면 그 사람에게 바로 답장 쓰기로 이동. 탈퇴한 사람에게는 보낼 수 없어 숨긴다. */}
+                      {item.senderId !== null && !item.senderGone && (
                         <Link to={`/create?to=${item.senderId}`} className={styles.replyLink}>
                           답장
                         </Link>
