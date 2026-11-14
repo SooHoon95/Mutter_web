@@ -108,6 +108,8 @@ export interface LetterPayload {
   isPermanent: boolean;
   /** 0037: 받은 사람에게 닫히는 시각(ISO). 영구·아직 안 열린 편지·서버 반영 전은 null. */
   accessUntil: string | null;
+  /** 0041: 호출자가 보낸 사람 본인인지. 키가 없으면 false. */
+  isMine: boolean;
 }
 
 /**
@@ -315,6 +317,7 @@ export async function openByToken(
     audio_disabled: boolean;
     is_permanent?: boolean;
     access_until?: string | null;
+    is_mine?: boolean;
   };
 
   return {
@@ -326,6 +329,7 @@ export async function openByToken(
     audioDisabled: raw.audio_disabled === true,
     isPermanent: raw.is_permanent === true,
     accessUntil: raw.access_until ?? null,
+    isMine: raw.is_mine === true,
   };
 }
 

@@ -175,9 +175,10 @@ export default function Viewer(): React.ReactElement {
       photoUrls={photoUrls}
       photoUrlsFailed={photoUrlsFailed}
       endNotice={
-        token && (
+        // 보낸 사람 본인에게는 받은 사람용 안내·간직하기를 통째로 숨긴다(0041 is_mine).
+        token &&
+        !letter.isMine && (
           <LetterKeepNotice
-            letterId={letter.id}
             token={token}
             password={password}
             accessUntil={accessUntil}

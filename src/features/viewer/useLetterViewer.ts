@@ -44,6 +44,8 @@ export interface ViewerLetter {
    * 사용자에게 명확히 안내한다.
    */
   audioDisabled: boolean;
+  /** 0041: 보낸 사람 본인이 자기 편지를 연 경우 — 받은 사람용 간직하기 안내를 숨긴다. */
+  isMine: boolean;
 }
 
 export type ViewerStatus =
@@ -154,6 +156,7 @@ function normalizeLetter(payload: {
   paragraphs: unknown;
   cues: unknown;
   audioDisabled: boolean;
+  isMine: boolean;
 }): ViewerLetter {
   const paragraphs = normalizeParagraphs(payload.paragraphs);
 
@@ -175,6 +178,7 @@ function normalizeLetter(payload: {
     paragraphs,
     cues,
     audioDisabled: payload.audioDisabled,
+    isMine: payload.isMine,
   };
 }
 

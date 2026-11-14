@@ -48,6 +48,7 @@ const samplePayload: LetterPayload = {
   audioDisabled: false,
   isPermanent: false,
   accessUntil: null,
+  isMine: false,
 };
 
 beforeEach(() => {
