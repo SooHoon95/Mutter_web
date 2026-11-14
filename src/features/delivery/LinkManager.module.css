@@ -29,6 +29,8 @@
 
 .fieldRow {
   display: flex;
+  /* 좁은 화면: 날짜·시각 입력은 고유 최소 폭이 커서 라벨 옆에 못 들어가면 카드 밖으로 밀려 나간다 — 다음 줄로 내린다. */
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
 }
