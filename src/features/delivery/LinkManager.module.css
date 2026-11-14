@@ -214,3 +214,58 @@
   text-align: center;
   padding: 1rem 0;
 }
+
+/* 보내기 전 선택(SendChoiceGate) — 발급 폼과 같은 상자 안에 선택지 둘. 영구가 먼저·강조. */
+.choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-xs);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.choice:hover:not(:disabled) {
+  border-color: var(--border-brand);
+}
+
+.choice:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.choicePrimary {
+  border: 1.5px solid var(--border-brand);
+}
+
+.choiceTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.choicePrimary .choiceTitle {
+  color: var(--text-brand);
+}
+
+.choiceDesc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.choiceMeta {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.choiceConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}

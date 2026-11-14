@@ -30,9 +30,15 @@ interface SentLetterDetailProps {
   letterId: string;
   /** 이 편지의 접근 상태(목록에서 합친 값). 서버 반영 전이면 undefined. */
   access: LetterAccess | undefined;
+  /** 보내기 전 선택 카드가 같은 편지에 보이는 동안 영구 버튼·편지권 안내를 숨긴다. */
+  hidePermanent?: boolean;
 }
 
-export function SentLetterDetail({ letterId, access }: SentLetterDetailProps): React.ReactElement | null {
+export function SentLetterDetail({
+  letterId,
+  access,
+  hidePermanent = false,
+}: SentLetterDetailProps): React.ReactElement | null {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { entitlements, canUseTicket, showBuyHint } = useEntitlements();
@@ -57,7 +63,7 @@ export function SentLetterDetail({ letterId, access }: SentLetterDetailProps): R
   const [noTicket, setNoTicket] = useState(false);
 
   // 영구로 만들 수 있는 편지 — 무료 기간 안이거나 잠긴 편지(삭제 대상은 되살릴 수 없다).
-  const upgradable = access?.state === 'open' || access?.state === 'locked';
+  const upgradable = !hidePermanent && (access?.state === 'open' || access?.state === 'locked');
 
   async function handlePermanent(): Promise<void> {
     setBusy('permanent');

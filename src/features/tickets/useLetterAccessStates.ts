@@ -18,6 +18,8 @@ export interface UseLetterAccessStatesResult {
   states: Map<string, LetterAccess>;
   /** 목록 상태 문구 — `영구` / `{n}일 남음` / `닫힘`, 보일 게 없으면 null. */
   labelFor: (letterId: string) => string | null;
+  /** 조회가 끝났는지(실패 포함). */
+  loaded: boolean;
 }
 
 export function useLetterAccessStates(letterIds: string[]): UseLetterAccessStatesResult {
@@ -37,6 +39,7 @@ export function useLetterAccessStates(letterIds: string[]): UseLetterAccessState
 
   return {
     states,
+    loaded: ids.length === 0 || data !== undefined,
     labelFor: (letterId) => {
       const access = states.get(letterId);
       if (!access) return null;

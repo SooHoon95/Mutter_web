@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useLetterDraft, MusicCueEditor, LetterBlockEditor } from '@/features/compose';
 import { TemplatePicker, TemplateThemed, DEFAULT_TEMPLATE_ID } from '@/features/templates';
-import { LinkManager } from '@/features/delivery';
+import { LinkManager, SendChoiceGate } from '@/features/delivery';
 import { SendToConnection, useConnections } from '@/features/connections';
 import styles from './Create.module.css';
 
@@ -165,7 +165,8 @@ export default function Create(): React.ReactElement {
       <section className={styles.sendSection}>
         <h2 className={styles.sectionHeading}>보내기</h2>
         {draft.letterId ? (
-          <>
+          // 보내기 전 선택 — 링크 발급·연결 상대 발송 둘 다 고른 뒤에 연다.
+          <SendChoiceGate letterId={draft.letterId}>
             {/* 보내기 방식 탭 — 연결 안 된 사람(링크) vs 연결된 사람(직접 발송) */}
             <div className={styles.sendTabs} role="tablist">
               <button
@@ -204,7 +205,7 @@ export default function Create(): React.ReactElement {
                 <SendToConnection letterId={draft.letterId} preselectId={replyTo} />
               </>
             )}
-          </>
+          </SendChoiceGate>
         ) : (
           <p className={styles.sendHint}>
             먼저 <strong>“저장하고 보내기 준비”</strong>를 누르면, 여기에서 전달 링크를 만들어

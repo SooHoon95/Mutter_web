@@ -10,7 +10,7 @@ import type { SentWithRecipient } from '../data/threads';
 import { getMyLetterOpens } from '../data/opens';
 import type { LetterOpenSummary } from '../data/opens';
 import type { Letter } from '../data/types';
-import { LinkManager, SentLetterDetail } from '../features/delivery';
+import { LinkManager, SendChoiceGate, SentLetterDetail } from '../features/delivery';
 import { useLetterAccessStates } from '../features/tickets';
 import { UndoToast } from '../components/UndoToast';
 import styles from './Sent.module.css';
@@ -213,8 +213,19 @@ export default function Sent(): React.ReactElement {
               {/* 링크 관리 패널 */}
               {expanded === letter.id && (
                 <div className={styles.linkPanel}>
-                  <SentLetterDetail letterId={letter.id} access={accessStates.get(letter.id)} />
-                  <LinkManager letterId={letter.id} />
+                  {/* 보내기 전 선택 — 아직 링크가 없는 14일 편지면 링크 발급 전에 영구/14일을 묻는다. */}
+                  <SendChoiceGate
+                    letterId={letter.id}
+                    before={(choosing) => (
+                      <SentLetterDetail
+                        letterId={letter.id}
+                        access={accessStates.get(letter.id)}
+                        hidePermanent={choosing}
+                      />
+                    )}
+                  >
+                    <LinkManager letterId={letter.id} />
+                  </SendChoiceGate>
                 </div>
               )}
             </li>

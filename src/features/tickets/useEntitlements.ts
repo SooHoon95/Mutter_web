@@ -20,6 +20,8 @@ export interface UseEntitlementsResult {
   showBuyHint: boolean;
   /** 프로필 등에 잔액을 보일지. */
   showBalance: boolean;
+  /** 조회가 끝났는지(실패·비로그인 포함) — 결과에 따라 화면이 바뀌는 곳에서 깜빡임을 막는다. */
+  loaded: boolean;
 }
 
 export function useEntitlements(): UseEntitlementsResult {
@@ -42,5 +44,6 @@ export function useEntitlements(): UseEntitlementsResult {
     canUseTicket: !!e && (e.isAdmin || (e.paidEnabled && e.tickets > 0)),
     showBuyHint: paid && e.tickets <= 0,
     showBalance: paid,
+    loaded: userId === null || data !== undefined,
   };
 }
