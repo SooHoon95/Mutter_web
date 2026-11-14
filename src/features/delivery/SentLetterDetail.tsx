@@ -1,7 +1,8 @@
 // SentLetterDetail — 보낸 편지 상세(0037·0038). 보낸 편지 목록의 펼친 패널에서 LinkManager 위에 놓인다.
 //
 //   - 열람자: "{닉네임} · {M}월 {D}일에 열어봄"(get_letter_readers). 조회 실패·아무도 안 열었으면 숨김.
-//   - 영구 편지로 만들기 · 편지권 1장: 영구가 아닌 편지에, 편지권을 쓸 수 있을 때만. 잔액이 없으면 앱 안내.
+//   - 영구 편지로 만들기 · 편지권 1장: 영구가 아닌 편지에, 편지권을 쓸 수 있을 때만. 문구가 편지권 1장을
+//     말하므로 확인 단계 없이 바로 진행한다. 잔액이 없으면 앱 안내.
 //   - 같은 내용으로 한 통 더 보내기: duplicate-letter로 새 편지를 만들고 기존 발송 흐름(/create/:id)으로.
 // 서버 반영 전에는 편지권 조회가 null이라 위 기능이 모두 숨는다(오늘의 화면 그대로).
 
@@ -41,7 +42,6 @@ export function SentLetterDetail({
     retry: false,
   });
 
-  const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState<'permanent' | 'duplicate' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [noTicket, setNoTicket] = useState(false);
@@ -54,11 +54,9 @@ export function SentLetterDetail({
     setError(null);
     try {
       await makeLetterPermanent(letterId);
-      setConfirming(false);
       void queryClient.invalidateQueries({ queryKey: ENTITLEMENTS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: LETTER_ACCESS_QUERY_KEY });
     } catch (err) {
-      setConfirming(false);
       if (err instanceof NoTicketError) setNoTicket(true);
       else if (err instanceof LetterGoneError) setError(err.message);
       else setError('편지권을 쓰지 못했어요. 잠시 후 다시 시도해 주세요.');
@@ -101,38 +99,16 @@ export function SentLetterDetail({
 
       {entitlements !== null && (
         <div className={styles.actions}>
-          {upgradable &&
-            canUseTicket &&
-            !noTicket &&
-            (confirming ? (
-              <>
-                <button
-                  type="button"
-                  className={styles.btnQuiet}
-                  onClick={() => setConfirming(false)}
-                  disabled={busy !== null}
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  className={styles.btn}
-                  onClick={() => void handlePermanent()}
-                  disabled={busy !== null}
-                >
-                  {busy === 'permanent' ? '만드는 중…' : '영구 편지로 만들기 · 편지권 1장'}
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                className={styles.btn}
-                onClick={() => setConfirming(true)}
-                disabled={busy !== null}
-              >
-                영구 편지로 만들기 · 편지권 1장
-              </button>
-            ))}
+          {upgradable && canUseTicket && !noTicket && (
+            <button
+              type="button"
+              className={styles.btn}
+              onClick={() => void handlePermanent()}
+              disabled={busy !== null}
+            >
+              {busy === 'permanent' ? '만드는 중…' : '영구 편지로 만들기 · 편지권 1장'}
+            </button>
+          )}
           <button
             type="button"
             className={styles.btn}

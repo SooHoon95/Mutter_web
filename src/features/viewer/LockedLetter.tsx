@@ -1,7 +1,8 @@
 // LockedLetter — 무료 기간이 끝난 편지(0037 LETTER_LOCKED). 본문 대신 잠김 안내.
 //
-// 서버 계약 "받은 사람의 간직하기" ③: 로그인한 받은 사람에게 "편지권으로 간직하기"(KeepLetterAction —
-// 웹 규칙·확인 단계 공통). 간직하면 같은 편지를 다시 열어 본문이 보인다.
+// 서버 계약 "받은 사람의 간직하기" ③: 로그인한 받은 사람에게 "편지권으로 간직하기"(KeepLetterAction).
+// 문구가 편지권을 말하므로 확인 단계 없이 바로 진행하고, 안내 문장을 버튼 아래에 미리 보인다.
+// 간직하면 같은 편지를 다시 열어 본문이 보인다.
 
 import type { LetterCover } from '@/data/access';
 import { monthDay } from '@/lib/accessLabel';
@@ -52,6 +53,7 @@ export function LockedLetter({
           token={token}
           password={password}
           label="편지권으로 간직하기"
+          immediate
           classes={KEEP_CLASSES}
           onKept={onKept}
         />

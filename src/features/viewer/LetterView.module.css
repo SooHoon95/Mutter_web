@@ -157,6 +157,13 @@
   margin: 0.5rem 0 0.25rem;
 }
 
+/* 확인 문장은 <p>라 전역 p·템플릿 본문(.templateScoped p)의 크기·색을 물려받는다 — 안내 줄과 같은 조용한 글자로 되돌린다. */
+.closingNotice .keepText {
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
 .keepActions {
   display: inline-flex;
   gap: 1rem;
