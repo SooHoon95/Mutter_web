@@ -4,7 +4,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/AuthProvider';
-import { signOut } from '@/data/auth';
+import {
+  signOut,
+  setUserPassword,
+  passwordAuthErrorMessage,
+  PASSWORD_MIN_LENGTH,
+} from '@/data/auth';
 import { deleteMyAccount } from '@/data/profiles';
 import { useEntitlements } from '@/features/tickets';
 import { useProfile } from './useProfile';
@@ -27,6 +32,13 @@ export function MyPageView(): React.ReactElement {
     if (profile?.nickname) setNicknameInput(profile.nickname);
   }, [profile?.nickname]);
 
+  // 로그인 비밀번호 — 이메일 계정만. 코드로 가입한 사람도 여기서 정하면 다음부터 비밀번호로 로그인한다.
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordNotice, setPasswordNotice] = useState<string | null>(null);
+
   // 계정 삭제 확인 모달 표시 여부
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -41,6 +53,30 @@ export function MyPageView(): React.ReactElement {
       // (입력칸을 비우지 않는다 — 방금 저장한 값을 그대로 보여줌)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : '저장 실패');
+    }
+  }
+
+  async function handleSavePassword(): Promise<void> {
+    setPasswordError(null);
+    setPasswordNotice(null);
+    if (newPassword.length < PASSWORD_MIN_LENGTH) {
+      setPasswordError(`비밀번호는 ${PASSWORD_MIN_LENGTH}자 이상이어야 해요.`);
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('비밀번호가 서로 달라요.');
+      return;
+    }
+    setIsSavingPassword(true);
+    try {
+      await setUserPassword(newPassword);
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordNotice('비밀번호를 저장했어요.');
+    } catch (err) {
+      setPasswordError(passwordAuthErrorMessage(err) ?? '비밀번호를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setIsSavingPassword(false);
     }
   }
 
@@ -76,6 +112,9 @@ export function MyPageView(): React.ReactElement {
   }
 
   const email = session?.user.email ?? '';
+  // 소셜 계정은 이메일이 내부용(*.mutter.local·Apple relay)이라 비밀번호 로그인을 쓰지 않는다.
+  const isEmailAccount = session?.user.app_metadata?.provider === 'email';
+  const hasSetPassword = session?.user.user_metadata?.password_set === true;
   const currentNickname = profile?.nickname ?? '';
   const displayNickname = currentNickname || '(닉네임 없음)';
 
@@ -124,6 +163,51 @@ export function MyPageView(): React.ReactElement {
         </div>
         {saveError && <p className={styles.errorMsg}>{saveError}</p>}
       </section>
+
+      {isEmailAccount && (
+        <>
+          <hr className={styles.divider} />
+          <section className={styles.section}>
+            <span className={styles.label}>로그인 비밀번호</span>
+            <span className={styles.value}>{hasSetPassword ? '설정됨' : '설정 안 됨'}</span>
+            <p className={styles.hint}>
+              비밀번호를 정해 두면 다음부터 코드 없이 이메일과 비밀번호로 로그인할 수 있어요.
+            </p>
+            <div className={styles.nicknameRow}>
+              <input
+                className={styles.input}
+                type="password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder={`새 비밀번호 (${PASSWORD_MIN_LENGTH}자 이상)`}
+                aria-label="새 비밀번호"
+              />
+            </div>
+            <div className={styles.nicknameRow}>
+              <input
+                className={styles.input}
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="비밀번호 확인"
+                aria-label="비밀번호 확인"
+              />
+              <button
+                type="button"
+                className={styles.btnSave}
+                onClick={() => void handleSavePassword()}
+                disabled={isSavingPassword || newPassword === '' || confirmPassword === ''}
+              >
+                {isSavingPassword ? '저장 중…' : '저장'}
+              </button>
+            </div>
+            {passwordError && <p className={styles.errorMsg}>{passwordError}</p>}
+            {passwordNotice && <p className={styles.hint}>{passwordNotice}</p>}
+          </section>
+        </>
+      )}
 
       {showBalance && (
         <>

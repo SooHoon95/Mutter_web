@@ -73,12 +73,43 @@ export async function requestEmailCode(email: string): Promise<void> {
 }
 
 /**
- * 로그인 상태에서 비밀번호 설정/변경. 코드 인증 직후 호출해 비번을 건다
+ * 로그인 상태에서 비밀번호 설정/변경. 가입 코드 인증 직후·마이페이지에서 호출한다
  * → 이후부터는 이메일+비밀번호(signInWithPassword)로 로그인.
+ * `password_set`은 "사용자가 직접 정한 비밀번호가 있다"는 표시다 — 앱은 이 값이 없으면 코드 로그인 직후
+ * 비밀번호 설정 단계를 띄운다(코드 가입자는 Supabase가 넣은 임의 비밀번호뿐이라 비번 로그인이 안 된다).
+ * 계약: Mutter docs/specs/2026-11-14-login-password.md (iOS·Android 동일).
  */
 export async function setUserPassword(password: string): Promise<void> {
-  const { error } = await getSupabase().auth.updateUser({ password });
+  const { error } = await getSupabase().auth.updateUser({ password, data: { password_set: true } });
   if (error) throw error;
+}
+
+/** 비밀번호 최소 길이 — Supabase 기본값, 앱과 동일. */
+export const PASSWORD_MIN_LENGTH = 6;
+
+/**
+ * 비밀번호 로그인·설정·코드 메일 실패를 GoTrue error_code로 구분해 문구로 바꾼다(앱과 같은 표).
+ * 해당 없으면 null — 호출부의 일반 문구로.
+ */
+export function passwordAuthErrorMessage(err: unknown): string | null {
+  const code = (err as { code?: unknown } | null)?.code;
+  switch (code) {
+    case 'invalid_credentials':
+      return '이메일 또는 비밀번호가 맞지 않아요. 비밀번호를 정한 적이 없다면 코드로 로그인해 주세요.';
+    case 'email_not_confirmed':
+      return '이메일 인증이 아직 끝나지 않았어요. 코드로 로그인해 주세요.';
+    case 'weak_password':
+      return `비밀번호는 ${PASSWORD_MIN_LENGTH}자 이상이어야 해요.`;
+    case 'same_password':
+      return '지금 쓰는 비밀번호와 다른 비밀번호를 입력해 주세요.';
+    case 'reauthentication_needed':
+    case 'reauthentication_not_valid':
+      return '보안을 위해 코드로 다시 로그인한 뒤 설정해 주세요.';
+    case 'over_email_send_rate_limit':
+      return '코드 메일을 너무 자주 요청했어요. 잠시 후 다시 시도해 주세요.';
+    default:
+      return null;
+  }
 }
 
 /** 로그아웃. 세션을 파기하고 localStorage를 정리한다. */

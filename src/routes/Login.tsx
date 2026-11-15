@@ -15,6 +15,7 @@ import {
   requestEmailCode,
   verifyEmailOtp,
   setUserPassword,
+  passwordAuthErrorMessage,
   sendMagicLink,
   signInWithProvider,
   startKakaoLogin,
@@ -31,10 +32,13 @@ type Mode = 'login' | 'signup';
 
 /** Supabase 인증 에러 메시지를 사용자 친화 한국어로 정규화. */
 function authErrorMessage(err: unknown, mode: Mode): string {
+  const byCode = passwordAuthErrorMessage(err);
+  if (byCode) return byCode;
   const raw = err instanceof Error ? err.message : String(err);
   const m = raw.toLowerCase();
-  if (m.includes('invalid login credentials')) return '이메일 또는 비밀번호가 올바르지 않습니다.';
-  if (m.includes('email not confirmed')) return '이메일 인증을 먼저 완료해 주세요.';
+  if (m.includes('invalid login credentials'))
+    return '이메일 또는 비밀번호가 맞지 않아요. 비밀번호를 정한 적이 없다면 코드로 로그인해 주세요.';
+  if (m.includes('email not confirmed')) return '이메일 인증이 아직 끝나지 않았어요. 코드로 로그인해 주세요.';
   if (m.includes('already registered') || m.includes('already been registered'))
     return '이미 가입된 이메일이에요. 로그인해 주세요.';
   if (m.includes('password should be') || m.includes('at least 6'))
