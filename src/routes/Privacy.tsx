@@ -36,7 +36,7 @@ export default function Privacy(): React.ReactElement {
             <li><strong>열람 기록</strong> — 로그인한 받는 사람이 편지를 연 시각과 횟수(보낸 사람에게 「열어본 사람」으로 표시)</li>
             <li><strong>구매 기록</strong> — 편지권 구매 시 스토어 거래 정보(상품, 거래 번호, 구매·환불 시각, 스토어 환경)</li>
             <li><strong>기기·알림 정보</strong> — 푸시 알림 토큰(FCM)</li>
-            <li><strong>이용 기록</strong> — 접속 로그, 오류 로그(자동 생성)</li>
+            <li><strong>이용 기록</strong> — 접속 로그, 앱 오류 보고와 이용 통계(기기 종류·OS 버전·앱 버전 등, 자동 생성)</li>
           </ul>
           <p className={styles.note}>
             카메라·마이크·위치·주소록 등 기기 권한은 이용하지 않습니다. 사진은 이용자가 편지에 넣으려고
@@ -94,7 +94,7 @@ export default function Privacy(): React.ReactElement {
           </p>
           <ul className={styles.list}>
             <li><strong>Supabase</strong> — 인증·데이터베이스·서버 인프라</li>
-            <li><strong>Google(Firebase Cloud Messaging)</strong> — 푸시 알림 전송</li>
+            <li><strong>Google(Firebase)</strong> — 푸시 알림 전송(Cloud Messaging), 앱 오류 보고(Crashlytics)·앱 이용 통계(Analytics)</li>
             <li><strong>Apple · Google · Kakao</strong> — 소셜 로그인 인증</li>
             <li><strong>Apple(App Store) · Google(Google Play)</strong> — 인앱 결제 처리 및 구매·환불 확인</li>
             <li>웹 페이지 호스팅 제공자</li>
