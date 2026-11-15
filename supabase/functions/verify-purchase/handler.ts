@@ -9,13 +9,19 @@
 //         Android { platform: 'android', productId: 'mutter.ticket.1', purchaseToken: '…' }
 //   응답  200 { granted: boolean, tickets: number }   — tickets = 지급 후 잔액
 //         granted=false는 "이미 지급된 영수증"이며 성공이다. 앱은 이때도 거래를 finish/consume 한다.
-//   오류  401 unauthorized · 403 not_tester · 400 bad_request · 400 invalid_receipt · 400 unknown_product
-//         501 store_mode_unavailable · 501 android_verify_unconfigured          본문 { error: '<코드>' }
+//   오류  401 unauthorized · 403 not_tester · 403 account_mismatch · 400 bad_request · 400 invalid_receipt
+//         400 unknown_product · 501 store_mode_unavailable · 501 android_verify_unconfigured   본문 { error: '<코드>' }
 //
-// 테스트 모드(PURCHASE_MODE=test)만 구현돼 있다. 이 모드는 iOS 영수증의 서명을 검증하지 않는다
-// (Xcode StoreKit 테스트 결제는 Apple 서명이 아니라 검증 자체가 불가능하다). 그래서
-// **purchase_testers에 든 계정에만 지급한다 — 이 관문이 테스트 모드의 유일한 안전장치다.**
-// 모드가 test가 아니면(미설정 포함) 501로 닫힌다 → 실수로 검증 없이 열리지 않는다.
+// 모드(PURCHASE_MODE) — 그 밖의 값·미설정이면 501로 닫힌다(실수로 검증 없이 열리지 않게).
+//   live  운영. iOS는 JWS 서명을 Apple 루트까지 검증한다(_shared/appleJws.ts). Android는 Google Play에서 조회한다.
+//         실제 결제(iOS Production · Play 일반 구매)는 누구에게나 지급한다.
+//         시험 결제(iOS Sandbox — TestFlight·App Review / Play 라이선스 테스터 구매)는 purchase_testers에만 지급한다.
+//         App Review 심사관의 결제는 Sandbox로 오므로 심사용 계정을 purchase_testers에 넣어 둔다.
+//   test  로컬 개발. Xcode StoreKit 테스트 결제는 Apple 서명이 아니라 서명을 검증할 수 없다.
+//         그래서 purchase_testers에만, 그리고 Xcode·Sandbox 거래만 받는다(Production은 거부).
+//
+// 계정 묶기: iOS 거래의 appAccountToken, Play 구매의 obfuscatedExternalAccountId가 있으면 로그인 사용자 id와
+// 같아야 한다(다르면 403 account_mismatch — 앱은 거래를 마무리하지 않고 남겨 둔다). 없으면 묻지 않는다(예전 구매).
 
 /** 상품 ID → 편지권 장수. 스토어에 등록하는 상품과 같아야 한다. */
 export const PRODUCT_TICKETS: Record<string, number> = {
@@ -38,12 +44,15 @@ const MAX_BODY_BYTES = 16 * 1024;
 export interface PlayPurchase {
   purchaseState?: number; // 0 = 구매 완료
   orderId?: string;
-  purchaseType?: number; // 0 = 라이선스 테스터 구매
+  purchaseType?: number; // 0 = 라이선스 테스터 구매(1 프로모션 코드, 2 보상 — 실제 지급으로 본다)
+  obfuscatedExternalAccountId?: string; // 앱이 결제 창에 넣은 사용자 id
 }
 
 export interface VerifyPurchaseDeps {
-  /** PURCHASE_MODE 환경변수 값(미설정이면 null). */
+  /** PURCHASE_MODE 환경변수 값(미설정이면 null). 'live' 또는 'test'. */
   mode: string | null;
+  /** App Store JWS를 검증해 페이로드를 돌려준다. 실패하면 null(live 모드에서만 쓴다). */
+  verifyAppleJws(jws: string): Promise<Record<string, unknown> | null>;
   /** 사용자 JWT → 사용자 id. 유효하지 않으면 null. */
   getUserId(jwt: string): Promise<string | null>;
   isTester(userId: string): Promise<boolean>;
@@ -81,20 +90,25 @@ export function decodeJwsPayload(jws: string): Record<string, unknown> | null {
 }
 
 type Verified =
-  | { ok: true; productId: string; transactionId: string; environment: string; raw: unknown }
+  | { ok: true; productId: string; transactionId: string; environment: string; raw: unknown; testPurchase: boolean }
   | { ok: false; status: number; error: string };
 
-function verifyIos(jws: string, userId: string): Verified {
-  const payload = decodeJwsPayload(jws);
+const sameAccount = (claimed: unknown, userId: string): boolean =>
+  typeof claimed !== 'string' || claimed.length === 0 || claimed.toLowerCase() === userId.toLowerCase();
+
+async function verifyIos(deps: VerifyPurchaseDeps, live: boolean, jws: string, userId: string): Promise<Verified> {
+  // live는 서명을 Apple 루트까지 검증한다. test는 Xcode 테스트 결제라 디코드만 한다(테스터 관문이 지킨다).
+  const payload = live ? await deps.verifyAppleJws(jws) : decodeJwsPayload(jws);
   if (!payload) return { ok: false, status: 400, error: 'invalid_receipt' };
 
-  const { bundleId, environment, productId, transactionId, purchaseDate, revocationDate } = payload;
+  const { bundleId, environment, productId, transactionId, purchaseDate, revocationDate, appAccountToken } = payload;
   if (bundleId !== BUNDLE_ID) return { ok: false, status: 400, error: 'invalid_receipt' };
-  // 테스트 모드는 테스트 환경의 거래만 받는다. 실결제(Production)는 서명 검증이 있는 모드에서만.
-  if (environment !== 'Xcode' && environment !== 'Sandbox') {
+  const allowed = live ? ['Production', 'Sandbox'] : ['Xcode', 'Sandbox'];
+  if (typeof environment !== 'string' || !allowed.includes(environment)) {
     return { ok: false, status: 400, error: 'invalid_receipt' };
   }
   if (revocationDate != null) return { ok: false, status: 400, error: 'invalid_receipt' };
+  if (!sameAccount(appAccountToken, userId)) return { ok: false, status: 403, error: 'account_mismatch' };
   if (typeof productId !== 'string') return { ok: false, status: 400, error: 'invalid_receipt' };
   if (!(productId in PRODUCT_TICKETS)) return { ok: false, status: 400, error: 'unknown_product' };
   const txId =
@@ -106,13 +120,21 @@ function verifyIos(jws: string, userId: string): Verified {
   const transactionKey =
     environment === 'Xcode' ? `xcode:${userId}:${txId}:${String(purchaseDate ?? '')}` : txId;
 
-  return { ok: true, productId, transactionId: transactionKey, environment, raw: payload };
+  return {
+    ok: true,
+    productId,
+    transactionId: transactionKey,
+    environment,
+    raw: payload,
+    testPurchase: environment !== 'Production',
+  };
 }
 
 async function verifyAndroid(
   deps: VerifyPurchaseDeps,
   productId: string,
   purchaseToken: string,
+  userId: string,
 ): Promise<Verified> {
   if (!(productId in PRODUCT_TICKETS)) return { ok: false, status: 400, error: 'unknown_product' };
   const purchase = await deps.fetchPlayPurchase(productId, purchaseToken);
@@ -122,12 +144,17 @@ async function verifyAndroid(
   if (!purchase || purchase.purchaseState !== 0) {
     return { ok: false, status: 400, error: 'invalid_receipt' };
   }
+  if (!sameAccount(purchase.obfuscatedExternalAccountId, userId)) {
+    return { ok: false, status: 403, error: 'account_mismatch' };
+  }
+  const testPurchase = purchase.purchaseType === 0;
   return {
     ok: true,
     productId,
     transactionId: purchase.orderId && purchase.orderId.length > 0 ? purchase.orderId : purchaseToken,
-    environment: purchase.purchaseType === 0 ? 'PlayTest' : 'Play',
+    environment: testPurchase ? 'PlayTest' : 'Play',
     raw: purchase,
+    testPurchase,
   };
 }
 
@@ -143,16 +170,18 @@ export function createHandler(deps: VerifyPurchaseDeps): (req: Request) => Promi
     if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
 
     try {
-      // 모드가 test가 아니면 닫는다(실판매 검증은 아직 없다).
-      if (deps.mode !== 'test') return json(501, { error: 'store_mode_unavailable' });
+      // 모드가 live·test가 아니면 닫는다.
+      if (deps.mode !== 'live' && deps.mode !== 'test') return json(501, { error: 'store_mode_unavailable' });
+      const live = deps.mode === 'live';
 
       const jwt = (req.headers.get('Authorization') ?? '').match(/^Bearer\s+(\S+)$/i)?.[1];
       if (!jwt) return json(401, { error: 'unauthorized' });
       const userId = await deps.getUserId(jwt);
       if (!userId) return json(401, { error: 'unauthorized' });
 
+      const tester = await deps.isTester(userId);
       // 테스트 모드의 안전장치 — 테스터가 아니면 영수증을 보지도 않는다.
-      if (!(await deps.isTester(userId))) return json(403, { error: 'not_tester' });
+      if (!live && !tester) return json(403, { error: 'not_tester' });
 
       const raw = await req.text();
       if (raw.length > MAX_BODY_BYTES) return json(400, { error: 'bad_request' });
@@ -168,7 +197,7 @@ export function createHandler(deps: VerifyPurchaseDeps): (req: Request) => Promi
       let platform: 'ios' | 'android';
       if (body.platform === 'ios' && typeof body.jws === 'string') {
         platform = 'ios';
-        verified = verifyIos(body.jws, userId);
+        verified = await verifyIos(deps, live, body.jws, userId);
       } else if (
         body.platform === 'android' &&
         typeof body.productId === 'string' &&
@@ -176,11 +205,13 @@ export function createHandler(deps: VerifyPurchaseDeps): (req: Request) => Promi
         body.purchaseToken.length > 0
       ) {
         platform = 'android';
-        verified = await verifyAndroid(deps, body.productId, body.purchaseToken);
+        verified = await verifyAndroid(deps, body.productId, body.purchaseToken, userId);
       } else {
         return json(400, { error: 'bad_request' });
       }
       if (!verified.ok) return json(verified.status, { error: verified.error });
+      // 시험 결제(TestFlight·App Review의 Sandbox, Play 라이선스 테스터)는 돈이 오가지 않는다 — 테스터에게만 지급한다.
+      if (verified.testPurchase && !tester) return json(403, { error: 'not_tester' });
 
       const granted = await deps.credit({
         userId,

@@ -422,3 +422,9 @@ verify_jwt = false
 # 편지권 구매 검증·지급. 함수 안에서 사용자 JWT를 직접 확인한다.
 [functions.verify-purchase]
 verify_jwt = false
+
+[functions.apple-notifications]
+verify_jwt = false
+
+[functions.play-voided-sync]
+verify_jwt = false
