@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { lazy, Suspense, type ReactNode } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { RequireAuth } from '@/features/auth/RequireAuth';
+import { WhatsNewBanner } from '@/features/tickets';
 
 // 라우트별 코드 스플릿 — 콜드 번들을 가볍게 유지(<3s/4G 예산, US-001).
 const Home = lazy(() => import('@/routes/Home')); // 인증 상태에 따라 랜딩/대시보드
@@ -35,9 +36,10 @@ function withSuspense(node: ReactNode): ReactNode {
  * 제작자 셸로 감싼 라우트 — AppShell(헤더 + 컨테이너) 포함.
  * 수신 라우트(/l/:token)와 takedown은 이 셸을 쓰지 않는다.
  * 수신자가 인코그니토에서 열어도 제작 전용 UI가 전혀 노출되지 않는다.
+ * 새 소식 한 줄(WhatsNewBanner)은 셸에만 붙는다 — 로그인한 대상 계정에게만 스스로 보인다.
  */
 function withCreatorShell(node: ReactNode): ReactNode {
-  return withSuspense(<AppShell>{node}</AppShell>);
+  return withSuspense(<AppShell banner={<WhatsNewBanner />}>{node}</AppShell>);
 }
 
 /**
@@ -47,7 +49,7 @@ function withCreatorShell(node: ReactNode): ReactNode {
  */
 function withProtectedCreatorShell(node: ReactNode): ReactNode {
   return withSuspense(
-    <AppShell>
+    <AppShell banner={<WhatsNewBanner />}>
       <RequireAuth>{node}</RequireAuth>
     </AppShell>,
   );

@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AppShell } from '@/components/AppShell';
 import { RequireAuth } from '@/features/auth/RequireAuth';
+import { WhatsNewBanner } from '@/features/tickets';
 import { isIOS, isInAppBrowser } from '@/lib/device';
 import { appConnectUrl, openAppScheme, APP_STORE_URL, HANDOFF_ENABLED } from '@/lib/appLinks';
 import { appStoreUrl } from '@/lib/storeLinks';
@@ -29,7 +30,7 @@ const HANDOFF_TIMEOUT_MS = 1400;
 /** 웹 보호 플로우(로그인+수락) — 데스크톱/Android/비핸드오프, "웹에서 계속"의 착지점. */
 function WebConnect(): React.ReactElement {
   return (
-    <AppShell>
+    <AppShell banner={<WhatsNewBanner />}>
       <RequireAuth>
         <Connect />
       </RequireAuth>

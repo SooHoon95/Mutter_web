@@ -13,10 +13,12 @@ import { signOut } from '@/data/auth';
 import { Footer } from './Footer';
 
 interface AppShellProps {
+  /** 내비게이션 아래, 본문 위에 놓을 안내(새 소식 한 줄 등). 셸은 내용을 모른다 — 호출부가 건넨다. */
+  banner?: ReactNode;
   children: ReactNode;
 }
 
-export function AppShell({ children }: AppShellProps): ReactNode {
+export function AppShell({ banner, children }: AppShellProps): ReactNode {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -72,6 +74,7 @@ export function AppShell({ children }: AppShellProps): ReactNode {
           )}
         </nav>
       </header>
+      {banner}
       <div className="app-shell__content">{children}</div>
       <Footer />
     </div>
