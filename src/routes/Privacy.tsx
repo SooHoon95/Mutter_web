@@ -8,7 +8,7 @@
 import styles from './Privacy.module.css';
 
 /** 문의 이메일 — 앱 '문의하기'와 동일 채널. 빌드 시 VITE_SUPPORT_EMAIL로 덮어쓸 수 있다. */
-const CONTACT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'dkehskeh@gmail.com';
+const CONTACT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'musicletter2026@gmail.com';
 
 /** 최종 개정일 — 정책 변경 시 갱신한다. */
 const EFFECTIVE_DATE = '2026년 7월 12일';

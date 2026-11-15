@@ -32,9 +32,9 @@ const EMPTY_FORM: TakedownForm = {
 
 /** 연락처 이메일 — 폴백 mailto: 링크에도 사용.
  *  빌드 시 VITE_COPYRIGHT_EMAIL 환경 변수로 주입된다.
- *  미설정 시 mutter.app 도메인으로 폴백한다. */
+ *  미설정 시 문의하기와 같은 주소를 쓴다(예전 기본값 copyright@mutter.app은 연결되지 않은 도메인이었다). */
 const CONTACT_EMAIL =
-  import.meta.env.VITE_COPYRIGHT_EMAIL || 'copyright@mutter.app';
+  import.meta.env.VITE_COPYRIGHT_EMAIL || 'musicletter2026@gmail.com';
 
 type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
 
