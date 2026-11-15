@@ -1,6 +1,8 @@
 // SentLetterDetail — 보낸 편지 상세(0037·0038). 보낸 편지 목록의 펼친 패널에서 LinkManager 위에 놓인다.
 //
 //   - 열람자: "{닉네임} · {M}월 {D}일에 열어봄"(get_letter_readers). 조회 실패·아무도 안 열었으면 숨김.
+//   - 닫힌 편지(locked): "이 편지는 닫혔어요. {M}월 {D}일에 삭제돼요."(0042 삭제 안내) — 편지권 UI가 보이는 계정에는
+//     "편지권을 쓰면 다시 열리고 삭제되지 않아요."를 잇는다. "영구 편지로 만들기" 위.
 //   - 영구 편지로 만들기 · 편지권 1장: 이미 보낸(링크가 있는) 영구가 아닌 편지에, 편지권을 쓸 수 있을 때만. 문구가 편지권 1장을
 //     말하므로 확인 단계 없이 바로 진행한다. 잔액이 없으면 앱 안내.
 //   - 같은 내용으로 한 통 더 보내기: duplicate-letter로 새 편지를 만들고 기존 발송 흐름(/create/:id)으로.
@@ -48,6 +50,9 @@ export function SentLetterDetail({
 
   // 영구로 만들 수 있는 편지 — 무료 기간 안이거나 잠긴 편지(삭제 대상은 되살릴 수 없다).
   const upgradable = !hidePermanent && (access?.state === 'open' || access?.state === 'locked');
+  const locked = access?.state === 'locked';
+  // 편지권 UI가 보이는 계정(유료 전환·테스터·관리자) — 서버 계약 "화면 노출 규칙".
+  const ticketUiVisible = !!entitlements && (entitlements.paidEnabled || entitlements.isAdmin);
 
   async function handlePermanent(): Promise<void> {
     setBusy('permanent');
@@ -79,8 +84,8 @@ export function SentLetterDetail({
   }
 
   const hasReaders = !!readers && readers.length > 0;
-  // 서버(0038) 반영 전이면 entitlements가 null — 새 기능을 통째로 숨긴다.
-  if (!hasReaders && entitlements === null) return null;
+  // 서버(0038) 반영 전이면 entitlements가 null — 새 기능을 통째로 숨긴다(닫힌 편지의 삭제 안내는 상태만으로 보인다).
+  if (!hasReaders && entitlements === null && !locked) return null;
 
   return (
     <div className={styles.container}>
@@ -95,6 +100,13 @@ export function SentLetterDetail({
             ))}
           </ul>
         </div>
+      )}
+
+      {locked && (
+        <p className={styles.notice}>
+          이 편지는 닫혔어요.{access?.deleteAt && ` ${monthDay(access.deleteAt)}에 삭제돼요.`}
+          {upgradable && ticketUiVisible && ' 편지권을 쓰면 다시 열리고 삭제되지 않아요.'}
+        </p>
       )}
 
       {entitlements !== null && (

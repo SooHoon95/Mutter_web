@@ -4,12 +4,14 @@
 //   - 영구 편지(access_until 없음): 아무것도 없다.
 //   - 남은 날 ≤ warn_days: 닫힘 예고 "이 편지는 {n}일 뒤 닫혀요" + "간직하기"(②).
 //   - 그 전: "이 편지는 {M}월 {D}일까지 열려요" + "계속 간직하기"(①).
+//   - ①② 뒤에는 삭제 안내 "닫힌 뒤 {grace_days}일이 지나면 삭제돼요."(0042)를 붙인다. 일수는 서버 값이라
+//     권한을 받지 못했으면(비로그인·서버 반영 전) 그 문장만 뺀다.
 // 웹에서는 닫힘 예고도 같은 자리(본문 끝)라 ①②를 한 줄로 합친다 — 같은 뜻의 줄이 둘 붙지 않게.
 // 보낸 사람 본인(is_mine)에게는 호출부(Viewer)가 이 줄을 통째로 그리지 않는다. 버튼은 로그인한 받은 사람에게만
 // (KeepLetterAction이 편지권 조회로 가린다 — 비로그인은 날짜 안내만). 읽는 도중에는 끼어들지 않는다.
 
 import { useEntitlements } from '@/features/tickets';
-import { closingNotice, monthDay } from '@/lib/accessLabel';
+import { closingNotice, monthDay, purgeNotice } from '@/lib/accessLabel';
 import { KeepLetterAction } from './KeepLetterAction';
 import styles from './LetterView.module.css';
 
@@ -54,10 +56,11 @@ export function LetterKeepNotice({
   if (!accessUntil) return null;
 
   const closing = closingNotice(accessUntil, entitlements?.warnDays ?? DEFAULT_WARN_DAYS);
+  const period = closing ?? `이 편지는 ${monthDay(accessUntil)}까지 열려요`;
 
   return (
     <div className={styles.closingNotice} role="note">
-      <span>{closing ?? `이 편지는 ${monthDay(accessUntil)}까지 열려요`}</span>{' '}
+      <span>{entitlements ? `${period}. ${purgeNotice(entitlements.graceDays)}` : period}</span>{' '}
       <KeepLetterAction
         token={token}
         password={password}

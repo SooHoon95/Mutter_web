@@ -135,6 +135,8 @@ export function SendChoiceGate({ letterId, before, children }: SendChoiceGatePro
 
   const tickets = entitlements?.tickets ?? 0;
   const freeDays = entitlements?.freeDays;
+  // 0042 삭제 안내 — 일수는 서버 값(grace_days).
+  const graceDays = entitlements?.graceDays;
   const canPermanent = tickets > 0 && !noTicket;
   // 영구를 못 고르면(잔액 0·방금 "편지권 없음" 응답) 선택은 {n}일 편지뿐이다.
   const selected: Choice = canPermanent ? choice : 'free';
@@ -191,6 +193,11 @@ export function SendChoiceGate({ letterId, before, children }: SendChoiceGatePro
               <span className={styles.choiceDesc}>
                 받는 분이 처음 연 날부터 {freeDays}일 동안 열려요
               </span>
+              {graceDays !== undefined && (
+                <span className={styles.choiceDesc}>
+                  닫힌 뒤 {graceDays}일이 지나면 편지가 삭제돼요
+                </span>
+              )}
             </span>
             <span className={styles.choicePrice}>무료</span>
           </label>

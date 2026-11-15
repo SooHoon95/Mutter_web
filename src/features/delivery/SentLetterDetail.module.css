@@ -28,6 +28,14 @@
   color: var(--text-secondary);
 }
 
+.notice {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  word-break: keep-all;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

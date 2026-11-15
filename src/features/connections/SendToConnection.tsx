@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { NoTicketError } from '@/data/access';
-import { useSendChoice } from '@/features/tickets';
+import { useFreePeriodNotice, useSendChoice } from '@/features/tickets';
 import { useConnections } from './useConnections';
 import { ConnectionPicker } from './ConnectionPicker';
 import styles from './SendToConnection.module.css';
@@ -22,6 +22,8 @@ export function SendToConnection({
 }: SendToConnectionProps): React.ReactElement {
   const { connections, sendToConnection, isSending } = useConnections();
   const { permanent, onSent, onNoTicket } = useSendChoice();
+  // 0042: {n}일 편지로 보낼 때만 기간·삭제 안내 한 줄(링크 발급 화면과 같은 문장).
+  const freePeriodNotice = useFreePeriodNotice(letterId);
   const [selectedId, setSelectedId] = useState<string | null>(preselectId ?? null);
   const [sentName, setSentName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +66,8 @@ export function SendToConnection({
           setSentName(null);
         }}
       />
+
+      {freePeriodNotice && <p className={styles.hint}>{freePeriodNotice}</p>}
 
       <button
         type="button"

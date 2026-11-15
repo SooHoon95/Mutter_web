@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useLinks } from './useLinks';
 import { validateSchedule } from './validateSchedule';
 import { NoTicketError } from '@/data/access';
-import { useEntitlements, useLetterAccessStates, useSendChoice } from '@/features/tickets';
+import { useFreePeriodNotice, useSendChoice } from '@/features/tickets';
 import styles from './LinkManager.module.css';
 
 interface LinkManagerProps {
@@ -26,13 +26,10 @@ function toLocalInputValue(d: Date): string {
 
 export function LinkManager({ letterId }: LinkManagerProps) {
   const { links, loading, error, issue, revoke } = useLinks(letterId);
-  // 0037: 기간 규칙이 붙은 편지(state=open)에만 안내 한 줄. 일수는 서버 값(free_days).
-  const { entitlements } = useEntitlements();
-  const { states } = useLetterAccessStates([letterId]);
+  // 0037·0042: 기간 규칙이 붙은 편지(state=open)에만 기간·삭제 안내 한 줄. 일수는 서버 값.
+  const freePeriodNotice = useFreePeriodNotice(letterId);
   // 보내기 전 선택에서 영구 편지를 골랐으면 발급과 함께 편지권 1장이 쓰인다(그 전에는 쓰이지 않는다).
   const { permanent, onSent, onNoTicket } = useSendChoice();
-  const freeDays =
-    !permanent && states.get(letterId)?.state === 'open' ? entitlements?.freeDays : undefined;
 
   // 발급 폼 상태
   const [passwordEnabled, setPasswordEnabled] = useState(true); // 암호 기본 ON
@@ -99,9 +96,7 @@ export function LinkManager({ letterId }: LinkManagerProps) {
       {/* 발급 폼 */}
       <form className={styles.issueForm} onSubmit={(e) => void handleIssue(e)}>
         <h3>새 전달 링크 발급</h3>
-        {freeDays !== undefined && (
-          <p className={styles.fieldHint}>받는 분이 처음 연 날부터 {freeDays}일 동안 열려요.</p>
-        )}
+        {freePeriodNotice && <p className={styles.fieldHint}>{freePeriodNotice}</p>}
 
         {/* 암호 토글 — 기본 ON */}
         <div className={styles.fieldRow}>

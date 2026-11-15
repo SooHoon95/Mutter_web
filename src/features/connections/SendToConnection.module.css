@@ -28,6 +28,13 @@
   cursor: not-allowed;
 }
 
+.hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-tertiary);
+}
+
 .error {
   margin: 0;
   font-size: 0.8125rem;

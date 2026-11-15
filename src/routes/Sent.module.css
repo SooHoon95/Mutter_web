@@ -91,10 +91,11 @@
   margin: 0.25rem 0 0;
 }
 
-/* 0037 상태(영구 / n일 남음 / 닫힘) — 날짜 뒤에 조용히. */
+/* 0037 상태(영구 / n일 남음 / 닫힘 · n일 뒤 삭제) — 날짜 뒤에 조용히. 문구 중간에서 접히지 않고 통째로 다음 줄로 넘어간다. */
 .cardAccess {
   color: var(--text-secondary);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .cardRecipient {
