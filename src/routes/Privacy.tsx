@@ -3,7 +3,8 @@
  *
  * 공개·무인증 개인정보 처리방침. App Store 제출 필수(개인정보 처리방침 URL).
  * Takedown과 동일하게 셸/가드 없는 정적 법적 페이지 — 라이브 DB 없이도 항상 접근 가능.
- * 데이터 수집 항목은 실제 구현(Supabase 인증·FCM 푸시·소셜 로그인)에 맞춰 기술한다.
+ * 데이터 수집 항목은 실제 구현(Supabase 인증·FCM 푸시·소셜 로그인·사진 첨부·열람 기록·인앱 결제)에 맞춰 기술한다.
+ * iOS·Android 앱의 「개인정보 처리방침」도 이 페이지를 연다 — 앱에 따로 사본을 두지 않는다.
  */
 import styles from './Privacy.module.css';
 
@@ -11,7 +12,7 @@ import styles from './Privacy.module.css';
 const CONTACT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'musicletter2026@gmail.com';
 
 /** 최종 개정일 — 정책 변경 시 갱신한다. */
-const EFFECTIVE_DATE = '2026년 7월 12일';
+const EFFECTIVE_DATE = '2026년 11월 16일';
 
 export default function Privacy(): React.ReactElement {
   return (
@@ -31,13 +32,17 @@ export default function Privacy(): React.ReactElement {
           <ul className={styles.list}>
             <li><strong>계정 정보</strong> — 이메일 주소, 닉네임, 로그인 제공자(Apple·Google·Kakao 또는 이메일)</li>
             <li><strong>인증 식별자</strong> — 소셜 로그인 고유 식별자, 서비스 내 사용자 ID</li>
-            <li><strong>이용자 콘텐츠</strong> — 편지 본문·제목·테마 선택·첨부 음악 정보, 연결(친구) 관계</li>
+            <li><strong>이용자 콘텐츠</strong> — 편지 본문·제목·테마 선택·첨부 음악 정보, 이용자가 편지에 넣은 사진, 연결(친구) 관계</li>
+            <li><strong>열람 기록</strong> — 로그인한 받는 사람이 편지를 연 시각과 횟수(보낸 사람에게 「열어본 사람」으로 표시)</li>
+            <li><strong>구매 기록</strong> — 편지권 구매 시 스토어 거래 정보(상품, 거래 번호, 구매·환불 시각, 스토어 환경)</li>
             <li><strong>기기·알림 정보</strong> — 푸시 알림 토큰(FCM)</li>
             <li><strong>이용 기록</strong> — 접속 로그, 오류 로그(자동 생성)</li>
           </ul>
           <p className={styles.note}>
-            카메라·마이크·위치·사진·주소록 등 기기 권한은 수집·이용하지 않습니다. Apple 로그인 시
-            이메일 가리기를 선택하면 익명 릴레이 이메일이 제공될 수 있습니다.
+            카메라·마이크·위치·주소록 등 기기 권한은 이용하지 않습니다. 사진은 이용자가 편지에 넣으려고
+            직접 고른 것만 전송되며 사진 보관함 전체에 접근하지 않습니다. 결제 수단·카드 정보는 Apple·Google이
+            처리하며 서비스는 받지 않습니다. Apple 로그인 시 이메일 가리기를 선택하면 익명 릴레이 이메일이
+            제공될 수 있습니다.
           </p>
         </section>
 
@@ -46,7 +51,8 @@ export default function Privacy(): React.ReactElement {
           <ul className={styles.list}>
             <li>회원 식별 및 로그인, 계정 관리</li>
             <li>편지 작성·전달·열람 등 핵심 기능 제공</li>
-            <li>연결 및 편지 발송 알림 제공</li>
+            <li>연결 및 편지 발송·닫힘·삭제 예정 알림 제공</li>
+            <li>편지권 구매 확인·지급·환불 반영 및 중복·부정 결제 방지</li>
             <li>서비스 운영·개선, 오류 대응 및 문의 응대</li>
             <li>부정 이용 방지 및 관련 법령상 의무 이행</li>
           </ul>
@@ -57,8 +63,19 @@ export default function Privacy(): React.ReactElement {
           <ul className={styles.list}>
             <li>원칙적으로 <strong>회원 탈퇴 시 지체 없이 파기</strong>합니다.</li>
             <li>
-              서비스 내 <strong>계정 삭제</strong> 실행 시 계정 정보와 이용자가 작성한 편지·연결
-              정보가 삭제됩니다(상대방이 보관 중인 편지 포함).
+              서비스 내 <strong>계정 삭제</strong> 실행 시 계정 정보와 이용자가 작성한 편지·연결 정보, 남은
+              편지권이 삭제됩니다. 다만 이미 받은 분의 받은 편지함에 담긴 편지는 받은 분이 지울 때까지 남으며,
+              보낸 사람은 「탈퇴한 사용자」로 표시됩니다.
+            </li>
+            <li>
+              <strong>7일 편지</strong>(무료로 보낸 편지)는 받는 분이 처음 연 날부터 7일 동안 열리고, 닫힌 뒤
+              <strong>30일이 지나면 사진을 포함해 완전히 삭제</strong>합니다. 그 전에 편지권으로 영구 편지가 된
+              편지에는 이 기간이 적용되지 않습니다.
+            </li>
+            <li>
+              <strong>구매 기록</strong>은 중복 지급·부정 결제 방지와 관련 법령에 따른 거래 기록 보관을 위해
+              계정 삭제 뒤에도 계정과 분리해 보관하며, 법령이 정한 기간(전자상거래법상 대금 결제 기록 5년)이
+              지나면 파기합니다.
             </li>
             <li>
               이용자가 삭제한 편지는 실수로 지운 경우 되살릴 수 있도록 <strong>삭제함에 30일간
@@ -79,6 +96,7 @@ export default function Privacy(): React.ReactElement {
             <li><strong>Supabase</strong> — 인증·데이터베이스·서버 인프라</li>
             <li><strong>Google(Firebase Cloud Messaging)</strong> — 푸시 알림 전송</li>
             <li><strong>Apple · Google · Kakao</strong> — 소셜 로그인 인증</li>
+            <li><strong>Apple(App Store) · Google(Google Play)</strong> — 인앱 결제 처리 및 구매·환불 확인</li>
             <li>웹 페이지 호스팅 제공자</li>
           </ul>
           <p className={styles.note}>
