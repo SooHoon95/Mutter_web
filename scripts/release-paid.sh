@@ -43,7 +43,7 @@ read -r -p "운영 DB와 함수에 반영한다. 계속할까? (yes) " answer
 [ "$answer" = "yes" ] || { echo "그만둔다"; exit 1; }
 
 echo "== 1. 마이그레이션"
-supabase db push
+supabase db push --yes   # 위에서 yes를 받았으니 CLI 확인은 넘긴다
 
 echo "== 2. 함수 배포"
 for fn in "${FUNCTIONS[@]}"; do
