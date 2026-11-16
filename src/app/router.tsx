@@ -25,6 +25,7 @@ const Viewer = lazy(() => import('@/routes/Viewer'));
 const KakaoCallback = lazy(() => import('@/routes/KakaoCallback')); // 카카오 인가코드 콜백(닉네임-우선)
 const Takedown = lazy(() => import('@/routes/Takedown'));
 const Privacy = lazy(() => import('@/routes/Privacy')); // 개인정보 처리방침(App Store 필수)
+const Terms = lazy(() => import('@/routes/Terms')); // 이용약관(앱의 「이용약관」도 이 페이지를 연다)
 const Support = lazy(() => import('@/routes/Support')); // 고객 지원(App Store 지원 URL)
 const NotFound = lazy(() => import('@/routes/NotFound'));
 
@@ -90,6 +91,7 @@ export const router = createBrowserRouter([
   // ── 공개 법적 채널 (셸 없음) ─────────────────────────────────────────────
   { path: '/legal/takedown', element: withSuspense(<Takedown />) },
   { path: '/legal/privacy', element: withSuspense(<Privacy />) },
+  { path: '/legal/terms', element: withSuspense(<Terms />) },
   { path: '/support', element: withSuspense(<Support />) },
   { path: '*', element: withSuspense(<NotFound />) },
 ]);

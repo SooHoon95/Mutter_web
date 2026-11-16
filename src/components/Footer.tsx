@@ -1,7 +1,7 @@
 /**
  * src/components/Footer.tsx
  *
- * 공통 푸터 — 저작권 신고 링크 + 간단 이용 약관 문구.
+ * 공통 푸터 — 이용약관·개인정보 처리방침·저작권 신고 링크.
  * 제작 셸(AppShell)과 수신 뷰(LetterView) 양쪽에 노출된다.
  *
  * T9 (US-009): 법적 안전장치 — 권리주장자가 신고 경로를 쉽게 찾을 수 있어야 한다.
@@ -13,10 +13,13 @@ export function Footer(): React.ReactElement {
     <footer className={styles.footer}>
       <p className={styles.tos}>
         이 서비스를 이용함으로써{' '}
-        <a className={styles.link} href="/legal/takedown">
-          이용 약관 및 저작권 정책
+        <a className={styles.link} href="/legal/terms">
+          이용약관
         </a>
-        에 동의합니다.
+        에 동의합니다.{' '}
+        <a className={styles.link} href="/legal/privacy">
+          개인정보 처리방침
+        </a>
       </p>
       <p className={styles.copy}>
         저작권 침해가 우려되는 경우{' '}

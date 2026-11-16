@@ -37,6 +37,7 @@ export default function Privacy(): React.ReactElement {
             <li><strong>구매 기록</strong> — 편지권 구매 시 스토어 거래 정보(상품, 거래 번호, 구매·환불 시각, 스토어 환경)</li>
             <li><strong>기기·알림 정보</strong> — 푸시 알림 토큰(FCM)</li>
             <li><strong>이용 기록</strong> — 접속 로그, 앱 오류 보고와 이용 통계(기기 종류·OS 버전·앱 버전 등, 자동 생성)</li>
+            <li><strong>웹 이용 통계</strong> — 웹 페이지 조회와 버튼 사용(Google Analytics). 브라우저를 닫으면 지워지는 세션 쿠키만 쓰며, 편지 링크 주소와 편지 내용은 보내지 않습니다</li>
           </ul>
           <p className={styles.note}>
             카메라·마이크·위치·주소록 등 기기 권한은 이용하지 않습니다. 사진은 이용자가 편지에 넣으려고
@@ -94,7 +95,7 @@ export default function Privacy(): React.ReactElement {
           </p>
           <ul className={styles.list}>
             <li><strong>Supabase</strong> — 인증·데이터베이스·서버 인프라</li>
-            <li><strong>Google(Firebase)</strong> — 푸시 알림 전송(Cloud Messaging), 앱 오류 보고(Crashlytics)·앱 이용 통계(Analytics)</li>
+            <li><strong>Google(Firebase)</strong> — 푸시 알림 전송(Cloud Messaging), 앱 오류 보고(Crashlytics)·앱 이용 통계(Analytics), 웹 이용 통계(Google Analytics)</li>
             <li><strong>Apple · Google · Kakao</strong> — 소셜 로그인 인증</li>
             <li><strong>Apple(App Store) · Google(Google Play)</strong> — 인앱 결제 처리 및 구매·환불 확인</li>
             <li>웹 페이지 호스팅 제공자</li>
@@ -143,7 +144,8 @@ export default function Privacy(): React.ReactElement {
           <h2 className={styles.sectionTitle}>9. 방침의 변경</h2>
           <p className={styles.paragraph}>
             본 방침은 법령·서비스 변경에 따라 개정될 수 있으며, 개정 시 서비스 내 공지 또는 본 페이지를
-            통해 고지합니다.
+            통해 고지합니다. 서비스 이용 조건은 <a className={styles.link} href="/legal/terms">이용약관</a>을
+            따릅니다.
           </p>
         </section>
       </div>

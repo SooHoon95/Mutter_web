@@ -76,6 +76,9 @@ export default function Support(): React.ReactElement {
           <h2 className={styles.sectionTitle}>정책 및 신고</h2>
           <ul className={styles.linkList}>
             <li>
+              <Link className={styles.link} to="/legal/terms">이용약관</Link>
+            </li>
+            <li>
               <Link className={styles.link} to="/legal/privacy">개인정보 처리방침</Link>
             </li>
             <li>
