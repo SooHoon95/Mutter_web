@@ -208,7 +208,7 @@ function Dashboard({ user }: { user: User }): React.ReactElement {
       <nav className={styles.cards} aria-label="편지함 바로가기">
         <Link className={styles.card} to="/sent">
           <span className={styles.cardTitle}>보낸 편지 · 보관함</span>
-          <span className={styles.cardDesc}>이어쓰기 · 링크 관리 · 열람 현황</span>
+          <span className={styles.cardDesc}>이어쓰기 · 링크 관리</span>
         </Link>
         <Link className={styles.card} to="/inbox">
           <span className={styles.cardTitle}>받은 편지함</span>

@@ -64,7 +64,7 @@ export default function Terms(): React.ReactElement {
           <h2 className={styles.sectionTitle}>제4조 (서비스의 내용)</h2>
           <ul className={styles.list}>
             <li>편지 작성(테마·음악 정보·사진 첨부), 링크 발급, 연결된 회원에게 보내기</li>
-            <li>받은 편지함·삭제함, 편지를 열어본 사람과 열람 알림</li>
+            <li>받은 편지함·삭제함, 받는 분이 편지를 열었을 때의 알림</li>
             <li>편지권 구매와 사용(앱에서만)</li>
           </ul>
           <p className={styles.paragraph}>

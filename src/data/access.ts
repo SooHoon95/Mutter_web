@@ -3,7 +3,6 @@
 //
 // - 봉투(get_letter_cover): 로그인 전 화면·잠김 화면의 겉면(제목·보낸 사람). 본문·열람 기록 없음.
 // - 목록 상태(get_letter_access_states): 보낸 편지·받은 편지함에 합칠 영구/남은 기간/닫힘.
-// - 열람자(get_letter_readers): 보낸 사람(소유자)만.
 // - 게이트 오류 코드(LOGIN_REQUIRED·LETTER_LOCKED:<ISO>·LETTER_GONE·NO_TICKET)를 타입 있는 에러로 바꾼다.
 
 import { getSupabase } from './supabase';
@@ -162,37 +161,4 @@ export async function getLetterCover(token: string): Promise<LetterCover> {
     },
     loginRequired: row.login_required === true,
   };
-}
-
-// ---------------------------------------------------------------------------
-// 열람자 (보낸 사람 전용)
-// ---------------------------------------------------------------------------
-
-export interface LetterReader {
-  userId: string;
-  nickname: string | null;
-  firstOpenedAt: string;
-  lastOpenedAt: string;
-  openCount: number;
-}
-
-interface ReaderRow {
-  user_id: string;
-  nickname: string | null;
-  first_opened_at: string;
-  last_opened_at: string;
-  open_count: number;
-}
-
-/** 내 편지를 연 사람들 — 처음 연 순. 소유자가 아니면 서버가 FORBIDDEN. */
-export async function getLetterReaders(letterId: string): Promise<LetterReader[]> {
-  const { data, error } = await getSupabase().rpc('get_letter_readers', { p_letter_id: letterId });
-  if (error) throw error;
-  return ((data ?? []) as ReaderRow[]).map((row) => ({
-    userId: row.user_id,
-    nickname: row.nickname,
-    firstOpenedAt: row.first_opened_at,
-    lastOpenedAt: row.last_opened_at,
-    openCount: Number(row.open_count),
-  }));
 }

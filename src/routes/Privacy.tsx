@@ -33,7 +33,7 @@ export default function Privacy(): React.ReactElement {
             <li><strong>계정 정보</strong> — 이메일 주소, 닉네임, 로그인 제공자(Apple·Google·Kakao 또는 이메일)</li>
             <li><strong>인증 식별자</strong> — 소셜 로그인 고유 식별자, 서비스 내 사용자 ID</li>
             <li><strong>이용자 콘텐츠</strong> — 편지 본문·제목·테마 선택·첨부 음악 정보, 이용자가 편지에 넣은 사진, 연결(친구) 관계</li>
-            <li><strong>열람 기록</strong> — 로그인한 받는 사람이 편지를 연 시각과 횟수(보낸 사람에게 「열어본 사람」으로 표시)</li>
+            <li><strong>열람 기록</strong> — 로그인한 받는 사람이 편지를 연 시각과 횟수(보낸 사람에게 보내는 열람 알림과 7일 편지의 열람 기간 계산에 사용)</li>
             <li><strong>구매 기록</strong> — 편지권 구매 시 스토어 거래 정보(상품, 거래 번호, 구매·환불 시각, 스토어 환경)</li>
             <li><strong>기기·알림 정보</strong> — 푸시 알림 토큰(FCM)</li>
             <li><strong>이용 기록</strong> — 접속 로그, 앱 오류 보고와 이용 통계(기기 종류·OS 버전·앱 버전 등, 자동 생성)</li>
