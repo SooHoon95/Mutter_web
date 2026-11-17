@@ -13,7 +13,7 @@ import styles from './Privacy.module.css';
 const CONTACT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'musicletter2026@gmail.com';
 
 /** 시행일 — 약관 변경 시 갱신한다. */
-const EFFECTIVE_DATE = '2026년 11월 16일';
+const EFFECTIVE_DATE = '2026년 11월 17일';
 
 export default function Terms(): React.ReactElement {
   return (
@@ -107,17 +107,21 @@ export default function Terms(): React.ReactElement {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>제7조 (청약철회와 환불)</h2>
+          <h2 className={styles.sectionTitle}>제7조 (환불)</h2>
           <ul className={styles.list}>
-            <li>편지권의 결제와 환불은 App Store 또는 Google Play의 정책과 절차를 따르며, 환불은 해당 스토어에 요청합니다.</li>
-            <li>사용하지 않은 편지권은 관계 법령에 따라 구매일로부터 7일 안에 청약철회(환불)를 요청할 수 있습니다.</li>
             <li>
-              이미 사용한 편지권은 디지털 콘텐츠의 제공이 시작된 것이므로 「전자상거래 등에서의 소비자보호에 관한
-              법률」 제17조 제2항에 따라 청약철회가 제한될 수 있습니다.
+              편지권은 결제가 끝나는 즉시 계정에 지급되어 바로 쓸 수 있는 디지털 콘텐츠입니다. 「전자상거래 등에서의
+              소비자보호에 관한 법률」 제17조 제2항 제5호에 따라 구매한 편지권은 사용 여부와 관계없이
+              청약철회(환불)가 되지 않으며, 서비스는 구매 화면에 이를 미리 알립니다.
             </li>
             <li>
-              스토어에서 환불되면 환불된 장수만큼 편지권이 회수됩니다. 이미 사용한 편지권이 환불되면 보유 편지권이
-              0장보다 적어질 수 있고, 그동안은 편지권을 쓸 수 없습니다. 이미 영구 편지가 된 편지는 되돌리지 않습니다.
+              미성년자가 법정대리인의 동의 없이 결제한 경우에는 관계 법령에 따라 결제를 취소할 수 있습니다. 이때는
+              해당 스토어 또는 아래 문의 이메일로 요청해 주세요.
+            </li>
+            <li>
+              App Store 또는 Google Play가 자체 정책에 따라 결제를 환불한 경우, 환불된 장수만큼 편지권이 회수됩니다.
+              이미 사용한 편지권이 환불되면 보유 편지권이 0장보다 적어질 수 있고, 그동안은 편지권을 쓸 수 없습니다.
+              이미 영구 편지가 된 편지는 되돌리지 않습니다.
             </li>
             <li>서비스의 오류로 편지권이 지급되지 않았거나 잘못 사용된 경우 문의해 주시면 확인한 뒤 지급하거나 되돌립니다.</li>
           </ul>
