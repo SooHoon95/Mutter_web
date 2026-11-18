@@ -9,14 +9,15 @@
 //         Android { platform: 'android', productId: 'mutter.ticket.1', purchaseToken: '…' }
 //   응답  200 { granted: boolean, tickets: number }   — tickets = 지급 후 잔액
 //         granted=false는 "이미 지급된 영수증"이며 성공이다. 앱은 이때도 거래를 finish/consume 한다.
-//   오류  401 unauthorized · 403 not_tester · 403 account_mismatch · 400 bad_request · 400 invalid_receipt
+//   오류  401 unauthorized · 403 not_tester(test 모드만) · 403 account_mismatch · 400 bad_request · 400 invalid_receipt
 //         400 unknown_product · 501 store_mode_unavailable · 501 android_verify_unconfigured   본문 { error: '<코드>' }
 //
 // 모드(PURCHASE_MODE) — 그 밖의 값·미설정이면 501로 닫힌다(실수로 검증 없이 열리지 않게).
 //   live  운영. iOS는 JWS 서명을 Apple 루트까지 검증한다(_shared/appleJws.ts). Android는 Google Play에서 조회한다.
-//         실제 결제(iOS Production · Play 일반 구매)는 누구에게나 지급한다.
-//         시험 결제(iOS Sandbox — TestFlight·App Review / Play 라이선스 테스터 구매)는 purchase_testers에만 지급한다.
-//         App Review 심사관의 결제는 Sandbox로 오므로 심사용 계정을 purchase_testers에 넣어 둔다.
+//         실제 결제(iOS Production · Play 일반 구매)와 시험 결제(iOS Sandbox — TestFlight·App Review /
+//         Play 라이선스 테스터 구매) 모두 누구에게나 지급한다. 시험 결제를 할 수 있는 사람은 스토어가 이미 정한다
+//         (TestFlight 초대·심사관·Play 라이선스 테스터). 심사관이 데모 계정이 아닌 계정으로 사 봐도 지급돼야 반려되지 않는다.
+//         원장의 environment(Sandbox·PlayTest)로 시험 결제를 구분한다.
 //   test  로컬 개발. Xcode StoreKit 테스트 결제는 Apple 서명이 아니라 서명을 검증할 수 없다.
 //         그래서 purchase_testers에만, 그리고 Xcode·Sandbox 거래만 받는다(Production은 거부).
 //
@@ -90,7 +91,7 @@ export function decodeJwsPayload(jws: string): Record<string, unknown> | null {
 }
 
 type Verified =
-  | { ok: true; productId: string; transactionId: string; environment: string; raw: unknown; testPurchase: boolean }
+  | { ok: true; productId: string; transactionId: string; environment: string; raw: unknown }
   | { ok: false; status: number; error: string };
 
 const sameAccount = (claimed: unknown, userId: string): boolean =>
@@ -126,7 +127,6 @@ async function verifyIos(deps: VerifyPurchaseDeps, live: boolean, jws: string, u
     transactionId: transactionKey,
     environment,
     raw: payload,
-    testPurchase: environment !== 'Production',
   };
 }
 
@@ -154,7 +154,6 @@ async function verifyAndroid(
     transactionId: purchase.orderId && purchase.orderId.length > 0 ? purchase.orderId : purchaseToken,
     environment: testPurchase ? 'PlayTest' : 'Play',
     raw: purchase,
-    testPurchase,
   };
 }
 
@@ -210,8 +209,6 @@ export function createHandler(deps: VerifyPurchaseDeps): (req: Request) => Promi
         return json(400, { error: 'bad_request' });
       }
       if (!verified.ok) return json(verified.status, { error: verified.error });
-      // 시험 결제(TestFlight·App Review의 Sandbox, Play 라이선스 테스터)는 돈이 오가지 않는다 — 테스터에게만 지급한다.
-      if (verified.testPurchase && !tester) return json(403, { error: 'not_tester' });
 
       const granted = await deps.credit({
         userId,
