@@ -35,7 +35,7 @@ export default function Privacy(): React.ReactElement {
             <li><strong>이용자 콘텐츠</strong> — 편지 본문·제목·테마 선택·첨부 음악 정보, 이용자가 편지에 넣은 사진, 연결(친구) 관계</li>
             <li><strong>열람 기록</strong> — 로그인한 받는 사람이 편지를 연 시각과 횟수(보낸 사람에게 보내는 열람 알림과 7일 편지의 열람 기간 계산에 사용)</li>
             <li><strong>구매 기록</strong> — 편지권 구매 시 스토어 거래 정보(상품, 거래 번호, 구매·환불 시각, 스토어 환경)</li>
-            <li><strong>기기·알림 정보</strong> — 푸시 알림 토큰(FCM)</li>
+            <li><strong>기기·알림 정보</strong> — 푸시 알림 토큰(FCM), 사용 중인 앱 버전과 플랫폼(iOS·Android)</li>
             <li><strong>이용 기록</strong> — 접속 로그, 앱 오류 보고와 이용 통계(기기 종류·OS 버전·앱 버전 등, 자동 생성)</li>
             <li><strong>웹 이용 통계</strong> — 웹 페이지 조회와 버튼 사용(Google Analytics). 브라우저를 닫으면 지워지는 세션 쿠키만 쓰며, 편지 링크 주소와 편지 내용은 보내지 않습니다</li>
           </ul>
